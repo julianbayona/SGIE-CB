@@ -41,10 +41,11 @@ public class ClienteController {
         ClienteView cliente = registrarClienteUseCase.ejecutar(
                 new RegistrarClienteCommand(
                         request.cedula(),
-                        request.nombre(),
+                        request.nombreCompleto(),
                         request.telefono(),
                         request.correo(),
-                        request.tipoCliente()
+                        request.tipoCliente(),
+                        request.creadoPor()
                 )
         );
 
@@ -76,11 +77,12 @@ public class ClienteController {
         return new ClienteResponse(
                 cliente.id(),
                 cliente.cedula(),
-                cliente.nombre(),
+                cliente.nombreCompleto(),
                 cliente.telefono(),
                 cliente.correo(),
                 cliente.tipoCliente(),
-                cliente.activo()
+                cliente.activo(),
+                cliente.creadoPor()
         );
     }
 }

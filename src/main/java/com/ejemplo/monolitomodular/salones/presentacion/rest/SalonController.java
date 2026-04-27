@@ -1,5 +1,6 @@
 package com.ejemplo.monolitomodular.salones.presentacion.rest;
 
+import com.ejemplo.monolitomodular.salones.aplicacion.dto.ConsultarDisponibilidadSalonesQuery;
 import com.ejemplo.monolitomodular.salones.aplicacion.dto.RegistrarSalonCommand;
 import com.ejemplo.monolitomodular.salones.aplicacion.dto.SalonView;
 import com.ejemplo.monolitomodular.salones.aplicacion.puerto.entrada.ConsultarSalonUseCase;
@@ -13,10 +14,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -57,6 +60,23 @@ public class SalonController {
     @GetMapping
     public List<SalonResponse> listar() {
         return consultarSalonUseCase.listar().stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    @GetMapping("/disponibilidad")
+    public List<SalonResponse> consultarDisponibilidad(
+            @RequestParam LocalDateTime fechaHoraInicio,
+            @RequestParam LocalDateTime fechaHoraFin,
+            @RequestParam(required = false) Integer capacidadMinima
+    ) {
+        return consultarSalonUseCase.consultarDisponibilidad(
+                        new ConsultarDisponibilidadSalonesQuery(
+                                fechaHoraInicio,
+                                fechaHoraFin,
+                                capacidadMinima
+                        )
+                ).stream()
                 .map(this::toResponse)
                 .toList();
     }

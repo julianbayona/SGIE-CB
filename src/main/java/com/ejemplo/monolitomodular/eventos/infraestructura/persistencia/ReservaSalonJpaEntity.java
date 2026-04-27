@@ -13,40 +13,76 @@ import java.util.UUID;
 public class ReservaSalonJpaEntity {
 
     @Id
+    @Column(name = "id_reserva")
     private UUID id;
 
-    @Column(name = "evento_id", nullable = false)
+    @Column(name = "reserva_raiz_id", nullable = false)
+    private UUID reservaRaizId;
+
+    @Column(name = "id_evento", nullable = false)
     private UUID eventoId;
 
-    @Column(name = "salon_id", nullable = false)
+    @Column(name = "id_salon", nullable = false)
     private UUID salonId;
 
-    @Column(name = "fecha_inicio", nullable = false)
-    private LocalDateTime fechaInicio;
+    @Column(name = "num_invitados", nullable = false)
+    private int numInvitados;
 
-    @Column(name = "fecha_fin", nullable = false)
-    private LocalDateTime fechaFin;
+    @Column(name = "fecha_hora_inicio", nullable = false)
+    private LocalDateTime fechaHoraInicio;
+
+    @Column(name = "fecha_hora_fin", nullable = false)
+    private LocalDateTime fechaHoraFin;
+
+    @Column(nullable = false, length = 40)
+    private String estado;
+
+    @Column(nullable = false)
+    private int version;
+
+    @Column(nullable = false)
+    private boolean vigente;
+
+    @Column(name = "creado_por", nullable = false)
+    private UUID creadoPor;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
 
     protected ReservaSalonJpaEntity() {
     }
 
     public ReservaSalonJpaEntity(
             UUID id,
+            UUID reservaRaizId,
             UUID eventoId,
             UUID salonId,
-            LocalDateTime fechaInicio,
-            LocalDateTime fechaFin,
-            LocalDateTime createdAt
+            int numInvitados,
+            LocalDateTime fechaHoraInicio,
+            LocalDateTime fechaHoraFin,
+            String estado,
+            int version,
+            boolean vigente,
+            UUID creadoPor,
+            LocalDateTime createdAt,
+            LocalDateTime updatedAt
     ) {
         this.id = id;
+        this.reservaRaizId = reservaRaizId;
         this.eventoId = eventoId;
         this.salonId = salonId;
-        this.fechaInicio = fechaInicio;
-        this.fechaFin = fechaFin;
+        this.numInvitados = numInvitados;
+        this.fechaHoraInicio = fechaHoraInicio;
+        this.fechaHoraFin = fechaHoraFin;
+        this.estado = estado;
+        this.version = version;
+        this.vigente = vigente;
+        this.creadoPor = creadoPor;
         this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
     }
 
     public UUID getId() {
@@ -57,15 +93,39 @@ public class ReservaSalonJpaEntity {
         return eventoId;
     }
 
+    public UUID getReservaRaizId() {
+        return reservaRaizId;
+    }
+
     public UUID getSalonId() {
         return salonId;
     }
 
-    public LocalDateTime getFechaInicio() {
-        return fechaInicio;
+    public int getNumInvitados() {
+        return numInvitados;
     }
 
-    public LocalDateTime getFechaFin() {
-        return fechaFin;
+    public LocalDateTime getFechaHoraInicio() {
+        return fechaHoraInicio;
+    }
+
+    public LocalDateTime getFechaHoraFin() {
+        return fechaHoraFin;
+    }
+
+    public String getEstado() {
+        return estado;
+    }
+
+    public int getVersion() {
+        return version;
+    }
+
+    public boolean isVigente() {
+        return vigente;
+    }
+
+    public UUID getCreadoPor() {
+        return creadoPor;
     }
 }

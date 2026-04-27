@@ -6,6 +6,8 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @Repository
@@ -24,10 +26,17 @@ public class ReservaSalonJpaRepositoryAdapter implements ReservaSalonRepository 
                         reservas.stream()
                                 .map(reserva -> new ReservaSalonJpaEntity(
                                         reserva.getId(),
+                                        reserva.getReservaRaizId(),
                                         reserva.getEventoId(),
                                         reserva.getSalonId(),
-                                        reserva.getFechaInicio(),
-                                        reserva.getFechaFin(),
+                                        reserva.getNumInvitados(),
+                                        reserva.getFechaHoraInicio(),
+                                        reserva.getFechaHoraFin(),
+                                        reserva.getEstado(),
+                                        reserva.getVersion(),
+                                        reserva.isVigente(),
+                                        reserva.getCreadoPor(),
+                                        now,
                                         now
                                 ))
                                 .toList()
@@ -37,24 +46,75 @@ public class ReservaSalonJpaRepositoryAdapter implements ReservaSalonRepository 
     }
 
     @Override
-    public boolean existeConflicto(UUID salonId, LocalDateTime fechaInicio, LocalDateTime fechaFin) {
-        return repository.existeConflicto(salonId, fechaInicio, fechaFin);
+    public ReservaSalon guardar(ReservaSalon reserva) {
+        LocalDateTime now = LocalDateTime.now();
+        return toDomain(repository.save(new ReservaSalonJpaEntity(
+                reserva.getId(),
+                reserva.getReservaRaizId(),
+                reserva.getEventoId(),
+                reserva.getSalonId(),
+                reserva.getNumInvitados(),
+                reserva.getFechaHoraInicio(),
+                reserva.getFechaHoraFin(),
+                reserva.getEstado(),
+                reserva.getVersion(),
+                reserva.isVigente(),
+                reserva.getCreadoPor(),
+                now,
+                now
+        )));
+    }
+
+    @Override
+    public boolean existeConflicto(UUID salonId, LocalDateTime fechaHoraInicio, LocalDateTime fechaHoraFin) {
+        return repository.existeConflicto(salonId, fechaHoraInicio, fechaHoraFin);
+    }
+
+    @Override
+    public boolean existeConflicto(UUID salonId, LocalDateTime fechaHoraInicio, LocalDateTime fechaHoraFin, UUID reservaRaizIdExcluida) {
+        return repository.existeConflicto(salonId, fechaHoraInicio, fechaHoraFin, reservaRaizIdExcluida);
     }
 
     @Override
     public List<ReservaSalon> listarPorEvento(UUID eventoId) {
-        return repository.findByEventoId(eventoId).stream()
+        return repository.findByEventoIdAndVigenteTrue(eventoId).stream()
                 .map(this::toDomain)
                 .toList();
+    }
+
+    @Override
+    public Set<UUID> buscarSalonesOcupados(LocalDateTime fechaHoraInicio, LocalDateTime fechaHoraFin) {
+        return repository.buscarSalonesOcupados(fechaHoraInicio, fechaHoraFin);
+    }
+
+    @Override
+    public Optional<ReservaSalon> buscarVigentePorEventoYSalon(UUID eventoId, UUID salonId) {
+        return repository.findByEventoIdAndSalonIdAndVigenteTrue(eventoId, salonId).map(this::toDomain);
+    }
+
+    @Override
+    public Optional<ReservaSalon> buscarVigentePorRaizId(UUID reservaRaizId) {
+        return repository.findByReservaRaizIdAndVigenteTrue(reservaRaizId).map(this::toDomain);
+    }
+
+    @Override
+    public void desactivarReservaVigente(UUID reservaRaizId) {
+        repository.desactivarReservaVigente(reservaRaizId, LocalDateTime.now());
     }
 
     private ReservaSalon toDomain(ReservaSalonJpaEntity entity) {
         return ReservaSalon.reconstruir(
                 entity.getId(),
+                entity.getReservaRaizId(),
                 entity.getEventoId(),
                 entity.getSalonId(),
-                entity.getFechaInicio(),
-                entity.getFechaFin()
+                entity.getNumInvitados(),
+                entity.getFechaHoraInicio(),
+                entity.getFechaHoraFin(),
+                entity.getEstado(),
+                entity.getVersion(),
+                entity.isVigente(),
+                entity.getCreadoPor()
         );
     }
 }

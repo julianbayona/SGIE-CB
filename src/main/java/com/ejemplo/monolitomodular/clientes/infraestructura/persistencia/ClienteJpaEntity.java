@@ -16,13 +16,14 @@ import java.util.UUID;
 public class ClienteJpaEntity {
 
     @Id
+    @Column(name = "id_cliente")
     private UUID id;
 
     @Column(nullable = false, unique = true, length = 20)
     private String cedula;
 
-    @Column(nullable = false, length = 120)
-    private String nombre;
+    @Column(name = "nombre_completo", nullable = false, length = 120)
+    private String nombreCompleto;
 
     @Column(nullable = false, length = 30)
     private String telefono;
@@ -37,6 +38,9 @@ public class ClienteJpaEntity {
     @Column(nullable = false)
     private boolean activo;
 
+    @Column(name = "creado_por")
+    private UUID creadoPor;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -49,21 +53,23 @@ public class ClienteJpaEntity {
     public ClienteJpaEntity(
             UUID id,
             String cedula,
-            String nombre,
+            String nombreCompleto,
             String telefono,
             String correo,
             TipoCliente tipoCliente,
             boolean activo,
+            UUID creadoPor,
             LocalDateTime createdAt,
             LocalDateTime updatedAt
     ) {
         this.id = id;
         this.cedula = cedula;
-        this.nombre = nombre;
+        this.nombreCompleto = nombreCompleto;
         this.telefono = telefono;
         this.correo = correo;
         this.tipoCliente = tipoCliente;
         this.activo = activo;
+        this.creadoPor = creadoPor;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -76,8 +82,8 @@ public class ClienteJpaEntity {
         return cedula;
     }
 
-    public String getNombre() {
-        return nombre;
+    public String getNombreCompleto() {
+        return nombreCompleto;
     }
 
     public String getTelefono() {
@@ -94,5 +100,9 @@ public class ClienteJpaEntity {
 
     public boolean isActivo() {
         return activo;
+    }
+
+    public UUID getCreadoPor() {
+        return creadoPor;
     }
 }

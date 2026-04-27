@@ -8,9 +8,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.UUID;
 
 @Entity
@@ -18,35 +16,33 @@ import java.util.UUID;
 public class EventoJpaEntity {
 
     @Id
+    @Column(name = "id_evento")
     private UUID id;
 
-    @Column(name = "cliente_id", nullable = false)
+    @Column(name = "id_cliente", nullable = false)
     private UUID clienteId;
 
-    @Column(name = "tipo_evento", nullable = false, length = 100)
-    private String tipoEvento;
+    @Column(name = "id_tipo_evento", nullable = false)
+    private UUID tipoEventoId;
 
-    @Column(name = "tipo_comida", nullable = false, length = 100)
-    private String tipoComida;
+    @Column(name = "id_tipo_comida", nullable = false)
+    private UUID tipoComidaId;
 
-    @Column(name = "fecha_evento", nullable = false)
-    private LocalDate fechaEvento;
+    @Column(name = "id_usuario_creador", nullable = false)
+    private UUID usuarioCreadorId;
 
-    @Column(name = "hora_inicio", nullable = false)
-    private LocalTime horaInicio;
+    @Column(name = "fecha_hora_inicio", nullable = false)
+    private LocalDateTime fechaHoraInicio;
 
-    @Column(name = "hora_fin", nullable = false)
-    private LocalTime horaFin;
-
-    @Column(name = "numero_personas", nullable = false)
-    private int numeroPersonas;
+    @Column(name = "fecha_hora_fin", nullable = false)
+    private LocalDateTime fechaHoraFin;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 40)
     private EstadoEvento estado;
 
-    @Column(columnDefinition = "text")
-    private String observaciones;
+    @Column(name = "gcal_event_id", length = 255)
+    private String gcalEventId;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -60,27 +56,25 @@ public class EventoJpaEntity {
     public EventoJpaEntity(
             UUID id,
             UUID clienteId,
-            String tipoEvento,
-            String tipoComida,
-            LocalDate fechaEvento,
-            LocalTime horaInicio,
-            LocalTime horaFin,
-            int numeroPersonas,
+            UUID tipoEventoId,
+            UUID tipoComidaId,
+            UUID usuarioCreadorId,
+            LocalDateTime fechaHoraInicio,
+            LocalDateTime fechaHoraFin,
             EstadoEvento estado,
-            String observaciones,
+            String gcalEventId,
             LocalDateTime createdAt,
             LocalDateTime updatedAt
     ) {
         this.id = id;
         this.clienteId = clienteId;
-        this.tipoEvento = tipoEvento;
-        this.tipoComida = tipoComida;
-        this.fechaEvento = fechaEvento;
-        this.horaInicio = horaInicio;
-        this.horaFin = horaFin;
-        this.numeroPersonas = numeroPersonas;
+        this.tipoEventoId = tipoEventoId;
+        this.tipoComidaId = tipoComidaId;
+        this.usuarioCreadorId = usuarioCreadorId;
+        this.fechaHoraInicio = fechaHoraInicio;
+        this.fechaHoraFin = fechaHoraFin;
         this.estado = estado;
-        this.observaciones = observaciones;
+        this.gcalEventId = gcalEventId;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -93,35 +87,31 @@ public class EventoJpaEntity {
         return clienteId;
     }
 
-    public String getTipoEvento() {
-        return tipoEvento;
+    public UUID getTipoEventoId() {
+        return tipoEventoId;
     }
 
-    public String getTipoComida() {
-        return tipoComida;
+    public UUID getTipoComidaId() {
+        return tipoComidaId;
     }
 
-    public LocalDate getFechaEvento() {
-        return fechaEvento;
+    public UUID getUsuarioCreadorId() {
+        return usuarioCreadorId;
     }
 
-    public LocalTime getHoraInicio() {
-        return horaInicio;
+    public LocalDateTime getFechaHoraInicio() {
+        return fechaHoraInicio;
     }
 
-    public LocalTime getHoraFin() {
-        return horaFin;
-    }
-
-    public int getNumeroPersonas() {
-        return numeroPersonas;
+    public LocalDateTime getFechaHoraFin() {
+        return fechaHoraFin;
     }
 
     public EstadoEvento getEstado() {
         return estado;
     }
 
-    public String getObservaciones() {
-        return observaciones;
+    public String getGcalEventId() {
+        return gcalEventId;
     }
 }

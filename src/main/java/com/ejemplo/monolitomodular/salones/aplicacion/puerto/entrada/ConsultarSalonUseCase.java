@@ -1,5 +1,6 @@
 package com.ejemplo.monolitomodular.salones.aplicacion.puerto.entrada;
 
+import com.ejemplo.monolitomodular.salones.aplicacion.dto.ConsultarDisponibilidadSalonesQuery;
 import com.ejemplo.monolitomodular.salones.aplicacion.dto.SalonView;
 
 import java.util.List;
@@ -10,4 +11,6 @@ public interface ConsultarSalonUseCase {
     SalonView obtenerPorId(UUID id);
 
     List<SalonView> listar();
+
+    List<SalonView> consultarDisponibilidad(ConsultarDisponibilidadSalonesQuery query);
 }

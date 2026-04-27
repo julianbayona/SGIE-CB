@@ -1,10 +1,17 @@
 package com.ejemplo.monolitomodular.eventos.aplicacion.servicio;
 
 import com.ejemplo.monolitomodular.clientes.dominio.puerto.salida.ClienteRepository;
+import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.TipoComidaRepository;
+import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.TipoEventoRepository;
 import com.ejemplo.monolitomodular.eventos.aplicacion.dto.CrearEventoCommand;
+import com.ejemplo.monolitomodular.eventos.aplicacion.dto.CrearReservaSalonCommand;
 import com.ejemplo.monolitomodular.eventos.aplicacion.dto.EventoView;
+import com.ejemplo.monolitomodular.eventos.aplicacion.dto.ModificarReservaSalonCommand;
+import com.ejemplo.monolitomodular.eventos.aplicacion.dto.ReservaSalonView;
 import com.ejemplo.monolitomodular.eventos.aplicacion.puerto.entrada.ConsultarEventoUseCase;
 import com.ejemplo.monolitomodular.eventos.aplicacion.puerto.entrada.CrearEventoUseCase;
+import com.ejemplo.monolitomodular.eventos.aplicacion.puerto.entrada.CrearReservaSalonUseCase;
+import com.ejemplo.monolitomodular.eventos.aplicacion.puerto.entrada.ModificarReservaSalonUseCase;
 import com.ejemplo.monolitomodular.eventos.dominio.modelo.Evento;
 import com.ejemplo.monolitomodular.eventos.dominio.modelo.HistorialEstadoEvento;
 import com.ejemplo.monolitomodular.eventos.dominio.modelo.ReservaSalon;
@@ -14,86 +21,150 @@ import com.ejemplo.monolitomodular.eventos.dominio.puerto.salida.ReservaSalonRep
 import com.ejemplo.monolitomodular.salones.dominio.puerto.salida.SalonRepository;
 import com.ejemplo.monolitomodular.shared.dominio.excepcion.DomainException;
 import com.ejemplo.monolitomodular.usuarios.dominio.puerto.salida.UsuarioRepository;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 @Service
-public class EventoApplicationService implements CrearEventoUseCase, ConsultarEventoUseCase {
+public class EventoApplicationService implements CrearEventoUseCase, ConsultarEventoUseCase, CrearReservaSalonUseCase, ModificarReservaSalonUseCase {
 
     private final ClienteRepository clienteRepository;
+    private final TipoEventoRepository tipoEventoRepository;
+    private final TipoComidaRepository tipoComidaRepository;
+    private final UsuarioRepository usuarioRepository;
     private final SalonRepository salonRepository;
     private final EventoRepository eventoRepository;
     private final ReservaSalonRepository reservaSalonRepository;
     private final HistorialEstadoEventoRepository historialEstadoEventoRepository;
-    private final UsuarioRepository usuarioRepository;
 
     public EventoApplicationService(
             ClienteRepository clienteRepository,
+            TipoEventoRepository tipoEventoRepository,
+            TipoComidaRepository tipoComidaRepository,
+            UsuarioRepository usuarioRepository,
             SalonRepository salonRepository,
             EventoRepository eventoRepository,
             ReservaSalonRepository reservaSalonRepository,
-            HistorialEstadoEventoRepository historialEstadoEventoRepository,
-            UsuarioRepository usuarioRepository
+            HistorialEstadoEventoRepository historialEstadoEventoRepository
     ) {
         this.clienteRepository = clienteRepository;
+        this.tipoEventoRepository = tipoEventoRepository;
+        this.tipoComidaRepository = tipoComidaRepository;
+        this.usuarioRepository = usuarioRepository;
         this.salonRepository = salonRepository;
         this.eventoRepository = eventoRepository;
         this.reservaSalonRepository = reservaSalonRepository;
         this.historialEstadoEventoRepository = historialEstadoEventoRepository;
-        this.usuarioRepository = usuarioRepository;
     }
 
     @Override
+    @Transactional
     public EventoView ejecutar(CrearEventoCommand command) {
         clienteRepository.buscarPorId(command.clienteId())
                 .orElseThrow(() -> new DomainException("Cliente no encontrado"));
 
-        if (command.usuarioResponsableId() != null) {
-            usuarioRepository.buscarPorId(command.usuarioResponsableId())
-                    .orElseThrow(() -> new DomainException("Usuario responsable no encontrado"));
+        if (!tipoEventoRepository.existeActivoPorId(command.tipoEventoId())) {
+            throw new DomainException("El tipo de evento no existe o esta inactivo");
         }
 
-        Set<UUID> salonIds = normalizarSalones(command.salonIds());
-        if (salonRepository.buscarTodosPorIds(salonIds).size() != salonIds.size()) {
-            throw new DomainException("Uno o mas salones no existen");
+        if (!tipoComidaRepository.existeActivoPorId(command.tipoComidaId())) {
+            throw new DomainException("El tipo de comida no existe o esta inactivo");
         }
+
+        usuarioRepository.buscarPorId(command.usuarioCreadorId())
+                .orElseThrow(() -> new DomainException("Usuario creador no encontrado"));
+
+        validarRango(command);
 
         Evento evento = Evento.nuevo(
                 command.clienteId(),
-                command.tipoEvento(),
-                command.tipoComida(),
-                command.fechaEvento(),
-                command.horaInicio(),
-                command.duracionHoras(),
-                command.numeroPersonas(),
-                command.observaciones()
+                command.tipoEventoId(),
+                command.tipoComidaId(),
+                command.usuarioCreadorId(),
+                command.fechaHoraInicio(),
+                command.fechaHoraFin()
+        );
+        Evento guardado = eventoRepository.guardar(evento);
+        historialEstadoEventoRepository.guardar(
+                HistorialEstadoEvento.registrarCreacion(guardado.getId(), command.usuarioCreadorId())
         );
 
-        LocalDateTime fechaInicio = LocalDateTime.of(evento.getFechaEvento(), evento.getHoraInicio());
-        LocalDateTime fechaFin = LocalDateTime.of(evento.getFechaEvento(), evento.getHoraFin());
+        return toView(guardado, List.of());
+    }
 
-        for (UUID salonId : salonIds) {
-            if (reservaSalonRepository.existeConflicto(salonId, fechaInicio, fechaFin)) {
-                throw new DomainException("Ya existe una reserva en conflicto para el salon " + salonId);
-            }
+    @Override
+    @Transactional
+    public EventoView ejecutar(UUID eventoId, CrearReservaSalonCommand command) {
+        Evento evento = eventoRepository.buscarPorId(eventoId)
+                .orElseThrow(() -> new DomainException("Evento no encontrado"));
+
+        usuarioRepository.buscarPorId(command.usuarioId())
+                .orElseThrow(() -> new DomainException("Usuario no encontrado"));
+
+        if (salonRepository.buscarTodosPorIds(Set.of(command.salonId())).isEmpty()) {
+            throw new DomainException("El salon no existe");
         }
 
-        Evento guardado = eventoRepository.guardar(evento);
+        validarRango(command.fechaHoraInicio(), command.fechaHoraFin());
 
-        List<ReservaSalon> reservas = salonIds.stream()
-                .map(salonId -> ReservaSalon.nueva(guardado.getId(), salonId, fechaInicio, fechaFin))
-                .toList();
-        reservaSalonRepository.guardarTodas(reservas);
-        historialEstadoEventoRepository.guardar(
-                HistorialEstadoEvento.registrarCreacion(guardado.getId(), command.usuarioResponsableId())
+        if (reservaSalonRepository.existeConflicto(command.salonId(), command.fechaHoraInicio(), command.fechaHoraFin())) {
+            throw new DomainException("Ya existe una reserva confirmada en conflicto para el salon " + command.salonId());
+        }
+
+        reservaSalonRepository.guardar(ReservaSalon.nueva(
+                eventoId,
+                command.salonId(),
+                command.numInvitados(),
+                command.fechaHoraInicio(),
+                command.fechaHoraFin(),
+                command.usuarioId()
+        ));
+
+        return toView(evento, reservaSalonRepository.listarPorEvento(eventoId));
+    }
+
+    @Override
+    @Transactional
+    public EventoView ejecutar(UUID reservaRaizId, ModificarReservaSalonCommand command) {
+        ReservaSalon reservaActual = reservaSalonRepository.buscarVigentePorRaizId(reservaRaizId)
+                .orElseThrow(() -> new DomainException("No existe una reserva vigente para el identificador indicado"));
+
+        Evento evento = eventoRepository.buscarPorId(reservaActual.getEventoId())
+                .orElseThrow(() -> new DomainException("Evento no encontrado"));
+
+        usuarioRepository.buscarPorId(command.usuarioId())
+                .orElseThrow(() -> new DomainException("Usuario no encontrado"));
+
+        if (salonRepository.buscarTodosPorIds(Set.of(command.salonId())).isEmpty()) {
+            throw new DomainException("El salon destino no existe");
+        }
+
+        validarRango(command.fechaHoraInicio(), command.fechaHoraFin());
+
+        if (reservaSalonRepository.existeConflicto(
+                command.salonId(),
+                command.fechaHoraInicio(),
+                command.fechaHoraFin(),
+                reservaActual.getReservaRaizId()
+        )) {
+            throw new DomainException("Ya existe una reserva confirmada en conflicto para el salon " + command.salonId());
+        }
+
+        reservaSalonRepository.desactivarReservaVigente(reservaActual.getReservaRaizId());
+        reservaSalonRepository.guardar(
+                reservaActual.crearNuevaVersion(
+                        command.salonId(),
+                        command.numInvitados(),
+                        command.fechaHoraInicio(),
+                        command.fechaHoraFin(),
+                        command.usuarioId()
+                )
         );
 
-        return toView(guardado, reservas);
+        return toView(evento, reservaSalonRepository.listarPorEvento(evento.getId()));
     }
 
     @Override
@@ -110,26 +181,48 @@ public class EventoApplicationService implements CrearEventoUseCase, ConsultarEv
                 .toList();
     }
 
-    private Set<UUID> normalizarSalones(List<UUID> salonIds) {
-        if (salonIds == null || salonIds.isEmpty()) {
-            throw new DomainException("Debe enviar al menos un salon para el evento");
+    private void validarRango(CrearEventoCommand command) {
+        validarRango(command.fechaHoraInicio(), command.fechaHoraFin());
+    }
+
+    private void validarRango(java.time.LocalDateTime fechaHoraInicio, java.time.LocalDateTime fechaHoraFin) {
+        if (fechaHoraInicio == null) {
+            throw new DomainException("La fecha y hora de inicio del evento es obligatoria");
         }
-        return new LinkedHashSet<>(salonIds);
+        if (fechaHoraFin == null) {
+            throw new DomainException("La fecha y hora de fin del evento es obligatoria");
+        }
+        if (!fechaHoraFin.isAfter(fechaHoraInicio)) {
+            throw new DomainException("La fecha y hora de fin debe ser posterior a la fecha y hora de inicio");
+        }
     }
 
     private EventoView toView(Evento evento, List<ReservaSalon> reservas) {
         return new EventoView(
                 evento.getId(),
                 evento.getClienteId(),
-                evento.getTipoEvento(),
-                evento.getTipoComida(),
-                evento.getFechaEvento(),
-                evento.getHoraInicio(),
-                evento.getHoraFin(),
-                evento.getNumeroPersonas(),
+                evento.getTipoEventoId(),
+                evento.getTipoComidaId(),
+                evento.getUsuarioCreadorId(),
                 evento.getEstado(),
-                evento.getObservaciones(),
-                reservas.stream().map(ReservaSalon::getSalonId).toList()
+                evento.getGcalEventId(),
+                evento.getFechaHoraInicio(),
+                evento.getFechaHoraFin(),
+                reservas.stream().map(this::toReservaView).toList()
+        );
+    }
+
+    private ReservaSalonView toReservaView(ReservaSalon reserva) {
+        return new ReservaSalonView(
+                reserva.getId(),
+                reserva.getReservaRaizId(),
+                reserva.getSalonId(),
+                reserva.getNumInvitados(),
+                reserva.getFechaHoraInicio(),
+                reserva.getFechaHoraFin(),
+                reserva.getEstado(),
+                reserva.getVersion(),
+                reserva.isVigente()
         );
     }
 }

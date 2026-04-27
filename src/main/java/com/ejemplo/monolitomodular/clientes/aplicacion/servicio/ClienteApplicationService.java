@@ -7,6 +7,7 @@ import com.ejemplo.monolitomodular.clientes.aplicacion.puerto.entrada.RegistrarC
 import com.ejemplo.monolitomodular.clientes.dominio.modelo.Cliente;
 import com.ejemplo.monolitomodular.clientes.dominio.puerto.salida.ClienteRepository;
 import com.ejemplo.monolitomodular.shared.dominio.excepcion.DomainException;
+import com.ejemplo.monolitomodular.usuarios.dominio.puerto.salida.UsuarioRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,19 +17,27 @@ import java.util.UUID;
 public class ClienteApplicationService implements RegistrarClienteUseCase, ConsultarClienteUseCase {
 
     private final ClienteRepository clienteRepository;
+    private final UsuarioRepository usuarioRepository;
 
-    public ClienteApplicationService(ClienteRepository clienteRepository) {
+    public ClienteApplicationService(ClienteRepository clienteRepository, UsuarioRepository usuarioRepository) {
         this.clienteRepository = clienteRepository;
+        this.usuarioRepository = usuarioRepository;
     }
 
     @Override
     public ClienteView ejecutar(RegistrarClienteCommand command) {
+        if (command.creadoPor() != null) {
+            usuarioRepository.buscarPorId(command.creadoPor())
+                    .orElseThrow(() -> new DomainException("El usuario creador del cliente no existe"));
+        }
+
         Cliente cliente = Cliente.nuevo(
                 command.cedula(),
-                command.nombre(),
+                command.nombreCompleto(),
                 command.telefono(),
                 command.correo(),
-                command.tipoCliente()
+                command.tipoCliente(),
+                command.creadoPor()
         );
 
         clienteRepository.buscarPorCedula(cliente.getCedula())
@@ -64,11 +73,12 @@ public class ClienteApplicationService implements RegistrarClienteUseCase, Consu
         return new ClienteView(
                 cliente.getId(),
                 cliente.getCedula(),
-                cliente.getNombre(),
+                cliente.getNombreCompleto(),
                 cliente.getTelefono(),
                 cliente.getCorreo(),
                 cliente.getTipoCliente(),
-                cliente.isActivo()
+                cliente.isActivo(),
+                cliente.getCreadoPor()
         );
     }
 }

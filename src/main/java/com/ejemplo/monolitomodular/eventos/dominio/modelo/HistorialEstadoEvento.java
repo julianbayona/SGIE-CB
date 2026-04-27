@@ -10,8 +10,7 @@ public class HistorialEstadoEvento {
     private final UUID usuarioId;
     private final EstadoEvento estadoAnterior;
     private final EstadoEvento estadoNuevo;
-    private final String observacion;
-    private final LocalDateTime fechaCambio;
+    private final LocalDateTime createdAt;
 
     private HistorialEstadoEvento(
             UUID id,
@@ -19,16 +18,14 @@ public class HistorialEstadoEvento {
             UUID usuarioId,
             EstadoEvento estadoAnterior,
             EstadoEvento estadoNuevo,
-            String observacion,
-            LocalDateTime fechaCambio
+            LocalDateTime createdAt
     ) {
         this.id = id;
         this.eventoId = eventoId;
         this.usuarioId = usuarioId;
         this.estadoAnterior = estadoAnterior;
         this.estadoNuevo = estadoNuevo;
-        this.observacion = observacion == null ? "" : observacion.trim();
-        this.fechaCambio = fechaCambio;
+        this.createdAt = createdAt;
     }
 
     public static HistorialEstadoEvento registrarCreacion(UUID eventoId, UUID usuarioId) {
@@ -38,7 +35,6 @@ public class HistorialEstadoEvento {
                 usuarioId,
                 null,
                 EstadoEvento.PENDIENTE,
-                "Creacion del evento",
                 LocalDateTime.now()
         );
     }
@@ -49,10 +45,9 @@ public class HistorialEstadoEvento {
             UUID usuarioId,
             EstadoEvento estadoAnterior,
             EstadoEvento estadoNuevo,
-            String observacion,
-            LocalDateTime fechaCambio
+            LocalDateTime createdAt
     ) {
-        return new HistorialEstadoEvento(id, eventoId, usuarioId, estadoAnterior, estadoNuevo, observacion, fechaCambio);
+        return new HistorialEstadoEvento(id, eventoId, usuarioId, estadoAnterior, estadoNuevo, createdAt);
     }
 
     public UUID getId() {
@@ -75,11 +70,7 @@ public class HistorialEstadoEvento {
         return estadoNuevo;
     }
 
-    public String getObservacion() {
-        return observacion;
-    }
-
-    public LocalDateTime getFechaCambio() {
-        return fechaCambio;
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
     }
 }

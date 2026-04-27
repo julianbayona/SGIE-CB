@@ -21,8 +21,7 @@ public class HistorialEstadoEventoJpaRepositoryAdapter implements HistorialEstad
                 historialEstadoEvento.getUsuarioId(),
                 historialEstadoEvento.getEstadoAnterior(),
                 historialEstadoEvento.getEstadoNuevo(),
-                historialEstadoEvento.getObservacion(),
-                historialEstadoEvento.getFechaCambio()
+                historialEstadoEvento.getCreatedAt()
         );
         HistorialEstadoEventoJpaEntity saved = repository.save(entity);
         return HistorialEstadoEvento.reconstruir(
@@ -31,8 +30,7 @@ public class HistorialEstadoEventoJpaRepositoryAdapter implements HistorialEstad
                 saved.getUsuarioId(),
                 saved.getEstadoAnterior(),
                 saved.getEstadoNuevo(),
-                saved.getObservacion(),
-                saved.getFechaCambio()
+                saved.getCreatedAt()
         );
     }
 }

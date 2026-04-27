@@ -1,5 +1,7 @@
 package com.ejemplo.monolitomodular.salones.aplicacion.servicio;
 
+import com.ejemplo.monolitomodular.eventos.dominio.puerto.salida.ReservaSalonRepository;
+import com.ejemplo.monolitomodular.salones.aplicacion.dto.ConsultarDisponibilidadSalonesQuery;
 import com.ejemplo.monolitomodular.salones.aplicacion.dto.RegistrarSalonCommand;
 import com.ejemplo.monolitomodular.salones.aplicacion.dto.SalonView;
 import com.ejemplo.monolitomodular.salones.aplicacion.puerto.entrada.ConsultarSalonUseCase;
@@ -10,15 +12,21 @@ import com.ejemplo.monolitomodular.shared.dominio.excepcion.DomainException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
 public class SalonApplicationService implements RegistrarSalonUseCase, ConsultarSalonUseCase {
 
     private final SalonRepository salonRepository;
+    private final ReservaSalonRepository reservaSalonRepository;
 
-    public SalonApplicationService(SalonRepository salonRepository) {
+    public SalonApplicationService(
+            SalonRepository salonRepository,
+            ReservaSalonRepository reservaSalonRepository
+    ) {
         this.salonRepository = salonRepository;
+        this.reservaSalonRepository = reservaSalonRepository;
     }
 
     @Override
@@ -46,6 +54,23 @@ public class SalonApplicationService implements RegistrarSalonUseCase, Consultar
                 .toList();
     }
 
+    @Override
+    public List<SalonView> consultarDisponibilidad(ConsultarDisponibilidadSalonesQuery query) {
+        validarConsultaDisponibilidad(query);
+
+        Set<UUID> salonesOcupados = reservaSalonRepository.buscarSalonesOcupados(
+                query.fechaHoraInicio(),
+                query.fechaHoraFin()
+        );
+
+        return salonRepository.listar().stream()
+                .filter(Salon::isActivo)
+                .filter(salon -> query.capacidadMinima() == null || salon.getCapacidad() >= query.capacidadMinima())
+                .filter(salon -> !salonesOcupados.contains(salon.getId()))
+                .map(this::toView)
+                .toList();
+    }
+
     private SalonView toView(Salon salon) {
         return new SalonView(
                 salon.getId(),
@@ -54,5 +79,20 @@ public class SalonApplicationService implements RegistrarSalonUseCase, Consultar
                 salon.getDescripcion(),
                 salon.isActivo()
         );
+    }
+
+    private void validarConsultaDisponibilidad(ConsultarDisponibilidadSalonesQuery query) {
+        if (query.fechaHoraInicio() == null) {
+            throw new DomainException("La fecha y hora de inicio es obligatoria");
+        }
+        if (query.fechaHoraFin() == null) {
+            throw new DomainException("La fecha y hora de fin es obligatoria");
+        }
+        if (!query.fechaHoraFin().isAfter(query.fechaHoraInicio())) {
+            throw new DomainException("La fecha y hora de fin debe ser posterior a la fecha y hora de inicio");
+        }
+        if (query.capacidadMinima() != null && query.capacidadMinima() <= 0) {
+            throw new DomainException("La capacidad minima debe ser mayor a cero");
+        }
     }
 }

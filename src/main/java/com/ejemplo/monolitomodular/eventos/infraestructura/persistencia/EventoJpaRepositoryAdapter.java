@@ -24,14 +24,13 @@ public class EventoJpaRepositoryAdapter implements EventoRepository {
         EventoJpaEntity entity = new EventoJpaEntity(
                 evento.getId(),
                 evento.getClienteId(),
-                evento.getTipoEvento(),
-                evento.getTipoComida(),
-                evento.getFechaEvento(),
-                evento.getHoraInicio(),
-                evento.getHoraFin(),
-                evento.getNumeroPersonas(),
+                evento.getTipoEventoId(),
+                evento.getTipoComidaId(),
+                evento.getUsuarioCreadorId(),
+                evento.getFechaHoraInicio(),
+                evento.getFechaHoraFin(),
                 evento.getEstado(),
-                evento.getObservaciones(),
+                evento.getGcalEventId(),
                 now,
                 now
         );
@@ -45,7 +44,7 @@ public class EventoJpaRepositoryAdapter implements EventoRepository {
 
     @Override
     public List<Evento> listar() {
-        return repository.findAllByOrderByFechaEventoAscHoraInicioAsc().stream()
+        return repository.findAllByOrderByCreatedAtAsc().stream()
                 .map(this::toDomain)
                 .toList();
     }
@@ -54,14 +53,13 @@ public class EventoJpaRepositoryAdapter implements EventoRepository {
         return Evento.reconstruir(
                 entity.getId(),
                 entity.getClienteId(),
-                entity.getTipoEvento(),
-                entity.getTipoComida(),
-                entity.getFechaEvento(),
-                entity.getHoraInicio(),
-                entity.getHoraFin(),
-                entity.getNumeroPersonas(),
+                entity.getTipoEventoId(),
+                entity.getTipoComidaId(),
+                entity.getUsuarioCreadorId(),
+                entity.getFechaHoraInicio(),
+                entity.getFechaHoraFin(),
                 entity.getEstado(),
-                entity.getObservaciones()
+                entity.getGcalEventId()
         );
     }
 }

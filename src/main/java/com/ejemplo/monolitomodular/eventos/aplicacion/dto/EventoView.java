@@ -2,22 +2,20 @@ package com.ejemplo.monolitomodular.eventos.aplicacion.dto;
 
 import com.ejemplo.monolitomodular.eventos.dominio.modelo.EstadoEvento;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
 public record EventoView(
         UUID id,
         UUID clienteId,
-        String tipoEvento,
-        String tipoComida,
-        LocalDate fechaEvento,
-        LocalTime horaInicio,
-        LocalTime horaFin,
-        int numeroPersonas,
+        UUID tipoEventoId,
+        UUID tipoComidaId,
+        UUID usuarioCreadorId,
         EstadoEvento estado,
-        String observaciones,
-        List<UUID> salonIds
+        String gcalEventId,
+        LocalDateTime fechaHoraInicio,
+        LocalDateTime fechaHoraFin,
+        List<ReservaSalonView> reservas
 ) {
 }

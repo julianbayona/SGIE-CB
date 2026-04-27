@@ -6,6 +6,9 @@ import com.ejemplo.monolitomodular.clientes.dominio.modelo.Cliente;
 import com.ejemplo.monolitomodular.clientes.dominio.modelo.TipoCliente;
 import com.ejemplo.monolitomodular.clientes.dominio.puerto.salida.ClienteRepository;
 import com.ejemplo.monolitomodular.shared.dominio.excepcion.DomainException;
+import com.ejemplo.monolitomodular.usuarios.dominio.modelo.RolUsuario;
+import com.ejemplo.monolitomodular.usuarios.dominio.modelo.Usuario;
+import com.ejemplo.monolitomodular.usuarios.dominio.puerto.salida.UsuarioRepository;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -21,31 +24,44 @@ class ClienteApplicationServiceTest {
 
     @Test
     void deberiaRegistrarCliente() {
-        ClienteApplicationService service = new ClienteApplicationService(new InMemoryClienteRepositoryStub());
+        Usuario usuario = Usuario.nuevo("Admin", "$2a$hash", RolUsuario.ADMINISTRADOR);
+        ClienteApplicationService service = new ClienteApplicationService(
+                new InMemoryClienteRepositoryStub(),
+                new UsuarioRepositoryStub(List.of(usuario))
+        );
 
         ClienteView cliente = service.ejecutar(
-                new RegistrarClienteCommand("123", "Ana", "3001112233", "ana@correo.com", TipoCliente.SOCIO)
+                new RegistrarClienteCommand(
+                        "123",
+                        "Ana Perez",
+                        "3001112233",
+                        "ana@correo.com",
+                        TipoCliente.SOCIO,
+                        usuario.getId()
+                )
         );
 
         assertNotNull(cliente.id());
         assertEquals("123", cliente.cedula());
-        assertEquals("Ana", cliente.nombre());
+        assertEquals("Ana Perez", cliente.nombreCompleto());
         assertEquals("3001112233", cliente.telefono());
-        assertEquals("ana@correo.com", cliente.correo());
+        assertEquals(usuario.getId(), cliente.creadoPor());
     }
 
     @Test
     void noDeberiaPermitirCedulasDuplicadas() {
-        InMemoryClienteRepositoryStub repository = new InMemoryClienteRepositoryStub();
-        ClienteApplicationService service = new ClienteApplicationService(repository);
+        ClienteApplicationService service = new ClienteApplicationService(
+                new InMemoryClienteRepositoryStub(),
+                new UsuarioRepositoryStub(List.of())
+        );
         service.ejecutar(
-                new RegistrarClienteCommand("123", "Ana", "3001112233", "ana@correo.com", TipoCliente.SOCIO)
+                new RegistrarClienteCommand("123", "Ana Perez", "3001112233", "ana@correo.com", TipoCliente.SOCIO, null)
         );
 
         assertThrows(
                 DomainException.class,
                 () -> service.ejecutar(
-                        new RegistrarClienteCommand("123", "Otra Ana", "3004445566", "otra@correo.com", TipoCliente.NO_SOCIO)
+                        new RegistrarClienteCommand("123", "Otra Ana", "3004445566", "otra@correo.com", TipoCliente.NO_SOCIO, null)
                 )
         );
     }
@@ -79,9 +95,28 @@ class ClienteApplicationServiceTest {
         public List<Cliente> buscarPorFiltro(String filtro) {
             return clientes.stream()
                     .filter(cliente -> cliente.getCedula().contains(filtro)
-                            || cliente.getNombre().contains(filtro)
+                            || cliente.getNombreCompleto().contains(filtro)
                             || cliente.getTelefono().contains(filtro))
                     .toList();
+        }
+    }
+
+    private static class UsuarioRepositoryStub implements UsuarioRepository {
+
+        private final List<Usuario> usuarios;
+
+        private UsuarioRepositoryStub(List<Usuario> usuarios) {
+            this.usuarios = usuarios;
+        }
+
+        @Override
+        public Usuario guardar(Usuario usuario) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Optional<Usuario> buscarPorId(UUID id) {
+            return usuarios.stream().filter(usuario -> usuario.getId().equals(id)).findFirst();
         }
     }
 }

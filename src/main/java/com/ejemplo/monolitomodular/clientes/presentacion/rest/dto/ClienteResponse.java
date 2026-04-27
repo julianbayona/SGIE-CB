@@ -7,10 +7,11 @@ import java.util.UUID;
 public record ClienteResponse(
         UUID id,
         String cedula,
-        String nombre,
+        String nombreCompleto,
         String telefono,
         String correo,
         TipoCliente tipoCliente,
-        boolean activo
+        boolean activo,
+        UUID creadoPor
 ) {
 }

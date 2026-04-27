@@ -16,16 +16,14 @@ import java.util.UUID;
 public class UsuarioJpaEntity {
 
     @Id
+    @Column(name = "id_usuario")
     private UUID id;
 
     @Column(nullable = false, length = 120)
     private String nombre;
 
-    @Column(nullable = false, unique = true, length = 120)
-    private String email;
-
-    @Column(name = "password_hash", nullable = false, length = 255)
-    private String passwordHash;
+    @Column(name = "contrasena_hash", nullable = false, length = 255)
+    private String contrasenaHash;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
@@ -46,8 +44,7 @@ public class UsuarioJpaEntity {
     public UsuarioJpaEntity(
             UUID id,
             String nombre,
-            String email,
-            String passwordHash,
+            String contrasenaHash,
             RolUsuario rol,
             boolean activo,
             LocalDateTime createdAt,
@@ -55,8 +52,7 @@ public class UsuarioJpaEntity {
     ) {
         this.id = id;
         this.nombre = nombre;
-        this.email = email;
-        this.passwordHash = passwordHash;
+        this.contrasenaHash = contrasenaHash;
         this.rol = rol;
         this.activo = activo;
         this.createdAt = createdAt;
@@ -71,12 +67,8 @@ public class UsuarioJpaEntity {
         return nombre;
     }
 
-    public String getEmail() {
-        return email;
-    }
-
-    public String getPasswordHash() {
-        return passwordHash;
+    public String getContrasenaHash() {
+        return contrasenaHash;
     }
 
     public RolUsuario getRol() {

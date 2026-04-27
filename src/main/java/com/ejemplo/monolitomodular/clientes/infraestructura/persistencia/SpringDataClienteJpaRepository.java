@@ -15,9 +15,9 @@ public interface SpringDataClienteJpaRepository extends JpaRepository<ClienteJpa
             select c
             from ClienteJpaEntity c
             where lower(c.cedula) like lower(concat('%', :filtro, '%'))
-               or lower(c.nombre) like lower(concat('%', :filtro, '%'))
+               or lower(c.nombreCompleto) like lower(concat('%', :filtro, '%'))
                or lower(c.telefono) like lower(concat('%', :filtro, '%'))
-            order by c.nombre asc
+            order by c.nombreCompleto asc
             """)
     List<ClienteJpaEntity> buscarPorFiltro(String filtro);
 }

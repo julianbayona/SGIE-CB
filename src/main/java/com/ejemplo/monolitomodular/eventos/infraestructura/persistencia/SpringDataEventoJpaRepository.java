@@ -7,5 +7,5 @@ import java.util.UUID;
 
 public interface SpringDataEventoJpaRepository extends JpaRepository<EventoJpaEntity, UUID> {
 
-    List<EventoJpaEntity> findAllByOrderByFechaEventoAscHoraInicioAsc();
+    List<EventoJpaEntity> findAllByOrderByCreatedAtAsc();
 }

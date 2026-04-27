@@ -23,8 +23,7 @@ public class UsuarioJpaRepositoryAdapter implements UsuarioRepository {
         UsuarioJpaEntity entity = new UsuarioJpaEntity(
                 usuario.getId(),
                 usuario.getNombre(),
-                usuario.getEmail(),
-                usuario.getPasswordHash(),
+                usuario.getContrasenaHash(),
                 usuario.getRol(),
                 usuario.isActivo(),
                 now,
@@ -38,17 +37,11 @@ public class UsuarioJpaRepositoryAdapter implements UsuarioRepository {
         return repository.findById(id).map(this::toDomain);
     }
 
-    @Override
-    public Optional<Usuario> buscarPorEmail(String email) {
-        return repository.findByEmailIgnoreCase(email).map(this::toDomain);
-    }
-
     private Usuario toDomain(UsuarioJpaEntity entity) {
         return Usuario.reconstruir(
                 entity.getId(),
                 entity.getNombre(),
-                entity.getEmail(),
-                entity.getPasswordHash(),
+                entity.getContrasenaHash(),
                 entity.getRol(),
                 entity.isActivo()
         );

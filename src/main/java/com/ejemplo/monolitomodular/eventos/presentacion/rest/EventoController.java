@@ -1,14 +1,23 @@
 package com.ejemplo.monolitomodular.eventos.presentacion.rest;
 
 import com.ejemplo.monolitomodular.eventos.aplicacion.dto.CrearEventoCommand;
+import com.ejemplo.monolitomodular.eventos.aplicacion.dto.CrearReservaSalonCommand;
 import com.ejemplo.monolitomodular.eventos.aplicacion.dto.EventoView;
+import com.ejemplo.monolitomodular.eventos.aplicacion.dto.ModificarReservaSalonCommand;
+import com.ejemplo.monolitomodular.eventos.aplicacion.dto.ReservaSalonView;
 import com.ejemplo.monolitomodular.eventos.aplicacion.puerto.entrada.ConsultarEventoUseCase;
 import com.ejemplo.monolitomodular.eventos.aplicacion.puerto.entrada.CrearEventoUseCase;
+import com.ejemplo.monolitomodular.eventos.aplicacion.puerto.entrada.CrearReservaSalonUseCase;
+import com.ejemplo.monolitomodular.eventos.aplicacion.puerto.entrada.ModificarReservaSalonUseCase;
 import com.ejemplo.monolitomodular.eventos.presentacion.rest.dto.CrearEventoRequest;
+import com.ejemplo.monolitomodular.eventos.presentacion.rest.dto.CrearReservaSalonRequest;
 import com.ejemplo.monolitomodular.eventos.presentacion.rest.dto.EventoResponse;
+import com.ejemplo.monolitomodular.eventos.presentacion.rest.dto.ModificarReservaSalonRequest;
+import com.ejemplo.monolitomodular.eventos.presentacion.rest.dto.ReservaSalonResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,13 +35,19 @@ public class EventoController {
 
     private final CrearEventoUseCase crearEventoUseCase;
     private final ConsultarEventoUseCase consultarEventoUseCase;
+    private final CrearReservaSalonUseCase crearReservaSalonUseCase;
+    private final ModificarReservaSalonUseCase modificarReservaSalonUseCase;
 
     public EventoController(
             CrearEventoUseCase crearEventoUseCase,
-            ConsultarEventoUseCase consultarEventoUseCase
+            ConsultarEventoUseCase consultarEventoUseCase,
+            CrearReservaSalonUseCase crearReservaSalonUseCase,
+            ModificarReservaSalonUseCase modificarReservaSalonUseCase
     ) {
         this.crearEventoUseCase = crearEventoUseCase;
         this.consultarEventoUseCase = consultarEventoUseCase;
+        this.crearReservaSalonUseCase = crearReservaSalonUseCase;
+        this.modificarReservaSalonUseCase = modificarReservaSalonUseCase;
     }
 
     @PostMapping
@@ -40,15 +55,11 @@ public class EventoController {
         EventoView evento = crearEventoUseCase.ejecutar(
                 new CrearEventoCommand(
                         request.clienteId(),
-                        request.tipoEvento(),
-                        request.tipoComida(),
-                        request.fechaEvento(),
-                        request.horaInicio(),
-                        request.duracionHoras(),
-                        request.numeroPersonas(),
-                        request.salonIds(),
-                        request.observaciones(),
-                        request.usuarioResponsableId()
+                        request.tipoEventoId(),
+                        request.tipoComidaId(),
+                        request.usuarioCreadorId(),
+                        request.fechaHoraInicio(),
+                        request.fechaHoraFin()
                 )
         );
 
@@ -65,6 +76,40 @@ public class EventoController {
         return toResponse(consultarEventoUseCase.obtenerPorId(id));
     }
 
+    @PostMapping("/{eventoId}/reservas")
+    public EventoResponse crearReserva(
+            @PathVariable UUID eventoId,
+            @Valid @RequestBody CrearReservaSalonRequest request
+    ) {
+        return toResponse(crearReservaSalonUseCase.ejecutar(
+                eventoId,
+                new CrearReservaSalonCommand(
+                        request.usuarioId(),
+                        request.salonId(),
+                        request.numInvitados(),
+                        request.fechaHoraInicio(),
+                        request.fechaHoraFin()
+                )
+        ));
+    }
+
+    @PatchMapping("/reservas/{reservaRaizId}")
+    public EventoResponse modificarReserva(
+            @PathVariable UUID reservaRaizId,
+            @Valid @RequestBody ModificarReservaSalonRequest request
+    ) {
+        return toResponse(modificarReservaSalonUseCase.ejecutar(
+                reservaRaizId,
+                new ModificarReservaSalonCommand(
+                        request.usuarioId(),
+                        request.salonId(),
+                        request.numInvitados(),
+                        request.fechaHoraInicio(),
+                        request.fechaHoraFin()
+                )
+        ));
+    }
+
     @GetMapping
     public List<EventoResponse> listar() {
         return consultarEventoUseCase.listar().stream()
@@ -76,15 +121,28 @@ public class EventoController {
         return new EventoResponse(
                 evento.id(),
                 evento.clienteId(),
-                evento.tipoEvento(),
-                evento.tipoComida(),
-                evento.fechaEvento(),
-                evento.horaInicio(),
-                evento.horaFin(),
-                evento.numeroPersonas(),
+                evento.tipoEventoId(),
+                evento.tipoComidaId(),
+                evento.usuarioCreadorId(),
                 evento.estado(),
-                evento.observaciones(),
-                evento.salonIds()
+                evento.gcalEventId(),
+                evento.fechaHoraInicio(),
+                evento.fechaHoraFin(),
+                evento.reservas().stream().map(this::toReservaResponse).toList()
+        );
+    }
+
+    private ReservaSalonResponse toReservaResponse(ReservaSalonView reserva) {
+        return new ReservaSalonResponse(
+                reserva.id(),
+                reserva.reservaRaizId(),
+                reserva.salonId(),
+                reserva.numInvitados(),
+                reserva.fechaHoraInicio(),
+                reserva.fechaHoraFin(),
+                reserva.estado(),
+                reserva.version(),
+                reserva.vigente()
         );
     }
 }

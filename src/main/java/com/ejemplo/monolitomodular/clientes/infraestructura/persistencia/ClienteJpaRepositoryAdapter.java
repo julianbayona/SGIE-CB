@@ -24,11 +24,12 @@ public class ClienteJpaRepositoryAdapter implements ClienteRepository {
         ClienteJpaEntity entity = new ClienteJpaEntity(
                 cliente.getId(),
                 cliente.getCedula(),
-                cliente.getNombre(),
+                cliente.getNombreCompleto(),
                 cliente.getTelefono(),
                 cliente.getCorreo(),
                 cliente.getTipoCliente(),
                 cliente.isActivo(),
+                cliente.getCreadoPor(),
                 now,
                 now
         );
@@ -49,7 +50,7 @@ public class ClienteJpaRepositoryAdapter implements ClienteRepository {
     public List<Cliente> listar() {
         return repository.findAll().stream()
                 .map(this::toDomain)
-                .sorted((a, b) -> a.getNombre().compareToIgnoreCase(b.getNombre()))
+                .sorted((a, b) -> a.getNombreCompleto().compareToIgnoreCase(b.getNombreCompleto()))
                 .toList();
     }
 
@@ -67,11 +68,12 @@ public class ClienteJpaRepositoryAdapter implements ClienteRepository {
         return Cliente.reconstruir(
                 entity.getId(),
                 entity.getCedula(),
-                entity.getNombre(),
+                entity.getNombreCompleto(),
                 entity.getTelefono(),
                 entity.getCorreo(),
                 entity.getTipoCliente(),
-                entity.isActivo()
+                entity.isActivo(),
+                entity.getCreadoPor()
         );
     }
 }

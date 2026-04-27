@@ -16,12 +16,13 @@ import java.util.UUID;
 public class HistorialEstadoEventoJpaEntity {
 
     @Id
+    @Column(name = "id_historial")
     private UUID id;
 
-    @Column(name = "evento_id", nullable = false)
+    @Column(name = "id_evento", nullable = false)
     private UUID eventoId;
 
-    @Column(name = "usuario_id")
+    @Column(name = "id_usuario", nullable = false)
     private UUID usuarioId;
 
     @Enumerated(EnumType.STRING)
@@ -32,11 +33,8 @@ public class HistorialEstadoEventoJpaEntity {
     @Column(name = "estado_nuevo", nullable = false, length = 40)
     private EstadoEvento estadoNuevo;
 
-    @Column(length = 255)
-    private String observacion;
-
-    @Column(name = "fecha_cambio", nullable = false)
-    private LocalDateTime fechaCambio;
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
 
     protected HistorialEstadoEventoJpaEntity() {
     }
@@ -47,16 +45,14 @@ public class HistorialEstadoEventoJpaEntity {
             UUID usuarioId,
             EstadoEvento estadoAnterior,
             EstadoEvento estadoNuevo,
-            String observacion,
-            LocalDateTime fechaCambio
+            LocalDateTime createdAt
     ) {
         this.id = id;
         this.eventoId = eventoId;
         this.usuarioId = usuarioId;
         this.estadoAnterior = estadoAnterior;
         this.estadoNuevo = estadoNuevo;
-        this.observacion = observacion;
-        this.fechaCambio = fechaCambio;
+        this.createdAt = createdAt;
     }
 
     public UUID getId() {
@@ -79,11 +75,7 @@ public class HistorialEstadoEventoJpaEntity {
         return estadoNuevo;
     }
 
-    public String getObservacion() {
-        return observacion;
-    }
-
-    public LocalDateTime getFechaCambio() {
-        return fechaCambio;
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
     }
 }

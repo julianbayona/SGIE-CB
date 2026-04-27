@@ -13,50 +13,55 @@ public class Cliente {
 
     private final UUID id;
     private final String cedula;
-    private final String nombre;
+    private final String nombreCompleto;
     private final String telefono;
     private final String correo;
     private final TipoCliente tipoCliente;
     private final boolean activo;
+    private final UUID creadoPor;
 
     private Cliente(
             UUID id,
             String cedula,
-            String nombre,
+            String nombreCompleto,
             String telefono,
             String correo,
             TipoCliente tipoCliente,
-            boolean activo
+            boolean activo,
+            UUID creadoPor
     ) {
         this.id = Objects.requireNonNull(id, "El id es obligatorio");
         this.cedula = validarCedula(cedula);
-        this.nombre = validarNombre(nombre);
+        this.nombreCompleto = validarNombreCompleto(nombreCompleto);
         this.telefono = validarTelefono(telefono);
         this.correo = validarCorreo(correo);
         this.tipoCliente = Objects.requireNonNull(tipoCliente, "El tipo de cliente es obligatorio");
         this.activo = activo;
+        this.creadoPor = creadoPor;
     }
 
     public static Cliente nuevo(
             String cedula,
-            String nombre,
+            String nombreCompleto,
             String telefono,
             String correo,
-            TipoCliente tipoCliente
+            TipoCliente tipoCliente,
+            UUID creadoPor
     ) {
-        return new Cliente(UUID.randomUUID(), cedula, nombre, telefono, correo, tipoCliente, true);
+        return new Cliente(UUID.randomUUID(), cedula, nombreCompleto, telefono, correo, tipoCliente, true, creadoPor);
     }
 
     public static Cliente reconstruir(
             UUID id,
             String cedula,
-            String nombre,
+            String nombreCompleto,
             String telefono,
             String correo,
             TipoCliente tipoCliente,
-            boolean activo
+            boolean activo,
+            UUID creadoPor
     ) {
-        return new Cliente(id, cedula, nombre, telefono, correo, tipoCliente, activo);
+        return new Cliente(id, cedula, nombreCompleto, telefono, correo, tipoCliente, activo, creadoPor);
     }
 
     public UUID getId() {
@@ -67,8 +72,8 @@ public class Cliente {
         return cedula;
     }
 
-    public String getNombre() {
-        return nombre;
+    public String getNombreCompleto() {
+        return nombreCompleto;
     }
 
     public String getTelefono() {
@@ -87,6 +92,10 @@ public class Cliente {
         return activo;
     }
 
+    public UUID getCreadoPor() {
+        return creadoPor;
+    }
+
     private static String validarCedula(String cedula) {
         if (cedula == null || cedula.isBlank()) {
             throw new DomainException("La cedula del cliente es obligatoria");
@@ -94,11 +103,11 @@ public class Cliente {
         return cedula.trim();
     }
 
-    private static String validarNombre(String nombre) {
-        if (nombre == null || nombre.isBlank()) {
-            throw new DomainException("El nombre del cliente es obligatorio");
+    private static String validarNombreCompleto(String nombreCompleto) {
+        if (nombreCompleto == null || nombreCompleto.isBlank()) {
+            throw new DomainException("El nombre completo del cliente es obligatorio");
         }
-        return nombre.trim();
+        return nombreCompleto.trim();
     }
 
     private static String validarTelefono(String telefono) {

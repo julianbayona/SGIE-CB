@@ -10,6 +10,4 @@ public interface UsuarioRepository {
     Usuario guardar(Usuario usuario);
 
     Optional<Usuario> buscarPorId(UUID id);
-
-    Optional<Usuario> buscarPorEmail(String email);
 }
