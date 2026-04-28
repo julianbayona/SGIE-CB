@@ -26,6 +26,41 @@ create table tipo_comida (
     updated_at timestamp not null
 );
 
+create table color (
+    id_color uuid primary key,
+    nombre varchar(120) not null,
+    codigo_hex varchar(7) not null,
+    activo boolean not null default true,
+    created_at timestamp not null,
+    updated_at timestamp not null
+);
+
+create table tipo_silla (
+    id_tipo_silla uuid primary key,
+    nombre varchar(120) not null,
+    activo boolean not null default true,
+    created_at timestamp not null,
+    updated_at timestamp not null
+);
+
+create table mantel (
+    id_mantel uuid primary key,
+    nombre varchar(120) not null,
+    id_color uuid not null references color(id_color),
+    activo boolean not null default true,
+    created_at timestamp not null,
+    updated_at timestamp not null
+);
+
+create table sobremantel (
+    id_sobremantel uuid primary key,
+    nombre varchar(120) not null,
+    id_color uuid not null references color(id_color),
+    activo boolean not null default true,
+    created_at timestamp not null,
+    updated_at timestamp not null
+);
+
 create table cliente (
     id_cliente uuid primary key,
     cedula varchar(20) not null unique,
@@ -92,6 +127,12 @@ create table historial_estado_evento (
 create index idx_usuario_nombre on usuario (nombre);
 create index idx_tipo_evento_nombre on tipo_evento (nombre);
 create index idx_tipo_comida_nombre on tipo_comida (nombre);
+create index idx_color_nombre on color (nombre);
+create index idx_tipo_silla_nombre on tipo_silla (nombre);
+create index idx_mantel_nombre on mantel (nombre);
+create index idx_mantel_color on mantel (id_color);
+create index idx_sobremantel_nombre on sobremantel (nombre);
+create index idx_sobremantel_color on sobremantel (id_color);
 create index idx_cliente_cedula on cliente (cedula);
 create index idx_salon_nombre on salon (nombre);
 create index idx_evento_cliente on evento (id_cliente);

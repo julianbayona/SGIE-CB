@@ -2,10 +2,21 @@ package com.ejemplo.monolitomodular.catalogos.aplicacion.servicio;
 
 import com.ejemplo.monolitomodular.catalogos.aplicacion.dto.CatalogoBasicoCommand;
 import com.ejemplo.monolitomodular.catalogos.aplicacion.dto.CatalogoBasicoView;
+import com.ejemplo.monolitomodular.catalogos.aplicacion.dto.CatalogoConColorCommand;
+import com.ejemplo.monolitomodular.catalogos.aplicacion.dto.CatalogoConColorView;
+import com.ejemplo.monolitomodular.catalogos.aplicacion.dto.ColorCommand;
+import com.ejemplo.monolitomodular.catalogos.dominio.modelo.Color;
+import com.ejemplo.monolitomodular.catalogos.dominio.modelo.Mantel;
+import com.ejemplo.monolitomodular.catalogos.dominio.modelo.Sobremantel;
 import com.ejemplo.monolitomodular.catalogos.dominio.modelo.TipoComida;
 import com.ejemplo.monolitomodular.catalogos.dominio.modelo.TipoEvento;
+import com.ejemplo.monolitomodular.catalogos.dominio.modelo.TipoSilla;
+import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.ColorRepository;
+import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.MantelRepository;
+import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.SobremantelRepository;
 import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.TipoComidaRepository;
 import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.TipoEventoRepository;
+import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.TipoSillaRepository;
 import com.ejemplo.monolitomodular.shared.dominio.excepcion.DomainException;
 import org.junit.jupiter.api.Test;
 
@@ -25,7 +36,11 @@ class CatalogoApplicationServiceTest {
         TipoEventoRepositoryStub tipoEventoRepository = new TipoEventoRepositoryStub();
         CatalogoApplicationService service = new CatalogoApplicationService(
                 tipoEventoRepository,
-                new TipoComidaRepositoryStub()
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub()
         );
 
         CatalogoBasicoView creado = service.crearTipoEvento(new CatalogoBasicoCommand("Boda", "Evento social"));
@@ -40,13 +55,58 @@ class CatalogoApplicationServiceTest {
     void noDeberiaPermitirTipoComidaDuplicado() {
         CatalogoApplicationService service = new CatalogoApplicationService(
                 new TipoEventoRepositoryStub(),
-                new TipoComidaRepositoryStub()
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub()
         );
         service.crearTipoComida(new CatalogoBasicoCommand("Cena", "Servicio nocturno"));
 
         assertThrows(
                 DomainException.class,
                 () -> service.crearTipoComida(new CatalogoBasicoCommand("cena", "Duplicado"))
+        );
+    }
+
+    @Test
+    void deberiaCrearMantelConColorActivo() {
+        ColorRepositoryStub colorRepository = new ColorRepositoryStub();
+        MantelRepositoryStub mantelRepository = new MantelRepositoryStub();
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                colorRepository,
+                new TipoSillaRepositoryStub(),
+                mantelRepository,
+                new SobremantelRepositoryStub()
+        );
+
+        var color = service.crearColor(new ColorCommand("Rojo vino", "#7B1E2B"));
+        CatalogoConColorView mantel = service.crearMantel(new CatalogoConColorCommand("Mantel rojo vino", color.id()));
+
+        assertEquals("Mantel rojo vino", mantel.nombre());
+        assertEquals(color.id(), mantel.colorId());
+    }
+
+    @Test
+    void noDeberiaCrearSobremantelConColorInactivo() {
+        ColorRepositoryStub colorRepository = new ColorRepositoryStub();
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                colorRepository,
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub()
+        );
+
+        var color = service.crearColor(new ColorCommand("Azul", "#0033AA"));
+        service.desactivarColor(color.id());
+
+        assertThrows(
+                DomainException.class,
+                () -> service.crearSobremantel(new CatalogoConColorCommand("Sobremantel azul", color.id()))
         );
     }
 
@@ -111,6 +171,134 @@ class CatalogoApplicationServiceTest {
         @Override
         public boolean existePorNombre(String nombre) {
             return tiposComida.stream().anyMatch(tipoComida -> tipoComida.getNombre().equalsIgnoreCase(nombre));
+        }
+    }
+
+    private static class ColorRepositoryStub implements ColorRepository {
+
+        private final List<Color> colores = new ArrayList<>();
+
+        @Override
+        public Color guardar(Color color) {
+            colores.removeIf(actual -> actual.getId().equals(color.getId()));
+            colores.add(color);
+            return color;
+        }
+
+        @Override
+        public Optional<Color> buscarPorId(UUID id) {
+            return colores.stream().filter(color -> color.getId().equals(id)).findFirst();
+        }
+
+        @Override
+        public List<Color> listar() {
+            return List.copyOf(colores);
+        }
+
+        @Override
+        public boolean existeActivoPorId(UUID id) {
+            return colores.stream().anyMatch(color -> color.getId().equals(id) && color.isActivo());
+        }
+
+        @Override
+        public boolean existePorNombre(String nombre) {
+            return colores.stream().anyMatch(color -> color.getNombre().equalsIgnoreCase(nombre));
+        }
+    }
+
+    private static class TipoSillaRepositoryStub implements TipoSillaRepository {
+
+        private final List<TipoSilla> tiposSilla = new ArrayList<>();
+
+        @Override
+        public TipoSilla guardar(TipoSilla tipoSilla) {
+            tiposSilla.removeIf(actual -> actual.getId().equals(tipoSilla.getId()));
+            tiposSilla.add(tipoSilla);
+            return tipoSilla;
+        }
+
+        @Override
+        public Optional<TipoSilla> buscarPorId(UUID id) {
+            return tiposSilla.stream().filter(tipoSilla -> tipoSilla.getId().equals(id)).findFirst();
+        }
+
+        @Override
+        public List<TipoSilla> listar() {
+            return List.copyOf(tiposSilla);
+        }
+
+        @Override
+        public boolean existeActivoPorId(UUID id) {
+            return tiposSilla.stream().anyMatch(tipoSilla -> tipoSilla.getId().equals(id) && tipoSilla.isActivo());
+        }
+
+        @Override
+        public boolean existePorNombre(String nombre) {
+            return tiposSilla.stream().anyMatch(tipoSilla -> tipoSilla.getNombre().equalsIgnoreCase(nombre));
+        }
+    }
+
+    private static class MantelRepositoryStub implements MantelRepository {
+
+        private final List<Mantel> manteles = new ArrayList<>();
+
+        @Override
+        public Mantel guardar(Mantel mantel) {
+            manteles.removeIf(actual -> actual.getId().equals(mantel.getId()));
+            manteles.add(mantel);
+            return mantel;
+        }
+
+        @Override
+        public Optional<Mantel> buscarPorId(UUID id) {
+            return manteles.stream().filter(mantel -> mantel.getId().equals(id)).findFirst();
+        }
+
+        @Override
+        public List<Mantel> listar() {
+            return List.copyOf(manteles);
+        }
+
+        @Override
+        public boolean existeActivoPorId(UUID id) {
+            return manteles.stream().anyMatch(mantel -> mantel.getId().equals(id) && mantel.isActivo());
+        }
+
+        @Override
+        public boolean existePorNombre(String nombre) {
+            return manteles.stream().anyMatch(mantel -> mantel.getNombre().equalsIgnoreCase(nombre));
+        }
+    }
+
+    private static class SobremantelRepositoryStub implements SobremantelRepository {
+
+        private final List<Sobremantel> sobremanteles = new ArrayList<>();
+
+        @Override
+        public Sobremantel guardar(Sobremantel sobremantel) {
+            sobremanteles.removeIf(actual -> actual.getId().equals(sobremantel.getId()));
+            sobremanteles.add(sobremantel);
+            return sobremantel;
+        }
+
+        @Override
+        public Optional<Sobremantel> buscarPorId(UUID id) {
+            return sobremanteles.stream().filter(sobremantel -> sobremantel.getId().equals(id)).findFirst();
+        }
+
+        @Override
+        public List<Sobremantel> listar() {
+            return List.copyOf(sobremanteles);
+        }
+
+        @Override
+        public boolean existeActivoPorId(UUID id) {
+            return sobremanteles.stream().anyMatch(sobremantel -> sobremantel.getId().equals(id) && sobremantel.isActivo());
+        }
+
+        @Override
+        public boolean existePorNombre(String nombre) {
+            return sobremanteles.stream().anyMatch(sobremantel -> sobremantel.getNombre().equalsIgnoreCase(nombre));
         }
     }
 }
