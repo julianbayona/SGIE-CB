@@ -34,9 +34,6 @@ public class ReservaSalonJpaEntity {
     @Column(name = "fecha_hora_fin", nullable = false)
     private LocalDateTime fechaHoraFin;
 
-    @Column(nullable = false, length = 40)
-    private String estado;
-
     @Column(nullable = false)
     private int version;
 
@@ -63,7 +60,6 @@ public class ReservaSalonJpaEntity {
             int numInvitados,
             LocalDateTime fechaHoraInicio,
             LocalDateTime fechaHoraFin,
-            String estado,
             int version,
             boolean vigente,
             UUID creadoPor,
@@ -77,7 +73,6 @@ public class ReservaSalonJpaEntity {
         this.numInvitados = numInvitados;
         this.fechaHoraInicio = fechaHoraInicio;
         this.fechaHoraFin = fechaHoraFin;
-        this.estado = estado;
         this.version = version;
         this.vigente = vigente;
         this.creadoPor = creadoPor;
@@ -111,10 +106,6 @@ public class ReservaSalonJpaEntity {
 
     public LocalDateTime getFechaHoraFin() {
         return fechaHoraFin;
-    }
-
-    public String getEstado() {
-        return estado;
     }
 
     public int getVersion() {

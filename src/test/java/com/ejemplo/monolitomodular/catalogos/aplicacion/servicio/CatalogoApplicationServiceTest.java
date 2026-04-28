@@ -5,21 +5,29 @@ import com.ejemplo.monolitomodular.catalogos.aplicacion.dto.CatalogoBasicoView;
 import com.ejemplo.monolitomodular.catalogos.aplicacion.dto.CatalogoConColorCommand;
 import com.ejemplo.monolitomodular.catalogos.aplicacion.dto.CatalogoConColorView;
 import com.ejemplo.monolitomodular.catalogos.aplicacion.dto.ColorCommand;
+import com.ejemplo.monolitomodular.catalogos.aplicacion.dto.TipoAdicionalCommand;
+import com.ejemplo.monolitomodular.catalogos.aplicacion.dto.TipoAdicionalView;
 import com.ejemplo.monolitomodular.catalogos.dominio.modelo.Color;
 import com.ejemplo.monolitomodular.catalogos.dominio.modelo.Mantel;
+import com.ejemplo.monolitomodular.catalogos.dominio.modelo.ModoCobroAdicional;
 import com.ejemplo.monolitomodular.catalogos.dominio.modelo.Sobremantel;
+import com.ejemplo.monolitomodular.catalogos.dominio.modelo.TipoAdicional;
 import com.ejemplo.monolitomodular.catalogos.dominio.modelo.TipoComida;
 import com.ejemplo.monolitomodular.catalogos.dominio.modelo.TipoEvento;
+import com.ejemplo.monolitomodular.catalogos.dominio.modelo.TipoMesa;
 import com.ejemplo.monolitomodular.catalogos.dominio.modelo.TipoSilla;
 import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.ColorRepository;
 import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.MantelRepository;
 import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.SobremantelRepository;
+import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.TipoAdicionalRepository;
 import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.TipoComidaRepository;
 import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.TipoEventoRepository;
+import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.TipoMesaRepository;
 import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.TipoSillaRepository;
 import com.ejemplo.monolitomodular.shared.dominio.excepcion.DomainException;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -38,9 +46,11 @@ class CatalogoApplicationServiceTest {
                 tipoEventoRepository,
                 new TipoComidaRepositoryStub(),
                 new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
                 new TipoSillaRepositoryStub(),
                 new MantelRepositoryStub(),
-                new SobremantelRepositoryStub()
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
         );
 
         CatalogoBasicoView creado = service.crearTipoEvento(new CatalogoBasicoCommand("Boda", "Evento social"));
@@ -57,9 +67,11 @@ class CatalogoApplicationServiceTest {
                 new TipoEventoRepositoryStub(),
                 new TipoComidaRepositoryStub(),
                 new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
                 new TipoSillaRepositoryStub(),
                 new MantelRepositoryStub(),
-                new SobremantelRepositoryStub()
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
         );
         service.crearTipoComida(new CatalogoBasicoCommand("Cena", "Servicio nocturno"));
 
@@ -77,9 +89,11 @@ class CatalogoApplicationServiceTest {
                 new TipoEventoRepositoryStub(),
                 new TipoComidaRepositoryStub(),
                 colorRepository,
+                new TipoMesaRepositoryStub(),
                 new TipoSillaRepositoryStub(),
                 mantelRepository,
-                new SobremantelRepositoryStub()
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
         );
 
         var color = service.crearColor(new ColorCommand("Rojo vino", "#7B1E2B"));
@@ -96,9 +110,11 @@ class CatalogoApplicationServiceTest {
                 new TipoEventoRepositoryStub(),
                 new TipoComidaRepositoryStub(),
                 colorRepository,
+                new TipoMesaRepositoryStub(),
                 new TipoSillaRepositoryStub(),
                 new MantelRepositoryStub(),
-                new SobremantelRepositoryStub()
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
         );
 
         var color = service.crearColor(new ColorCommand("Azul", "#0033AA"));
@@ -108,6 +124,53 @@ class CatalogoApplicationServiceTest {
                 DomainException.class,
                 () -> service.crearSobremantel(new CatalogoConColorCommand("Sobremantel azul", color.id()))
         );
+    }
+
+    @Test
+    void deberiaCrearYDesactivarTipoAdicional() {
+        TipoAdicionalRepositoryStub tipoAdicionalRepository = new TipoAdicionalRepositoryStub();
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                tipoAdicionalRepository
+        );
+
+        TipoAdicionalView creado = service.crearTipoAdicional(
+                new TipoAdicionalCommand("Video beam", ModoCobroAdicional.SERVICIO, new BigDecimal("120000.00"))
+        );
+        TipoAdicionalView desactivado = service.desactivarTipoAdicional(creado.id());
+
+        assertEquals("Video beam", creado.nombre());
+        assertEquals(new BigDecimal("120000.00"), creado.precioBase());
+        assertFalse(desactivado.activo());
+        assertFalse(tipoAdicionalRepository.existeActivoPorId(creado.id()));
+    }
+
+    @Test
+    void deberiaCrearYDesactivarTipoMesa() {
+        TipoMesaRepositoryStub tipoMesaRepository = new TipoMesaRepositoryStub();
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                tipoMesaRepository,
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        CatalogoBasicoView creado = service.crearTipoMesa(new CatalogoBasicoCommand("Mesa redonda", null));
+        CatalogoBasicoView desactivado = service.desactivarTipoMesa(creado.id());
+
+        assertEquals("Mesa redonda", creado.nombre());
+        assertFalse(desactivado.activo());
+        assertFalse(tipoMesaRepository.existeActivoPorId(creado.id()));
     }
 
     private static class TipoEventoRepositoryStub implements TipoEventoRepository {
@@ -238,6 +301,38 @@ class CatalogoApplicationServiceTest {
         }
     }
 
+    private static class TipoMesaRepositoryStub implements TipoMesaRepository {
+
+        private final List<TipoMesa> tiposMesa = new ArrayList<>();
+
+        @Override
+        public TipoMesa guardar(TipoMesa tipoMesa) {
+            tiposMesa.removeIf(actual -> actual.getId().equals(tipoMesa.getId()));
+            tiposMesa.add(tipoMesa);
+            return tipoMesa;
+        }
+
+        @Override
+        public Optional<TipoMesa> buscarPorId(UUID id) {
+            return tiposMesa.stream().filter(tipoMesa -> tipoMesa.getId().equals(id)).findFirst();
+        }
+
+        @Override
+        public List<TipoMesa> listar() {
+            return List.copyOf(tiposMesa);
+        }
+
+        @Override
+        public boolean existeActivoPorId(UUID id) {
+            return tiposMesa.stream().anyMatch(tipoMesa -> tipoMesa.getId().equals(id) && tipoMesa.isActivo());
+        }
+
+        @Override
+        public boolean existePorNombre(String nombre) {
+            return tiposMesa.stream().anyMatch(tipoMesa -> tipoMesa.getNombre().equalsIgnoreCase(nombre));
+        }
+    }
+
     private static class MantelRepositoryStub implements MantelRepository {
 
         private final List<Mantel> manteles = new ArrayList<>();
@@ -299,6 +394,38 @@ class CatalogoApplicationServiceTest {
         @Override
         public boolean existePorNombre(String nombre) {
             return sobremanteles.stream().anyMatch(sobremantel -> sobremantel.getNombre().equalsIgnoreCase(nombre));
+        }
+    }
+
+    private static class TipoAdicionalRepositoryStub implements TipoAdicionalRepository {
+
+        private final List<TipoAdicional> tiposAdicional = new ArrayList<>();
+
+        @Override
+        public TipoAdicional guardar(TipoAdicional tipoAdicional) {
+            tiposAdicional.removeIf(actual -> actual.getId().equals(tipoAdicional.getId()));
+            tiposAdicional.add(tipoAdicional);
+            return tipoAdicional;
+        }
+
+        @Override
+        public Optional<TipoAdicional> buscarPorId(UUID id) {
+            return tiposAdicional.stream().filter(tipoAdicional -> tipoAdicional.getId().equals(id)).findFirst();
+        }
+
+        @Override
+        public List<TipoAdicional> listar() {
+            return List.copyOf(tiposAdicional);
+        }
+
+        @Override
+        public boolean existeActivoPorId(UUID id) {
+            return tiposAdicional.stream().anyMatch(tipoAdicional -> tipoAdicional.getId().equals(id) && tipoAdicional.isActivo());
+        }
+
+        @Override
+        public boolean existePorNombre(String nombre) {
+            return tiposAdicional.stream().anyMatch(tipoAdicional -> tipoAdicional.getNombre().equalsIgnoreCase(nombre));
         }
     }
 }

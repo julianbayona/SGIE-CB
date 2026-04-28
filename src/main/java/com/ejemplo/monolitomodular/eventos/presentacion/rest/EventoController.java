@@ -140,7 +140,6 @@ public class EventoController {
                 reserva.numInvitados(),
                 reserva.fechaHoraInicio(),
                 reserva.fechaHoraFin(),
-                reserva.estado(),
                 reserva.version(),
                 reserva.vigente()
         );

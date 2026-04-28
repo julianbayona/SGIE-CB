@@ -6,23 +6,31 @@ import com.ejemplo.monolitomodular.catalogos.aplicacion.dto.CatalogoConColorComm
 import com.ejemplo.monolitomodular.catalogos.aplicacion.dto.CatalogoConColorView;
 import com.ejemplo.monolitomodular.catalogos.aplicacion.dto.ColorCommand;
 import com.ejemplo.monolitomodular.catalogos.aplicacion.dto.ColorView;
+import com.ejemplo.monolitomodular.catalogos.aplicacion.dto.TipoAdicionalCommand;
+import com.ejemplo.monolitomodular.catalogos.aplicacion.dto.TipoAdicionalView;
 import com.ejemplo.monolitomodular.catalogos.aplicacion.puerto.entrada.GestionarColorUseCase;
 import com.ejemplo.monolitomodular.catalogos.aplicacion.puerto.entrada.GestionarMantelUseCase;
 import com.ejemplo.monolitomodular.catalogos.aplicacion.puerto.entrada.GestionarSobremantelUseCase;
+import com.ejemplo.monolitomodular.catalogos.aplicacion.puerto.entrada.GestionarTipoAdicionalUseCase;
 import com.ejemplo.monolitomodular.catalogos.aplicacion.puerto.entrada.GestionarTipoComidaUseCase;
 import com.ejemplo.monolitomodular.catalogos.aplicacion.puerto.entrada.GestionarTipoEventoUseCase;
+import com.ejemplo.monolitomodular.catalogos.aplicacion.puerto.entrada.GestionarTipoMesaUseCase;
 import com.ejemplo.monolitomodular.catalogos.aplicacion.puerto.entrada.GestionarTipoSillaUseCase;
 import com.ejemplo.monolitomodular.catalogos.dominio.modelo.Color;
 import com.ejemplo.monolitomodular.catalogos.dominio.modelo.Mantel;
 import com.ejemplo.monolitomodular.catalogos.dominio.modelo.Sobremantel;
+import com.ejemplo.monolitomodular.catalogos.dominio.modelo.TipoAdicional;
 import com.ejemplo.monolitomodular.catalogos.dominio.modelo.TipoComida;
 import com.ejemplo.monolitomodular.catalogos.dominio.modelo.TipoEvento;
+import com.ejemplo.monolitomodular.catalogos.dominio.modelo.TipoMesa;
 import com.ejemplo.monolitomodular.catalogos.dominio.modelo.TipoSilla;
 import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.ColorRepository;
 import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.MantelRepository;
 import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.SobremantelRepository;
+import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.TipoAdicionalRepository;
 import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.TipoComidaRepository;
 import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.TipoEventoRepository;
+import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.TipoMesaRepository;
 import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.TipoSillaRepository;
 import com.ejemplo.monolitomodular.shared.dominio.excepcion.DomainException;
 import org.springframework.stereotype.Service;
@@ -35,31 +43,39 @@ public class CatalogoApplicationService implements
         GestionarTipoEventoUseCase,
         GestionarTipoComidaUseCase,
         GestionarColorUseCase,
+        GestionarTipoMesaUseCase,
         GestionarTipoSillaUseCase,
         GestionarMantelUseCase,
-        GestionarSobremantelUseCase {
+        GestionarSobremantelUseCase,
+        GestionarTipoAdicionalUseCase {
 
     private final TipoEventoRepository tipoEventoRepository;
     private final TipoComidaRepository tipoComidaRepository;
     private final ColorRepository colorRepository;
+    private final TipoMesaRepository tipoMesaRepository;
     private final TipoSillaRepository tipoSillaRepository;
     private final MantelRepository mantelRepository;
     private final SobremantelRepository sobremantelRepository;
+    private final TipoAdicionalRepository tipoAdicionalRepository;
 
     public CatalogoApplicationService(
             TipoEventoRepository tipoEventoRepository,
             TipoComidaRepository tipoComidaRepository,
             ColorRepository colorRepository,
+            TipoMesaRepository tipoMesaRepository,
             TipoSillaRepository tipoSillaRepository,
             MantelRepository mantelRepository,
-            SobremantelRepository sobremantelRepository
+            SobremantelRepository sobremantelRepository,
+            TipoAdicionalRepository tipoAdicionalRepository
     ) {
         this.tipoEventoRepository = tipoEventoRepository;
         this.tipoComidaRepository = tipoComidaRepository;
         this.colorRepository = colorRepository;
+        this.tipoMesaRepository = tipoMesaRepository;
         this.tipoSillaRepository = tipoSillaRepository;
         this.mantelRepository = mantelRepository;
         this.sobremantelRepository = sobremantelRepository;
+        this.tipoAdicionalRepository = tipoAdicionalRepository;
     }
 
     @Override
@@ -159,6 +175,39 @@ public class CatalogoApplicationService implements
     @Override
     public List<ColorView> listarColores() {
         return colorRepository.listar().stream().map(this::toView).toList();
+    }
+
+    @Override
+    public CatalogoBasicoView crearTipoMesa(CatalogoBasicoCommand command) {
+        validarNombreDisponibleTipoMesa(command.nombre());
+        return toView(tipoMesaRepository.guardar(TipoMesa.nuevo(command.nombre())));
+    }
+
+    @Override
+    public CatalogoBasicoView actualizarTipoMesa(UUID id, CatalogoBasicoCommand command) {
+        TipoMesa tipoMesa = tipoMesaRepository.buscarPorId(id)
+                .orElseThrow(() -> new DomainException("Tipo de mesa no encontrado"));
+        validarNombreDisponibleTipoMesa(command.nombre(), tipoMesa.getNombre());
+        return toView(tipoMesaRepository.guardar(tipoMesa.actualizar(command.nombre())));
+    }
+
+    @Override
+    public CatalogoBasicoView desactivarTipoMesa(UUID id) {
+        TipoMesa tipoMesa = tipoMesaRepository.buscarPorId(id)
+                .orElseThrow(() -> new DomainException("Tipo de mesa no encontrado"));
+        return toView(tipoMesaRepository.guardar(tipoMesa.desactivar()));
+    }
+
+    @Override
+    public CatalogoBasicoView obtenerTipoMesa(UUID id) {
+        return tipoMesaRepository.buscarPorId(id)
+                .map(this::toView)
+                .orElseThrow(() -> new DomainException("Tipo de mesa no encontrado"));
+    }
+
+    @Override
+    public List<CatalogoBasicoView> listarTiposMesa() {
+        return tipoMesaRepository.listar().stream().map(this::toView).toList();
     }
 
     @Override
@@ -264,6 +313,43 @@ public class CatalogoApplicationService implements
         return sobremantelRepository.listar().stream().map(this::toView).toList();
     }
 
+    @Override
+    public TipoAdicionalView crearTipoAdicional(TipoAdicionalCommand command) {
+        validarNombreDisponibleTipoAdicional(command.nombre());
+        return toView(tipoAdicionalRepository.guardar(
+                TipoAdicional.nuevo(command.nombre(), command.modoCobro(), command.precioBase())
+        ));
+    }
+
+    @Override
+    public TipoAdicionalView actualizarTipoAdicional(UUID id, TipoAdicionalCommand command) {
+        TipoAdicional tipoAdicional = tipoAdicionalRepository.buscarPorId(id)
+                .orElseThrow(() -> new DomainException("Tipo adicional no encontrado"));
+        validarNombreDisponibleTipoAdicional(command.nombre(), tipoAdicional.getNombre());
+        return toView(tipoAdicionalRepository.guardar(
+                tipoAdicional.actualizar(command.nombre(), command.modoCobro(), command.precioBase())
+        ));
+    }
+
+    @Override
+    public TipoAdicionalView desactivarTipoAdicional(UUID id) {
+        TipoAdicional tipoAdicional = tipoAdicionalRepository.buscarPorId(id)
+                .orElseThrow(() -> new DomainException("Tipo adicional no encontrado"));
+        return toView(tipoAdicionalRepository.guardar(tipoAdicional.desactivar()));
+    }
+
+    @Override
+    public TipoAdicionalView obtenerTipoAdicional(UUID id) {
+        return tipoAdicionalRepository.buscarPorId(id)
+                .map(this::toView)
+                .orElseThrow(() -> new DomainException("Tipo adicional no encontrado"));
+    }
+
+    @Override
+    public List<TipoAdicionalView> listarTiposAdicional() {
+        return tipoAdicionalRepository.listar().stream().map(this::toView).toList();
+    }
+
     private void validarNombreDisponibleTipoEvento(String nombre) {
         if (nombre == null || nombre.isBlank()) {
             return;
@@ -312,6 +398,18 @@ public class CatalogoApplicationService implements
         }
     }
 
+    private void validarNombreDisponibleTipoMesa(String nombre) {
+        if (nombre != null && !nombre.isBlank() && tipoMesaRepository.existePorNombre(nombre)) {
+            throw new DomainException("Ya existe un tipo de mesa con el nombre indicado");
+        }
+    }
+
+    private void validarNombreDisponibleTipoMesa(String nombre, String nombreActual) {
+        if (nombre == null || !nombreActual.equalsIgnoreCase(nombre.trim())) {
+            validarNombreDisponibleTipoMesa(nombre);
+        }
+    }
+
     private void validarNombreDisponibleTipoSilla(String nombre, String nombreActual) {
         if (nombre == null || !nombreActual.equalsIgnoreCase(nombre.trim())) {
             validarNombreDisponibleTipoSilla(nombre);
@@ -345,6 +443,18 @@ public class CatalogoApplicationService implements
     private void validarColorActivo(UUID colorId) {
         if (!colorRepository.existeActivoPorId(colorId)) {
             throw new DomainException("El color no existe o esta inactivo");
+        }
+    }
+
+    private void validarNombreDisponibleTipoAdicional(String nombre) {
+        if (nombre != null && !nombre.isBlank() && tipoAdicionalRepository.existePorNombre(nombre)) {
+            throw new DomainException("Ya existe un tipo adicional con el nombre indicado");
+        }
+    }
+
+    private void validarNombreDisponibleTipoAdicional(String nombre, String nombreActual) {
+        if (nombre == null || !nombreActual.equalsIgnoreCase(nombre.trim())) {
+            validarNombreDisponibleTipoAdicional(nombre);
         }
     }
 
@@ -384,6 +494,15 @@ public class CatalogoApplicationService implements
         );
     }
 
+    private CatalogoBasicoView toView(TipoMesa tipoMesa) {
+        return new CatalogoBasicoView(
+                tipoMesa.getId(),
+                tipoMesa.getNombre(),
+                "",
+                tipoMesa.isActivo()
+        );
+    }
+
     private CatalogoConColorView toView(Mantel mantel) {
         return new CatalogoConColorView(
                 mantel.getId(),
@@ -399,6 +518,16 @@ public class CatalogoApplicationService implements
                 sobremantel.getNombre(),
                 sobremantel.getColorId(),
                 sobremantel.isActivo()
+        );
+    }
+
+    private TipoAdicionalView toView(TipoAdicional tipoAdicional) {
+        return new TipoAdicionalView(
+                tipoAdicional.getId(),
+                tipoAdicional.getNombre(),
+                tipoAdicional.getModoCobro(),
+                tipoAdicional.getPrecioBase(),
+                tipoAdicional.isActivo()
         );
     }
 }

@@ -17,7 +17,12 @@ public interface SpringDataReservaSalonJpaRepository extends JpaRepository<Reser
             from ReservaSalonJpaEntity r
             where r.salonId = :salonId
               and r.vigente = true
-              and upper(r.estado) = 'CONFIRMADO'
+              and exists (
+                  select 1
+                  from EventoJpaEntity e
+                  where e.id = r.eventoId
+                    and e.estado = com.ejemplo.monolitomodular.eventos.dominio.modelo.EstadoEvento.CONFIRMADO
+              )
               and r.fechaHoraInicio < :fechaHoraFin
               and r.fechaHoraFin > :fechaHoraInicio
             """)
@@ -29,7 +34,12 @@ public interface SpringDataReservaSalonJpaRepository extends JpaRepository<Reser
             where r.salonId = :salonId
               and r.vigente = true
               and r.reservaRaizId <> :reservaRaizIdExcluida
-              and upper(r.estado) = 'CONFIRMADO'
+              and exists (
+                  select 1
+                  from EventoJpaEntity e
+                  where e.id = r.eventoId
+                    and e.estado = com.ejemplo.monolitomodular.eventos.dominio.modelo.EstadoEvento.CONFIRMADO
+              )
               and r.fechaHoraInicio < :fechaHoraFin
               and r.fechaHoraFin > :fechaHoraInicio
             """)
@@ -45,7 +55,12 @@ public interface SpringDataReservaSalonJpaRepository extends JpaRepository<Reser
             select distinct r.salonId
             from ReservaSalonJpaEntity r
             where r.vigente = true
-              and upper(r.estado) = 'CONFIRMADO'
+              and exists (
+                  select 1
+                  from EventoJpaEntity e
+                  where e.id = r.eventoId
+                    and e.estado = com.ejemplo.monolitomodular.eventos.dominio.modelo.EstadoEvento.CONFIRMADO
+              )
               and r.fechaHoraInicio < :fechaHoraFin
               and r.fechaHoraFin > :fechaHoraInicio
             """)

@@ -134,16 +134,17 @@ class EventoApplicationServiceTest {
 
         EventoRepositoryStub eventoRepository = new EventoRepositoryStub();
         ReservaSalonRepositoryStub reservaRepository = new ReservaSalonRepositoryStub();
+        UUID eventoConfirmadoId = UUID.randomUUID();
+        reservaRepository.marcarEventoConfirmado(eventoConfirmadoId);
         reservaRepository.guardarTodas(List.of(
                 ReservaSalon.reconstruir(
                         UUID.randomUUID(),
                         UUID.randomUUID(),
-                        UUID.randomUUID(),
+                        eventoConfirmadoId,
                         salon.getId(),
                         60,
                         LocalDateTime.of(2026, 5, 10, 18, 0),
                         LocalDateTime.of(2026, 5, 10, 22, 0),
-                        "CONFIRMADO",
                         1,
                         true,
                         usuario.getId()
@@ -402,6 +403,11 @@ class EventoApplicationServiceTest {
     private static class ReservaSalonRepositoryStub implements ReservaSalonRepository {
 
         private final List<ReservaSalon> reservas = new ArrayList<>();
+        private final Set<UUID> eventosConfirmados = new java.util.HashSet<>();
+
+        void marcarEventoConfirmado(UUID eventoId) {
+            eventosConfirmados.add(eventoId);
+        }
 
         @Override
         public List<ReservaSalon> guardarTodas(List<ReservaSalon> reservas) {
@@ -427,7 +433,7 @@ class EventoApplicationServiceTest {
                     .filter(ReservaSalon::isVigente)
                     .filter(reserva -> reserva.getSalonId().equals(salonId))
                     .filter(reserva -> reservaRaizIdExcluida == null || !reserva.getReservaRaizId().equals(reservaRaizIdExcluida))
-                    .filter(reserva -> "CONFIRMADO".equals(reserva.getEstado()))
+                    .filter(reserva -> eventosConfirmados.contains(reserva.getEventoId()))
                     .anyMatch(reserva -> reserva.getFechaHoraInicio().isBefore(fechaHoraFin)
                             && reserva.getFechaHoraFin().isAfter(fechaHoraInicio));
         }
@@ -444,7 +450,7 @@ class EventoApplicationServiceTest {
         public Set<UUID> buscarSalonesOcupados(LocalDateTime fechaHoraInicio, LocalDateTime fechaHoraFin) {
             return reservas.stream()
                     .filter(ReservaSalon::isVigente)
-                    .filter(reserva -> "CONFIRMADO".equals(reserva.getEstado()))
+                    .filter(reserva -> eventosConfirmados.contains(reserva.getEventoId()))
                     .filter(reserva -> reserva.getFechaHoraInicio().isBefore(fechaHoraFin)
                             && reserva.getFechaHoraFin().isAfter(fechaHoraInicio))
                     .map(ReservaSalon::getSalonId)

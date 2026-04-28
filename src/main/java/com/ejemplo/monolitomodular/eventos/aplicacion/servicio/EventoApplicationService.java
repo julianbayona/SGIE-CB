@@ -220,7 +220,6 @@ public class EventoApplicationService implements CrearEventoUseCase, ConsultarEv
                 reserva.getNumInvitados(),
                 reserva.getFechaHoraInicio(),
                 reserva.getFechaHoraFin(),
-                reserva.getEstado(),
                 reserva.getVersion(),
                 reserva.isVigente()
         );

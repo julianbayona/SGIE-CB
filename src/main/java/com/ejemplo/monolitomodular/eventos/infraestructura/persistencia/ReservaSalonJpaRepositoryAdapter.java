@@ -32,7 +32,6 @@ public class ReservaSalonJpaRepositoryAdapter implements ReservaSalonRepository 
                                         reserva.getNumInvitados(),
                                         reserva.getFechaHoraInicio(),
                                         reserva.getFechaHoraFin(),
-                                        reserva.getEstado(),
                                         reserva.getVersion(),
                                         reserva.isVigente(),
                                         reserva.getCreadoPor(),
@@ -56,7 +55,6 @@ public class ReservaSalonJpaRepositoryAdapter implements ReservaSalonRepository 
                 reserva.getNumInvitados(),
                 reserva.getFechaHoraInicio(),
                 reserva.getFechaHoraFin(),
-                reserva.getEstado(),
                 reserva.getVersion(),
                 reserva.isVigente(),
                 reserva.getCreadoPor(),
@@ -111,7 +109,6 @@ public class ReservaSalonJpaRepositoryAdapter implements ReservaSalonRepository 
                 entity.getNumInvitados(),
                 entity.getFechaHoraInicio(),
                 entity.getFechaHoraFin(),
-                entity.getEstado(),
                 entity.getVersion(),
                 entity.isVigente(),
                 entity.getCreadoPor()

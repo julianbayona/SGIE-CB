@@ -15,7 +15,6 @@ public class ReservaSalon {
     private final int numInvitados;
     private final LocalDateTime fechaHoraInicio;
     private final LocalDateTime fechaHoraFin;
-    private final String estado;
     private final int version;
     private final boolean vigente;
     private final UUID creadoPor;
@@ -28,7 +27,6 @@ public class ReservaSalon {
             int numInvitados,
             LocalDateTime fechaHoraInicio,
             LocalDateTime fechaHoraFin,
-            String estado,
             int version,
             boolean vigente,
             UUID creadoPor
@@ -46,7 +44,6 @@ public class ReservaSalon {
         if (!fechaHoraFin.isAfter(fechaHoraInicio)) {
             throw new DomainException("La fecha y hora de fin debe ser posterior a la fecha y hora de inicio");
         }
-        this.estado = validarEstado(estado);
         if (version <= 0) {
             throw new DomainException("La version de la reserva debe ser mayor a cero");
         }
@@ -64,7 +61,7 @@ public class ReservaSalon {
             UUID creadoPor
     ) {
         UUID id = UUID.randomUUID();
-        return new ReservaSalon(id, id, eventoId, salonId, numInvitados, fechaHoraInicio, fechaHoraFin, "PENDIENTE", 1, true, creadoPor);
+        return new ReservaSalon(id, id, eventoId, salonId, numInvitados, fechaHoraInicio, fechaHoraFin, 1, true, creadoPor);
     }
 
     public ReservaSalon crearNuevaVersion(
@@ -82,7 +79,6 @@ public class ReservaSalon {
                 numInvitados,
                 fechaHoraInicio,
                 fechaHoraFin,
-                estado,
                 version + 1,
                 true,
                 creadoPor
@@ -98,7 +94,6 @@ public class ReservaSalon {
                 numInvitados,
                 fechaHoraInicio,
                 fechaHoraFin,
-                estado,
                 version,
                 false,
                 creadoPor
@@ -113,12 +108,11 @@ public class ReservaSalon {
             int numInvitados,
             LocalDateTime fechaHoraInicio,
             LocalDateTime fechaHoraFin,
-            String estado,
             int version,
             boolean vigente,
             UUID creadoPor
     ) {
-        return new ReservaSalon(id, reservaRaizId, eventoId, salonId, numInvitados, fechaHoraInicio, fechaHoraFin, estado, version, vigente, creadoPor);
+        return new ReservaSalon(id, reservaRaizId, eventoId, salonId, numInvitados, fechaHoraInicio, fechaHoraFin, version, vigente, creadoPor);
     }
 
     public UUID getId() {
@@ -149,10 +143,6 @@ public class ReservaSalon {
         return fechaHoraFin;
     }
 
-    public String getEstado() {
-        return estado;
-    }
-
     public int getVersion() {
         return version;
     }
@@ -165,10 +155,4 @@ public class ReservaSalon {
         return creadoPor;
     }
 
-    private static String validarEstado(String estado) {
-        if (estado == null || estado.isBlank()) {
-            throw new DomainException("El estado de la reserva es obligatorio");
-        }
-        return estado.trim().toUpperCase();
-    }
 }

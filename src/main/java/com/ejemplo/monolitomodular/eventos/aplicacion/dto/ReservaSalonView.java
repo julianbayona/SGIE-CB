@@ -10,7 +10,6 @@ public record ReservaSalonView(
         int numInvitados,
         LocalDateTime fechaHoraInicio,
         LocalDateTime fechaHoraFin,
-        String estado,
         int version,
         boolean vigente
 ) {

@@ -35,6 +35,14 @@ create table color (
     updated_at timestamp not null
 );
 
+create table tipo_mesa (
+    id_tipo_mesa uuid primary key,
+    nombre varchar(120) not null,
+    activo boolean not null default true,
+    created_at timestamp not null,
+    updated_at timestamp not null
+);
+
 create table tipo_silla (
     id_tipo_silla uuid primary key,
     nombre varchar(120) not null,
@@ -56,6 +64,16 @@ create table sobremantel (
     id_sobremantel uuid primary key,
     nombre varchar(120) not null,
     id_color uuid not null references color(id_color),
+    activo boolean not null default true,
+    created_at timestamp not null,
+    updated_at timestamp not null
+);
+
+create table tipo_adicional (
+    id_tipo_adicional uuid primary key,
+    nombre varchar(120) not null,
+    modo_cobro varchar(40) not null check (modo_cobro in ('UNIDAD', 'SERVICIO')),
+    precio_base numeric(12,2) not null,
     activo boolean not null default true,
     created_at timestamp not null,
     updated_at timestamp not null
@@ -106,7 +124,6 @@ create table reserva_salon (
     num_invitados integer not null,
     fecha_hora_inicio timestamp not null,
     fecha_hora_fin timestamp not null,
-    estado varchar(40) not null,
     version integer not null,
     vigente boolean not null default true,
     creado_por uuid not null references usuario(id_usuario),
@@ -133,6 +150,7 @@ create index idx_mantel_nombre on mantel (nombre);
 create index idx_mantel_color on mantel (id_color);
 create index idx_sobremantel_nombre on sobremantel (nombre);
 create index idx_sobremantel_color on sobremantel (id_color);
+create index idx_tipo_adicional_nombre on tipo_adicional (nombre);
 create index idx_cliente_cedula on cliente (cedula);
 create index idx_salon_nombre on salon (nombre);
 create index idx_evento_cliente on evento (id_cliente);
@@ -144,5 +162,5 @@ create index idx_evento_rango on evento (fecha_hora_inicio, fecha_hora_fin);
 create index idx_reserva_salon_raiz on reserva_salon (reserva_raiz_id, version);
 create index idx_reserva_salon_vigente_evento on reserva_salon (id_evento, vigente);
 create index idx_reserva_salon_vigente_evento_salon on reserva_salon (id_evento, id_salon, vigente);
-create index idx_reserva_salon_rango on reserva_salon (id_salon, vigente, estado, fecha_hora_inicio, fecha_hora_fin);
+create index idx_reserva_salon_rango on reserva_salon (id_salon, vigente, fecha_hora_inicio, fecha_hora_fin);
 create index idx_historial_evento_fecha on historial_estado_evento (id_evento, created_at);
