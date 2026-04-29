@@ -173,6 +173,907 @@ class CatalogoApplicationServiceTest {
         assertFalse(tipoMesaRepository.existeActivoPorId(creado.id()));
     }
 
+  
+    
+    @Test
+    void deberiaActualizarTipoEvento() {
+        TipoEventoRepositoryStub tipoEventoRepository = new TipoEventoRepositoryStub();
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                tipoEventoRepository,
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        CatalogoBasicoView creado = service.crearTipoEvento(new CatalogoBasicoCommand("Boda", "Evento formal"));
+        CatalogoBasicoView actualizado = service.actualizarTipoEvento(creado.id(), new CatalogoBasicoCommand("Matrimonio", "Evento social"));
+
+        assertEquals("Matrimonio", actualizado.nombre());
+        assertEquals("Evento social", actualizado.descripcion());
+    }
+
+    @Test
+    void noDeberiaActualizarTipoEventoNoExistente() {
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        assertThrows(DomainException.class, () -> 
+                service.actualizarTipoEvento(UUID.randomUUID(), new CatalogoBasicoCommand("Boda", "Nueva"))
+        );
+    }
+
+    @Test
+    void noDeberiaActualizarTipoEventoConNombreDuplicado() {
+        TipoEventoRepositoryStub tipoEventoRepository = new TipoEventoRepositoryStub();
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                tipoEventoRepository,
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        CatalogoBasicoView evento1 = service.crearTipoEvento(new CatalogoBasicoCommand("Boda", ""));
+        CatalogoBasicoView evento2 = service.crearTipoEvento(new CatalogoBasicoCommand("Conferencia", ""));
+
+        assertThrows(DomainException.class, () ->
+                service.actualizarTipoEvento(evento2.id(), new CatalogoBasicoCommand("Boda", ""))
+        );
+    }
+
+    @Test
+    void deberiaObtenerTipoEventoPorId() {
+        TipoEventoRepositoryStub tipoEventoRepository = new TipoEventoRepositoryStub();
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                tipoEventoRepository,
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        CatalogoBasicoView creado = service.crearTipoEvento(new CatalogoBasicoCommand("Boda", "Evento formal"));
+        CatalogoBasicoView obtenido = service.obtenerTipoEvento(creado.id());
+
+        assertEquals("Boda", obtenido.nombre());
+        assertEquals(creado.id(), obtenido.id());
+    }
+
+    @Test
+    void noDeberiaObtenerTipoEventoNoExistente() {
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        assertThrows(DomainException.class, () -> service.obtenerTipoEvento(UUID.randomUUID()));
+    }
+
+    @Test
+    void deberiaListarTiposEventoVacio() {
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        assertEquals(0, service.listarTiposEvento().size());
+    }
+
+    @Test
+    void deberiaListarMultiplesTiposEvento() {
+        TipoEventoRepositoryStub tipoEventoRepository = new TipoEventoRepositoryStub();
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                tipoEventoRepository,
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        service.crearTipoEvento(new CatalogoBasicoCommand("Boda", ""));
+        service.crearTipoEvento(new CatalogoBasicoCommand("Conferencia", ""));
+        service.crearTipoEvento(new CatalogoBasicoCommand("Fiesta", ""));
+
+        assertEquals(3, service.listarTiposEvento().size());
+    }
+
+    // --- Gestión de TipoComida ---
+    
+    @Test
+    void deberiaActualizarTipoComida() {
+        TipoComidaRepositoryStub tipoComidaRepository = new TipoComidaRepositoryStub();
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                tipoComidaRepository,
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        CatalogoBasicoView creado = service.crearTipoComida(new CatalogoBasicoCommand("Almuerzo", "Servicio diurno"));
+        CatalogoBasicoView actualizado = service.actualizarTipoComida(creado.id(), new CatalogoBasicoCommand("Comida", "Servicio medio día"));
+
+        assertEquals("Comida", actualizado.nombre());
+    }
+
+    @Test
+    void noDeberiaActualizarTipoComidaConNombreDuplicado() {
+        TipoComidaRepositoryStub tipoComidaRepository = new TipoComidaRepositoryStub();
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                tipoComidaRepository,
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        service.crearTipoComida(new CatalogoBasicoCommand("Desayuno", ""));
+        CatalogoBasicoView comida2 = service.crearTipoComida(new CatalogoBasicoCommand("Almuerzo", ""));
+
+        assertThrows(DomainException.class, () ->
+                service.actualizarTipoComida(comida2.id(), new CatalogoBasicoCommand("Desayuno", ""))
+        );
+    }
+
+    @Test
+    void deberiaDesactivarTipoComida() {
+        TipoComidaRepositoryStub tipoComidaRepository = new TipoComidaRepositoryStub();
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                tipoComidaRepository,
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        CatalogoBasicoView creado = service.crearTipoComida(new CatalogoBasicoCommand("Cena", "Servicio nocturno"));
+        CatalogoBasicoView desactivado = service.desactivarTipoComida(creado.id());
+
+        assertFalse(desactivado.activo());
+    }
+
+    @Test
+    void deberiaObtenerTipoComidaPorId() {
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        CatalogoBasicoView creado = service.crearTipoComida(new CatalogoBasicoCommand("Almuerzo", ""));
+        CatalogoBasicoView obtenido = service.obtenerTipoComida(creado.id());
+
+        assertEquals(creado.id(), obtenido.id());
+        assertEquals("Almuerzo", obtenido.nombre());
+    }
+
+    @Test
+    void deberiaListarTiposComida() {
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        service.crearTipoComida(new CatalogoBasicoCommand("Desayuno", ""));
+        service.crearTipoComida(new CatalogoBasicoCommand("Almuerzo", ""));
+
+        assertEquals(2, service.listarTiposComida().size());
+    }
+
+    // --- Gestión de Colores ---
+    
+    @Test
+    void deberiaCrearColor() {
+        ColorRepositoryStub colorRepository = new ColorRepositoryStub();
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                colorRepository,
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        var color = service.crearColor(new ColorCommand("Rojo", "#FF0000"));
+
+        assertEquals("Rojo", color.nombre());
+        assertEquals("#FF0000", color.codigoHex());
+    }
+
+    @Test
+    void noDeberiaCrearColorDuplicado() {
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        service.crearColor(new ColorCommand("Azul", "#0000FF"));
+
+        assertThrows(DomainException.class, () ->
+                service.crearColor(new ColorCommand("azul", "#0000AA"))
+        );
+    }
+
+    @Test
+    void deberiaActualizarColor() {
+        ColorRepositoryStub colorRepository = new ColorRepositoryStub();
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                colorRepository,
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        var color = service.crearColor(new ColorCommand("Verde", "#00FF00"));
+        var actualizado = service.actualizarColor(color.id(), new ColorCommand("Verde Claro", "#90EE90"));
+
+        assertEquals("Verde Claro", actualizado.nombre());
+        assertEquals("#90EE90", actualizado.codigoHex());
+    }
+
+    @Test
+    void deberiaDesactivarColor() {
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        var color = service.crearColor(new ColorCommand("Amarillo", "#FFFF00"));
+        var desactivado = service.desactivarColor(color.id());
+
+        assertFalse(desactivado.activo());
+    }
+
+    @Test
+    void deberiaObtenerColorPorId() {
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        var color = service.crearColor(new ColorCommand("Negro", "#000000"));
+        var obtenido = service.obtenerColor(color.id());
+
+        assertEquals(color.id(), obtenido.id());
+        assertEquals("Negro", obtenido.nombre());
+    }
+
+    @Test
+    void deberiaListarColores() {
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        service.crearColor(new ColorCommand("Blanco", "#FFFFFF"));
+        service.crearColor(new ColorCommand("Gris", "#808080"));
+
+        assertEquals(2, service.listarColores().size());
+    }
+
+    // --- Gestión de TipoMesa ---
+    
+    @Test
+    void deberiaActualizarTipoMesa() {
+        TipoMesaRepositoryStub tipoMesaRepository = new TipoMesaRepositoryStub();
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                tipoMesaRepository,
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        CatalogoBasicoView creado = service.crearTipoMesa(new CatalogoBasicoCommand("Mesa rectangular", null));
+        CatalogoBasicoView actualizado = service.actualizarTipoMesa(creado.id(), new CatalogoBasicoCommand("Mesa cuadrada", null));
+
+        assertEquals("Mesa cuadrada", actualizado.nombre());
+    }
+
+    @Test
+    void noDeberiaCrearTipoMesaDuplicado() {
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        service.crearTipoMesa(new CatalogoBasicoCommand("Mesa Alta", null));
+
+        assertThrows(DomainException.class, () ->
+                service.crearTipoMesa(new CatalogoBasicoCommand("mesa alta", null))
+        );
+    }
+
+    @Test
+    void deberiaObtenerTipoMesaPorId() {
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        CatalogoBasicoView creado = service.crearTipoMesa(new CatalogoBasicoCommand("Mesa plegable", null));
+        CatalogoBasicoView obtenido = service.obtenerTipoMesa(creado.id());
+
+        assertEquals("Mesa plegable", obtenido.nombre());
+    }
+
+    @Test
+    void deberiaListarTiposMesa() {
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        service.crearTipoMesa(new CatalogoBasicoCommand("Mesa 1", null));
+        service.crearTipoMesa(new CatalogoBasicoCommand("Mesa 2", null));
+
+        assertEquals(2, service.listarTiposMesa().size());
+    }
+
+    // --- Gestión de TipoSilla ---
+    
+    @Test
+    void deberiaCrearYDesactivarTipoSilla() {
+        TipoSillaRepositoryStub tipoSillaRepository = new TipoSillaRepositoryStub();
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                tipoSillaRepository,
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        CatalogoBasicoView creado = service.crearTipoSilla(new CatalogoBasicoCommand("Silla moderna", null));
+        CatalogoBasicoView desactivado = service.desactivarTipoSilla(creado.id());
+
+        assertEquals("Silla moderna", creado.nombre());
+        assertFalse(desactivado.activo());
+    }
+
+    @Test
+    void deberiaActualizarTipoSilla() {
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        CatalogoBasicoView creado = service.crearTipoSilla(new CatalogoBasicoCommand("Silla de madera", null));
+        CatalogoBasicoView actualizado = service.actualizarTipoSilla(creado.id(), new CatalogoBasicoCommand("Silla de metal", null));
+
+        assertEquals("Silla de metal", actualizado.nombre());
+    }
+
+    @Test
+    void noDeberiaCrearTipoSillaDuplicado() {
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        service.crearTipoSilla(new CatalogoBasicoCommand("Silla plastica", null));
+
+        assertThrows(DomainException.class, () ->
+                service.crearTipoSilla(new CatalogoBasicoCommand("SILLA PLASTICA", null))
+        );
+    }
+
+    @Test
+    void deberiaObtenerTipoSillaPorId() {
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        CatalogoBasicoView creado = service.crearTipoSilla(new CatalogoBasicoCommand("Silla", null));
+        CatalogoBasicoView obtenido = service.obtenerTipoSilla(creado.id());
+
+        assertEquals(creado.id(), obtenido.id());
+    }
+
+    @Test
+    void deberiaListarTiposSilla() {
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        service.crearTipoSilla(new CatalogoBasicoCommand("Silla 1", null));
+        service.crearTipoSilla(new CatalogoBasicoCommand("Silla 2", null));
+
+        assertEquals(2, service.listarTiposSilla().size());
+    }
+
+    // --- Gestión de Manteles ---
+    
+    @Test
+    void deberiaActualizarMantel() {
+        MantelRepositoryStub mantelRepository = new MantelRepositoryStub();
+        ColorRepositoryStub colorRepository = new ColorRepositoryStub();
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                colorRepository,
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                mantelRepository,
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        var color1 = service.crearColor(new ColorCommand("Rojo", "#FF0000"));
+        var color2 = service.crearColor(new ColorCommand("Azul", "#0000FF"));
+        var mantel = service.crearMantel(new CatalogoConColorCommand("Mantel rojo", color1.id()));
+        var actualizado = service.actualizarMantel(mantel.id(), new CatalogoConColorCommand("Mantel azul", color2.id()));
+
+        assertEquals("Mantel azul", actualizado.nombre());
+        assertEquals(color2.id(), actualizado.colorId());
+    }
+
+    @Test
+    void noDeberiaCrearMantelConColorInactivo() {
+        ColorRepositoryStub colorRepository = new ColorRepositoryStub();
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                colorRepository,
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        var color = service.crearColor(new ColorCommand("Verde", "#00FF00"));
+        service.desactivarColor(color.id());
+
+        assertThrows(DomainException.class, () ->
+                service.crearMantel(new CatalogoConColorCommand("Mantel verde", color.id()))
+        );
+    }
+
+    @Test
+    void noDeberiaCrearMantelDuplicado() {
+        ColorRepositoryStub colorRepository = new ColorRepositoryStub();
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                colorRepository,
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        var color = service.crearColor(new ColorCommand("Blanco", "#FFFFFF"));
+        service.crearMantel(new CatalogoConColorCommand("Mantel blanco", color.id()));
+
+        assertThrows(DomainException.class, () ->
+                service.crearMantel(new CatalogoConColorCommand("mantel blanco", color.id()))
+        );
+    }
+
+    @Test
+    void deberiaDesactivarMantel() {
+        ColorRepositoryStub colorRepository = new ColorRepositoryStub();
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                colorRepository,
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        var color = service.crearColor(new ColorCommand("Negro", "#000000"));
+        var mantel = service.crearMantel(new CatalogoConColorCommand("Mantel negro", color.id()));
+        var desactivado = service.desactivarMantel(mantel.id());
+
+        assertFalse(desactivado.activo());
+    }
+
+    @Test
+    void deberiaObtenerMantelPorId() {
+        ColorRepositoryStub colorRepository = new ColorRepositoryStub();
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                colorRepository,
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        var color = service.crearColor(new ColorCommand("Gris", "#808080"));
+        var mantel = service.crearMantel(new CatalogoConColorCommand("Mantel gris", color.id()));
+        var obtenido = service.obtenerMantel(mantel.id());
+
+        assertEquals("Mantel gris", obtenido.nombre());
+    }
+
+    @Test
+    void deberiaListarManteles() {
+        ColorRepositoryStub colorRepository = new ColorRepositoryStub();
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                colorRepository,
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        var color = service.crearColor(new ColorCommand("Amarillo", "#FFFF00"));
+        service.crearMantel(new CatalogoConColorCommand("Mantel 1", color.id()));
+        service.crearMantel(new CatalogoConColorCommand("Mantel 2", color.id()));
+
+        assertEquals(2, service.listarManteles().size());
+    }
+
+    // --- Gestión de Sobremanteles ---
+    
+    @Test
+    void deberiaCrearSobremantel() {
+        ColorRepositoryStub colorRepository = new ColorRepositoryStub();
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                colorRepository,
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        var color = service.crearColor(new ColorCommand("Rosa", "#FFC0CB"));
+        var sobremantel = service.crearSobremantel(new CatalogoConColorCommand("Sobremantel rosa", color.id()));
+
+        assertEquals("Sobremantel rosa", sobremantel.nombre());
+        assertEquals(color.id(), sobremantel.colorId());
+    }
+
+    @Test
+    void deberiaActualizarSobremantel() {
+        ColorRepositoryStub colorRepository = new ColorRepositoryStub();
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                colorRepository,
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        var color1 = service.crearColor(new ColorCommand("Naranja", "#FFA500"));
+        var color2 = service.crearColor(new ColorCommand("Morado", "#800080"));
+        var sobremantel = service.crearSobremantel(new CatalogoConColorCommand("Sobremantel naranja", color1.id()));
+        var actualizado = service.actualizarSobremantel(sobremantel.id(), new CatalogoConColorCommand("Sobremantel morado", color2.id()));
+
+        assertEquals("Sobremantel morado", actualizado.nombre());
+    }
+
+    @Test
+    void noDeberiaCrearSobremantelDuplicado() {
+        ColorRepositoryStub colorRepository = new ColorRepositoryStub();
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                colorRepository,
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        var color = service.crearColor(new ColorCommand("Turquesa", "#40E0D0"));
+        service.crearSobremantel(new CatalogoConColorCommand("Sobremantel turquesa", color.id()));
+
+        assertThrows(DomainException.class, () ->
+                service.crearSobremantel(new CatalogoConColorCommand("sobremantel turquesa", color.id()))
+        );
+    }
+
+    @Test
+    void deberiaDesactivarSobremantel() {
+        ColorRepositoryStub colorRepository = new ColorRepositoryStub();
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                colorRepository,
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        var color = service.crearColor(new ColorCommand("Cian", "#00FFFF"));
+        var sobremantel = service.crearSobremantel(new CatalogoConColorCommand("Sobremantel cian", color.id()));
+        var desactivado = service.desactivarSobremantel(sobremantel.id());
+
+        assertFalse(desactivado.activo());
+    }
+
+    @Test
+    void deberiaObtenerSobremantelPorId() {
+        ColorRepositoryStub colorRepository = new ColorRepositoryStub();
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                colorRepository,
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        var color = service.crearColor(new ColorCommand("Magenta", "#FF00FF"));
+        var sobremantel = service.crearSobremantel(new CatalogoConColorCommand("Sobremantel magenta", color.id()));
+        var obtenido = service.obtenerSobremantel(sobremantel.id());
+
+        assertEquals("Sobremantel magenta", obtenido.nombre());
+    }
+
+    @Test
+    void deberiaListarSobremanteles() {
+        ColorRepositoryStub colorRepository = new ColorRepositoryStub();
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                colorRepository,
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        var color = service.crearColor(new ColorCommand("Beige", "#F5F5DC"));
+        service.crearSobremantel(new CatalogoConColorCommand("Sobremantel 1", color.id()));
+        service.crearSobremantel(new CatalogoConColorCommand("Sobremantel 2", color.id()));
+
+        assertEquals(2, service.listarSobremanteles().size());
+    }
+
+    // --- Gestión de TipoAdicional ---
+    
+    @Test
+    void deberiaActualizarTipoAdicional() {
+        TipoAdicionalRepositoryStub tipoAdicionalRepository = new TipoAdicionalRepositoryStub();
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                tipoAdicionalRepository
+        );
+
+        var adicional = service.crearTipoAdicional(
+                new TipoAdicionalCommand("Decoracion", ModoCobroAdicional.SERVICIO, new BigDecimal("50000.00"))
+        );
+        var actualizado = service.actualizarTipoAdicional(
+                adicional.id(),
+                new TipoAdicionalCommand("Decoracion Premium", ModoCobroAdicional.UNIDAD, new BigDecimal("75000.00"))
+        );
+
+        assertEquals("Decoracion Premium", actualizado.nombre());
+        assertEquals(new BigDecimal("75000.00"), actualizado.precioBase());
+    }
+
+    @Test
+    void noDeberiaCrearTipoAdicionalDuplicado() {
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        service.crearTipoAdicional(
+                new TipoAdicionalCommand("Musica", ModoCobroAdicional.SERVICIO, new BigDecimal("100000.00"))
+        );
+
+        assertThrows(DomainException.class, () ->
+                service.crearTipoAdicional(
+                        new TipoAdicionalCommand("musica", ModoCobroAdicional.UNIDAD, new BigDecimal("50000.00"))
+                )
+        );
+    }
+
+    @Test
+    void deberiaObtenerTipoAdicionalPorId() {
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        var adicional = service.crearTipoAdicional(
+                new TipoAdicionalCommand("Fotografia", ModoCobroAdicional.SERVICIO, new BigDecimal("200000.00"))
+        );
+        var obtenido = service.obtenerTipoAdicional(adicional.id());
+
+        assertEquals("Fotografia", obtenido.nombre());
+        assertEquals(new BigDecimal("200000.00"), obtenido.precioBase());
+    }
+
+    @Test
+    void deberiaListarTiposAdicional() {
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        service.crearTipoAdicional(
+                new TipoAdicionalCommand("Servicio 1", ModoCobroAdicional.SERVICIO, new BigDecimal("10000.00"))
+        );
+        service.crearTipoAdicional(
+                new TipoAdicionalCommand("Servicio 2", ModoCobroAdicional.UNIDAD, new BigDecimal("20000.00"))
+        );
+
+        assertEquals(2, service.listarTiposAdicional().size());
+    }
+
     private static class TipoEventoRepositoryStub implements TipoEventoRepository {
 
         private final List<TipoEvento> tiposEvento = new ArrayList<>();

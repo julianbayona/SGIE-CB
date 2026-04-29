@@ -242,6 +242,545 @@ class EventoApplicationServiceTest {
         assertEquals(2, reservaRepository.totalVersiones());
     }
 
+    
+    
+    @Test
+    void noDeberiaCrearEventoConClienteNoExistente() {
+        UUID tipoEventoId = UUID.randomUUID();
+        UUID tipoComidaId = UUID.randomUUID();
+        Usuario usuario = Usuario.nuevo("Admin", "$2a$hash", RolUsuario.ADMINISTRADOR);
+
+        EventoApplicationService service = new EventoApplicationService(
+                new ClienteRepositoryStub(List.of()),
+                new TipoEventoRepositoryStub(Set.of(tipoEventoId)),
+                new TipoComidaRepositoryStub(Set.of(tipoComidaId)),
+                new UsuarioRepositoryStub(List.of(usuario)),
+                new SalonRepositoryStub(List.of()),
+                new EventoRepositoryStub(),
+                new ReservaSalonRepositoryStub(),
+                new HistorialRepositoryStub()
+        );
+
+        assertThrows(DomainException.class, () ->
+                service.ejecutar(new CrearEventoCommand(
+                        UUID.randomUUID(),
+                        tipoEventoId,
+                        tipoComidaId,
+                        usuario.getId(),
+                        LocalDateTime.of(2026, 5, 10, 18, 0),
+                        LocalDateTime.of(2026, 5, 10, 22, 0)
+                ))
+        );
+    }
+
+    @Test
+    void noDeberiaCrearEventoConTipoEventoInactivo() {
+        Cliente cliente = Cliente.nuevo("123", "Test", "3001111111", "test@correo.com", TipoCliente.SOCIO, null);
+        Usuario usuario = Usuario.nuevo("Admin", "$2a$hash", RolUsuario.ADMINISTRADOR);
+
+        EventoApplicationService service = new EventoApplicationService(
+                new ClienteRepositoryStub(List.of(cliente)),
+                new TipoEventoRepositoryStub(Set.of()),
+                new TipoComidaRepositoryStub(Set.of(UUID.randomUUID())),
+                new UsuarioRepositoryStub(List.of(usuario)),
+                new SalonRepositoryStub(List.of()),
+                new EventoRepositoryStub(),
+                new ReservaSalonRepositoryStub(),
+                new HistorialRepositoryStub()
+        );
+
+        assertThrows(DomainException.class, () ->
+                service.ejecutar(new CrearEventoCommand(
+                        cliente.getId(),
+                        UUID.randomUUID(),
+                        UUID.randomUUID(),
+                        usuario.getId(),
+                        LocalDateTime.of(2026, 5, 10, 18, 0),
+                        LocalDateTime.of(2026, 5, 10, 22, 0)
+                ))
+        );
+    }
+
+    @Test
+    void noDeberiaCrearEventoConTipoComidaInactivo() {
+        Cliente cliente = Cliente.nuevo("123", "Test", "3001111111", "test@correo.com", TipoCliente.SOCIO, null);
+        Usuario usuario = Usuario.nuevo("Admin", "$2a$hash", RolUsuario.ADMINISTRADOR);
+        UUID tipoEventoId = UUID.randomUUID();
+
+        EventoApplicationService service = new EventoApplicationService(
+                new ClienteRepositoryStub(List.of(cliente)),
+                new TipoEventoRepositoryStub(Set.of(tipoEventoId)),
+                new TipoComidaRepositoryStub(Set.of()),
+                new UsuarioRepositoryStub(List.of(usuario)),
+                new SalonRepositoryStub(List.of()),
+                new EventoRepositoryStub(),
+                new ReservaSalonRepositoryStub(),
+                new HistorialRepositoryStub()
+        );
+
+        assertThrows(DomainException.class, () ->
+                service.ejecutar(new CrearEventoCommand(
+                        cliente.getId(),
+                        tipoEventoId,
+                        UUID.randomUUID(),
+                        usuario.getId(),
+                        LocalDateTime.of(2026, 5, 10, 18, 0),
+                        LocalDateTime.of(2026, 5, 10, 22, 0)
+                ))
+        );
+    }
+
+    @Test
+    void noDeberiaCrearEventoConUsuarioCreadorNoExistente() {
+        Cliente cliente = Cliente.nuevo("123", "Test", "3001111111", "test@correo.com", TipoCliente.SOCIO, null);
+        UUID tipoEventoId = UUID.randomUUID();
+        UUID tipoComidaId = UUID.randomUUID();
+
+        EventoApplicationService service = new EventoApplicationService(
+                new ClienteRepositoryStub(List.of(cliente)),
+                new TipoEventoRepositoryStub(Set.of(tipoEventoId)),
+                new TipoComidaRepositoryStub(Set.of(tipoComidaId)),
+                new UsuarioRepositoryStub(List.of()),
+                new SalonRepositoryStub(List.of()),
+                new EventoRepositoryStub(),
+                new ReservaSalonRepositoryStub(),
+                new HistorialRepositoryStub()
+        );
+
+        assertThrows(DomainException.class, () ->
+                service.ejecutar(new CrearEventoCommand(
+                        cliente.getId(),
+                        tipoEventoId,
+                        tipoComidaId,
+                        UUID.randomUUID(),
+                        LocalDateTime.of(2026, 5, 10, 18, 0),
+                        LocalDateTime.of(2026, 5, 10, 22, 0)
+                ))
+        );
+    }
+
+    @Test
+    void noDeberiaCrearEventoConFechaHoraInicioNull() {
+        Cliente cliente = Cliente.nuevo("123", "Test", "3001111111", "test@correo.com", TipoCliente.SOCIO, null);
+        Usuario usuario = Usuario.nuevo("Admin", "$2a$hash", RolUsuario.ADMINISTRADOR);
+        UUID tipoEventoId = UUID.randomUUID();
+        UUID tipoComidaId = UUID.randomUUID();
+
+        EventoApplicationService service = new EventoApplicationService(
+                new ClienteRepositoryStub(List.of(cliente)),
+                new TipoEventoRepositoryStub(Set.of(tipoEventoId)),
+                new TipoComidaRepositoryStub(Set.of(tipoComidaId)),
+                new UsuarioRepositoryStub(List.of(usuario)),
+                new SalonRepositoryStub(List.of()),
+                new EventoRepositoryStub(),
+                new ReservaSalonRepositoryStub(),
+                new HistorialRepositoryStub()
+        );
+
+        assertThrows(DomainException.class, () ->
+                service.ejecutar(new CrearEventoCommand(
+                        cliente.getId(),
+                        tipoEventoId,
+                        tipoComidaId,
+                        usuario.getId(),
+                        null,
+                        LocalDateTime.of(2026, 5, 10, 22, 0)
+                ))
+        );
+    }
+
+    @Test
+    void noDeberiaCrearEventoConFechaHoraFinNull() {
+        Cliente cliente = Cliente.nuevo("123", "Test", "3001111111", "test@correo.com", TipoCliente.SOCIO, null);
+        Usuario usuario = Usuario.nuevo("Admin", "$2a$hash", RolUsuario.ADMINISTRADOR);
+        UUID tipoEventoId = UUID.randomUUID();
+        UUID tipoComidaId = UUID.randomUUID();
+
+        EventoApplicationService service = new EventoApplicationService(
+                new ClienteRepositoryStub(List.of(cliente)),
+                new TipoEventoRepositoryStub(Set.of(tipoEventoId)),
+                new TipoComidaRepositoryStub(Set.of(tipoComidaId)),
+                new UsuarioRepositoryStub(List.of(usuario)),
+                new SalonRepositoryStub(List.of()),
+                new EventoRepositoryStub(),
+                new ReservaSalonRepositoryStub(),
+                new HistorialRepositoryStub()
+        );
+
+        assertThrows(DomainException.class, () ->
+                service.ejecutar(new CrearEventoCommand(
+                        cliente.getId(),
+                        tipoEventoId,
+                        tipoComidaId,
+                        usuario.getId(),
+                        LocalDateTime.of(2026, 5, 10, 18, 0),
+                        null
+                ))
+        );
+    }
+
+    @Test
+    void noDeberiaCrearEventoConFechaFinNoPosteriora() {
+        Cliente cliente = Cliente.nuevo("123", "Test", "3001111111", "test@correo.com", TipoCliente.SOCIO, null);
+        Usuario usuario = Usuario.nuevo("Admin", "$2a$hash", RolUsuario.ADMINISTRADOR);
+        UUID tipoEventoId = UUID.randomUUID();
+        UUID tipoComidaId = UUID.randomUUID();
+
+        EventoApplicationService service = new EventoApplicationService(
+                new ClienteRepositoryStub(List.of(cliente)),
+                new TipoEventoRepositoryStub(Set.of(tipoEventoId)),
+                new TipoComidaRepositoryStub(Set.of(tipoComidaId)),
+                new UsuarioRepositoryStub(List.of(usuario)),
+                new SalonRepositoryStub(List.of()),
+                new EventoRepositoryStub(),
+                new ReservaSalonRepositoryStub(),
+                new HistorialRepositoryStub()
+        );
+
+        LocalDateTime fecha = LocalDateTime.of(2026, 5, 10, 18, 0);
+
+        assertThrows(DomainException.class, () ->
+                service.ejecutar(new CrearEventoCommand(
+                        cliente.getId(),
+                        tipoEventoId,
+                        tipoComidaId,
+                        usuario.getId(),
+                        fecha,
+                        fecha
+                ))
+        );
+    }
+
+    // --- Validaciones de ReservaCommand ---
+    
+    @Test
+    void noDeberiaCrearReservaConEventoNoExistente() {
+        Usuario usuario = Usuario.nuevo("Admin", "$2a$hash", RolUsuario.ADMINISTRADOR);
+        Salon salon = Salon.nuevo("Salon Test", 100, "Test");
+
+        EventoApplicationService service = new EventoApplicationService(
+                new ClienteRepositoryStub(List.of()),
+                new TipoEventoRepositoryStub(Set.of()),
+                new TipoComidaRepositoryStub(Set.of()),
+                new UsuarioRepositoryStub(List.of(usuario)),
+                new SalonRepositoryStub(List.of(salon)),
+                new EventoRepositoryStub(),
+                new ReservaSalonRepositoryStub(),
+                new HistorialRepositoryStub()
+        );
+
+        assertThrows(DomainException.class, () ->
+                service.ejecutar(UUID.randomUUID(), new CrearReservaSalonCommand(
+                        usuario.getId(),
+                        salon.getId(),
+                        50,
+                        LocalDateTime.of(2026, 5, 10, 18, 0),
+                        LocalDateTime.of(2026, 5, 10, 22, 0)
+                ))
+        );
+    }
+
+    @Test
+    void noDeberiaCrearReservaConUsuarioNoExistente() {
+        Cliente cliente = Cliente.nuevo("123", "Test", "3001111111", "test@correo.com", TipoCliente.SOCIO, null);
+        Usuario usuario = Usuario.nuevo("Admin", "$2a$hash", RolUsuario.ADMINISTRADOR);
+        Salon salon = Salon.nuevo("Salon Test", 100, "Test");
+        UUID tipoEventoId = UUID.randomUUID();
+        UUID tipoComidaId = UUID.randomUUID();
+
+        EventoRepositoryStub eventoRepository = new EventoRepositoryStub();
+        EventoApplicationService service = new EventoApplicationService(
+                new ClienteRepositoryStub(List.of(cliente)),
+                new TipoEventoRepositoryStub(Set.of(tipoEventoId)),
+                new TipoComidaRepositoryStub(Set.of(tipoComidaId)),
+                new UsuarioRepositoryStub(List.of(usuario)),
+                new SalonRepositoryStub(List.of(salon)),
+                eventoRepository,
+                new ReservaSalonRepositoryStub(),
+                new HistorialRepositoryStub()
+        );
+
+        EventoView evento = service.ejecutar(new CrearEventoCommand(
+                cliente.getId(),
+                tipoEventoId,
+                tipoComidaId,
+                usuario.getId(),
+                LocalDateTime.of(2026, 5, 10, 18, 0),
+                LocalDateTime.of(2026, 5, 10, 23, 0)
+        ));
+
+        assertThrows(DomainException.class, () ->
+                service.ejecutar(evento.id(), new CrearReservaSalonCommand(
+                        UUID.randomUUID(),
+                        salon.getId(),
+                        50,
+                        LocalDateTime.of(2026, 5, 10, 18, 0),
+                        LocalDateTime.of(2026, 5, 10, 22, 0)
+                ))
+        );
+    }
+
+    @Test
+    void noDeberiaCrearReservaConSalonNoExistente() {
+        Cliente cliente = Cliente.nuevo("123", "Test", "3001111111", "test@correo.com", TipoCliente.SOCIO, null);
+        Usuario usuario = Usuario.nuevo("Admin", "$2a$hash", RolUsuario.ADMINISTRADOR);
+        UUID tipoEventoId = UUID.randomUUID();
+        UUID tipoComidaId = UUID.randomUUID();
+
+        EventoRepositoryStub eventoRepository = new EventoRepositoryStub();
+        EventoApplicationService service = new EventoApplicationService(
+                new ClienteRepositoryStub(List.of(cliente)),
+                new TipoEventoRepositoryStub(Set.of(tipoEventoId)),
+                new TipoComidaRepositoryStub(Set.of(tipoComidaId)),
+                new UsuarioRepositoryStub(List.of(usuario)),
+                new SalonRepositoryStub(List.of()),
+                eventoRepository,
+                new ReservaSalonRepositoryStub(),
+                new HistorialRepositoryStub()
+        );
+
+        EventoView evento = service.ejecutar(new CrearEventoCommand(
+                cliente.getId(),
+                tipoEventoId,
+                tipoComidaId,
+                usuario.getId(),
+                LocalDateTime.of(2026, 5, 10, 18, 0),
+                LocalDateTime.of(2026, 5, 10, 23, 0)
+        ));
+
+        assertThrows(DomainException.class, () ->
+                service.ejecutar(evento.id(), new CrearReservaSalonCommand(
+                        usuario.getId(),
+                        UUID.randomUUID(),
+                        50,
+                        LocalDateTime.of(2026, 5, 10, 18, 0),
+                        LocalDateTime.of(2026, 5, 10, 22, 0)
+                ))
+        );
+    }
+
+    @Test
+    void noDeberiaCrearReservaConFechasInvalidas() {
+        Cliente cliente = Cliente.nuevo("123", "Test", "3001111111", "test@correo.com", TipoCliente.SOCIO, null);
+        Usuario usuario = Usuario.nuevo("Admin", "$2a$hash", RolUsuario.ADMINISTRADOR);
+        Salon salon = Salon.nuevo("Salon Test", 100, "Test");
+        UUID tipoEventoId = UUID.randomUUID();
+        UUID tipoComidaId = UUID.randomUUID();
+
+        EventoRepositoryStub eventoRepository = new EventoRepositoryStub();
+        EventoApplicationService service = new EventoApplicationService(
+                new ClienteRepositoryStub(List.of(cliente)),
+                new TipoEventoRepositoryStub(Set.of(tipoEventoId)),
+                new TipoComidaRepositoryStub(Set.of(tipoComidaId)),
+                new UsuarioRepositoryStub(List.of(usuario)),
+                new SalonRepositoryStub(List.of(salon)),
+                eventoRepository,
+                new ReservaSalonRepositoryStub(),
+                new HistorialRepositoryStub()
+        );
+
+        EventoView evento = service.ejecutar(new CrearEventoCommand(
+                cliente.getId(),
+                tipoEventoId,
+                tipoComidaId,
+                usuario.getId(),
+                LocalDateTime.of(2026, 5, 10, 18, 0),
+                LocalDateTime.of(2026, 5, 10, 23, 0)
+        ));
+
+        LocalDateTime fecha = LocalDateTime.of(2026, 5, 10, 18, 0);
+
+        assertThrows(DomainException.class, () ->
+                service.ejecutar(evento.id(), new CrearReservaSalonCommand(
+                        usuario.getId(),
+                        salon.getId(),
+                        50,
+                        fecha,
+                        fecha
+                ))
+        );
+    }
+
+    @Test
+    void deberiaObtenerEventoPorId() {
+        Cliente cliente = Cliente.nuevo("123", "Test", "3001111111", "test@correo.com", TipoCliente.SOCIO, null);
+        Usuario usuario = Usuario.nuevo("Admin", "$2a$hash", RolUsuario.ADMINISTRADOR);
+        UUID tipoEventoId = UUID.randomUUID();
+        UUID tipoComidaId = UUID.randomUUID();
+
+        EventoRepositoryStub eventoRepository = new EventoRepositoryStub();
+        EventoApplicationService service = new EventoApplicationService(
+                new ClienteRepositoryStub(List.of(cliente)),
+                new TipoEventoRepositoryStub(Set.of(tipoEventoId)),
+                new TipoComidaRepositoryStub(Set.of(tipoComidaId)),
+                new UsuarioRepositoryStub(List.of(usuario)),
+                new SalonRepositoryStub(List.of()),
+                eventoRepository,
+                new ReservaSalonRepositoryStub(),
+                new HistorialRepositoryStub()
+        );
+
+        EventoView creado = service.ejecutar(new CrearEventoCommand(
+                cliente.getId(),
+                tipoEventoId,
+                tipoComidaId,
+                usuario.getId(),
+                LocalDateTime.of(2026, 5, 10, 18, 0),
+                LocalDateTime.of(2026, 5, 10, 22, 0)
+        ));
+
+        EventoView obtenido = service.obtenerPorId(creado.id());
+
+        assertEquals(creado.id(), obtenido.id());
+        assertEquals(cliente.getId(), obtenido.clienteId());
+    }
+
+    @Test
+    void noDeberiaObtenerEventoNoExistente() {
+        EventoApplicationService service = new EventoApplicationService(
+                new ClienteRepositoryStub(List.of()),
+                new TipoEventoRepositoryStub(Set.of()),
+                new TipoComidaRepositoryStub(Set.of()),
+                new UsuarioRepositoryStub(List.of()),
+                new SalonRepositoryStub(List.of()),
+                new EventoRepositoryStub(),
+                new ReservaSalonRepositoryStub(),
+                new HistorialRepositoryStub()
+        );
+
+        assertThrows(DomainException.class, () -> service.obtenerPorId(UUID.randomUUID()));
+    }
+
+    @Test
+    void deberiaListarEventosVacio() {
+        EventoApplicationService service = new EventoApplicationService(
+                new ClienteRepositoryStub(List.of()),
+                new TipoEventoRepositoryStub(Set.of()),
+                new TipoComidaRepositoryStub(Set.of()),
+                new UsuarioRepositoryStub(List.of()),
+                new SalonRepositoryStub(List.of()),
+                new EventoRepositoryStub(),
+                new ReservaSalonRepositoryStub(),
+                new HistorialRepositoryStub()
+        );
+
+        assertEquals(0, service.listar().size());
+    }
+
+    @Test
+    void deberiaListarMultiplesEventos() {
+        Cliente cliente1 = Cliente.nuevo("111", "Cliente 1", "3001111111", "c1@correo.com", TipoCliente.SOCIO, null);
+        Cliente cliente2 = Cliente.nuevo("222", "Cliente 2", "3002222222", "c2@correo.com", TipoCliente.NO_SOCIO, null);
+        Usuario usuario = Usuario.nuevo("Admin", "$2a$hash", RolUsuario.ADMINISTRADOR);
+        UUID tipoEventoId = UUID.randomUUID();
+        UUID tipoComidaId = UUID.randomUUID();
+
+        EventoRepositoryStub eventoRepository = new EventoRepositoryStub();
+        EventoApplicationService service = new EventoApplicationService(
+                new ClienteRepositoryStub(List.of(cliente1, cliente2)),
+                new TipoEventoRepositoryStub(Set.of(tipoEventoId)),
+                new TipoComidaRepositoryStub(Set.of(tipoComidaId)),
+                new UsuarioRepositoryStub(List.of(usuario)),
+                new SalonRepositoryStub(List.of()),
+                eventoRepository,
+                new ReservaSalonRepositoryStub(),
+                new HistorialRepositoryStub()
+        );
+
+        service.ejecutar(new CrearEventoCommand(
+                cliente1.getId(), tipoEventoId, tipoComidaId, usuario.getId(),
+                LocalDateTime.of(2026, 5, 10, 18, 0), LocalDateTime.of(2026, 5, 10, 22, 0)
+        ));
+        service.ejecutar(new CrearEventoCommand(
+                cliente2.getId(), tipoEventoId, tipoComidaId, usuario.getId(),
+                LocalDateTime.of(2026, 5, 15, 18, 0), LocalDateTime.of(2026, 5, 15, 22, 0)
+        ));
+
+        assertEquals(2, service.listar().size());
+    }
+
+    @Test
+    void noDeberiaModificarReservaConSalonNoExistente() {
+        Cliente cliente = Cliente.nuevo("123", "Test", "3001111111", "test@correo.com", TipoCliente.SOCIO, null);
+        Usuario usuario = Usuario.nuevo("Admin", "$2a$hash", RolUsuario.ADMINISTRADOR);
+        Salon salon = Salon.nuevo("Salon A", 100, "Test");
+        UUID tipoEventoId = UUID.randomUUID();
+        UUID tipoComidaId = UUID.randomUUID();
+
+        EventoRepositoryStub eventoRepository = new EventoRepositoryStub();
+        ReservaSalonRepositoryStub reservaRepository = new ReservaSalonRepositoryStub();
+        EventoApplicationService service = new EventoApplicationService(
+                new ClienteRepositoryStub(List.of(cliente)),
+                new TipoEventoRepositoryStub(Set.of(tipoEventoId)),
+                new TipoComidaRepositoryStub(Set.of(tipoComidaId)),
+                new UsuarioRepositoryStub(List.of(usuario)),
+                new SalonRepositoryStub(List.of(salon)),
+                eventoRepository,
+                reservaRepository,
+                new HistorialRepositoryStub()
+        );
+
+        EventoView evento = service.ejecutar(new CrearEventoCommand(
+                cliente.getId(), tipoEventoId, tipoComidaId, usuario.getId(),
+                LocalDateTime.of(2026, 5, 10, 18, 0), LocalDateTime.of(2026, 5, 10, 23, 0)
+        ));
+
+        EventoView conReserva = service.ejecutar(evento.id(), new CrearReservaSalonCommand(
+                usuario.getId(), salon.getId(), 50,
+                LocalDateTime.of(2026, 5, 10, 18, 0), LocalDateTime.of(2026, 5, 10, 22, 0)
+        ));
+
+        UUID reservaRaizId = conReserva.reservas().get(0).reservaRaizId();
+
+        assertThrows(DomainException.class, () ->
+                service.ejecutar(reservaRaizId, new ModificarReservaSalonCommand(
+                        usuario.getId(), UUID.randomUUID(), 60,
+                        LocalDateTime.of(2026, 5, 10, 19, 0), LocalDateTime.of(2026, 5, 10, 23, 0)
+                ))
+        );
+    }
+
+    @Test
+    void noDeberiaModificarReservaConUsuarioNoExistente() {
+        Cliente cliente = Cliente.nuevo("123", "Test", "3001111111", "test@correo.com", TipoCliente.SOCIO, null);
+        Usuario usuario = Usuario.nuevo("Admin", "$2a$hash", RolUsuario.ADMINISTRADOR);
+        Salon salon = Salon.nuevo("Salon A", 100, "Test");
+        UUID tipoEventoId = UUID.randomUUID();
+        UUID tipoComidaId = UUID.randomUUID();
+
+        EventoRepositoryStub eventoRepository = new EventoRepositoryStub();
+        ReservaSalonRepositoryStub reservaRepository = new ReservaSalonRepositoryStub();
+        EventoApplicationService service = new EventoApplicationService(
+                new ClienteRepositoryStub(List.of(cliente)),
+                new TipoEventoRepositoryStub(Set.of(tipoEventoId)),
+                new TipoComidaRepositoryStub(Set.of(tipoComidaId)),
+                new UsuarioRepositoryStub(List.of(usuario)),
+                new SalonRepositoryStub(List.of(salon)),
+                eventoRepository,
+                reservaRepository,
+                new HistorialRepositoryStub()
+        );
+
+        EventoView evento = service.ejecutar(new CrearEventoCommand(
+                cliente.getId(), tipoEventoId, tipoComidaId, usuario.getId(),
+                LocalDateTime.of(2026, 5, 10, 18, 0), LocalDateTime.of(2026, 5, 10, 23, 0)
+        ));
+
+        EventoView conReserva = service.ejecutar(evento.id(), new CrearReservaSalonCommand(
+                usuario.getId(), salon.getId(), 50,
+                LocalDateTime.of(2026, 5, 10, 18, 0), LocalDateTime.of(2026, 5, 10, 22, 0)
+        ));
+
+        UUID reservaRaizId = conReserva.reservas().get(0).reservaRaizId();
+
+        assertThrows(DomainException.class, () ->
+                service.ejecutar(reservaRaizId, new ModificarReservaSalonCommand(
+                        UUID.randomUUID(), salon.getId(), 60,
+                        LocalDateTime.of(2026, 5, 10, 19, 0), LocalDateTime.of(2026, 5, 10, 23, 0)
+                ))
+        );
+    }
+
     private static class ClienteRepositoryStub implements ClienteRepository {
 
         private final List<Cliente> clientes;
