@@ -1074,6 +1074,366 @@ class CatalogoApplicationServiceTest {
         assertEquals(2, service.listarTiposAdicional().size());
     }
 
+    // --- Casos de error adicionales para mayor cobertura ---
+    
+    @Test
+    void noDeberiaDesactivarTipoComidaNoExistente() {
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        assertThrows(DomainException.class, () -> service.desactivarTipoComida(UUID.randomUUID()));
+    }
+
+    @Test
+    void noDeberiaObtenerTipoComidaNoExistente() {
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        assertThrows(DomainException.class, () -> service.obtenerTipoComida(UUID.randomUUID()));
+    }
+
+    @Test
+    void noDeberiaActualizarTipoComidaNoExistente() {
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        assertThrows(DomainException.class, () -> 
+                service.actualizarTipoComida(UUID.randomUUID(), new CatalogoBasicoCommand("Nueva", ""))
+        );
+    }
+
+    @Test
+    void noDeberiaDesactivarColorNoExistente() {
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        assertThrows(DomainException.class, () -> service.desactivarColor(UUID.randomUUID()));
+    }
+
+    @Test
+    void noDeberiaObtenerColorNoExistente() {
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        assertThrows(DomainException.class, () -> service.obtenerColor(UUID.randomUUID()));
+    }
+
+    @Test
+    void noDeberiaActualizarColorNoExistente() {
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        assertThrows(DomainException.class, () -> 
+                service.actualizarColor(UUID.randomUUID(), new ColorCommand("Nuevo", "#AAAAAA"))
+        );
+    }
+
+    @Test
+    void noDeberiaDesactivarTipoMesaNoExistente() {
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        assertThrows(DomainException.class, () -> service.desactivarTipoMesa(UUID.randomUUID()));
+    }
+
+    @Test
+    void noDeberiaObtenerTipoMesaNoExistente() {
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        assertThrows(DomainException.class, () -> service.obtenerTipoMesa(UUID.randomUUID()));
+    }
+
+    @Test
+    void noDeberiaActualizarTipoMesaNoExistente() {
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        assertThrows(DomainException.class, () -> 
+                service.actualizarTipoMesa(UUID.randomUUID(), new CatalogoBasicoCommand("Nueva", null))
+        );
+    }
+
+    @Test
+    void noDeberiaDesactivarTipoSillaNoExistente() {
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        assertThrows(DomainException.class, () -> service.desactivarTipoSilla(UUID.randomUUID()));
+    }
+
+    @Test
+    void noDeberiaObtenerTipoSillaNoExistente() {
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        assertThrows(DomainException.class, () -> service.obtenerTipoSilla(UUID.randomUUID()));
+    }
+
+    @Test
+    void noDeberiaActualizarTipoSillaNoExistente() {
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        assertThrows(DomainException.class, () -> 
+                service.actualizarTipoSilla(UUID.randomUUID(), new CatalogoBasicoCommand("Nueva", null))
+        );
+    }
+
+    @Test
+    void noDeberiaDesactivarMantelNoExistente() {
+        ColorRepositoryStub colorRepository = new ColorRepositoryStub();
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                colorRepository,
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        assertThrows(DomainException.class, () -> service.desactivarMantel(UUID.randomUUID()));
+    }
+
+    @Test
+    void noDeberiaObtenerMantelNoExistente() {
+        ColorRepositoryStub colorRepository = new ColorRepositoryStub();
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                colorRepository,
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        assertThrows(DomainException.class, () -> service.obtenerMantel(UUID.randomUUID()));
+    }
+
+    @Test
+    void noDeberiaActualizarMantelNoExistente() {
+        ColorRepositoryStub colorRepository = new ColorRepositoryStub();
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                colorRepository,
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        var color = service.crearColor(new ColorCommand("Rojo", "#FF0000"));
+        assertThrows(DomainException.class, () -> 
+                service.actualizarMantel(UUID.randomUUID(), new CatalogoConColorCommand("Nuevo", color.id()))
+        );
+    }
+
+    @Test
+    void noDeberiaDesactivarSobremantelNoExistente() {
+        ColorRepositoryStub colorRepository = new ColorRepositoryStub();
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                colorRepository,
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        assertThrows(DomainException.class, () -> service.desactivarSobremantel(UUID.randomUUID()));
+    }
+
+    @Test
+    void noDeberiaObtenerSobremantelNoExistente() {
+        ColorRepositoryStub colorRepository = new ColorRepositoryStub();
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                colorRepository,
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        assertThrows(DomainException.class, () -> service.obtenerSobremantel(UUID.randomUUID()));
+    }
+
+    @Test
+    void noDeberiaActualizarSobremantelNoExistente() {
+        ColorRepositoryStub colorRepository = new ColorRepositoryStub();
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                colorRepository,
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        var color = service.crearColor(new ColorCommand("Azul", "#0000FF"));
+        assertThrows(DomainException.class, () -> 
+                service.actualizarSobremantel(UUID.randomUUID(), new CatalogoConColorCommand("Nuevo", color.id()))
+        );
+    }
+
+    @Test
+    void noDeberiaDesactivarTipoAdicionalNoExistente() {
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        assertThrows(DomainException.class, () -> service.desactivarTipoAdicional(UUID.randomUUID()));
+    }
+
+    @Test
+    void noDeberiaObtenerTipoAdicionalNoExistente() {
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        assertThrows(DomainException.class, () -> service.obtenerTipoAdicional(UUID.randomUUID()));
+    }
+
+    @Test
+    void noDeberiaActualizarTipoAdicionalNoExistente() {
+        CatalogoApplicationService service = new CatalogoApplicationService(
+                new TipoEventoRepositoryStub(),
+                new TipoComidaRepositoryStub(),
+                new ColorRepositoryStub(),
+                new TipoMesaRepositoryStub(),
+                new TipoSillaRepositoryStub(),
+                new MantelRepositoryStub(),
+                new SobremantelRepositoryStub(),
+                new TipoAdicionalRepositoryStub()
+        );
+
+        assertThrows(DomainException.class, () -> 
+                service.actualizarTipoAdicional(UUID.randomUUID(), new TipoAdicionalCommand("Nuevo", ModoCobroAdicional.SERVICIO, new BigDecimal("10000.00")))
+        );
+    }
+
     private static class TipoEventoRepositoryStub implements TipoEventoRepository {
 
         private final List<TipoEvento> tiposEvento = new ArrayList<>();
