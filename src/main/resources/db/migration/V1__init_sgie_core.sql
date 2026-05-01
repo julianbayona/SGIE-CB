@@ -132,6 +132,36 @@ create table reserva_salon (
     unique (id_reserva, reserva_raiz_id)
 );
 
+create table montaje (
+    id_montaje uuid primary key,
+    id_reserva uuid not null unique references reserva_salon(id_reserva),
+    observaciones varchar(500),
+    created_at timestamp not null,
+    updated_at timestamp not null
+);
+
+create table montaje_mesas_reserva (
+    id_montaje_mesa uuid primary key,
+    id_montaje uuid not null references montaje(id_montaje),
+    id_tipo_mesa uuid not null references tipo_mesa(id_tipo_mesa),
+    id_tipo_silla uuid not null references tipo_silla(id_tipo_silla),
+    silla_por_mesa integer not null,
+    cantidad_mesas integer not null,
+    id_mantel uuid not null references mantel(id_mantel),
+    id_sobremantel uuid references sobremantel(id_sobremantel),
+    vajilla boolean not null default false,
+    fajon boolean not null default false
+);
+
+create table infraestructura_reserva (
+    id_infra_reserva uuid primary key,
+    id_montaje uuid not null unique references montaje(id_montaje),
+    mesa_ponque boolean not null default false,
+    mesa_regalos boolean not null default false,
+    espacio_musicos boolean not null default false,
+    estante_bombas boolean not null default false
+);
+
 create table historial_estado_evento (
     id_historial uuid primary key,
     id_evento uuid not null references evento(id_evento),
@@ -163,4 +193,7 @@ create index idx_reserva_salon_raiz on reserva_salon (reserva_raiz_id, version);
 create index idx_reserva_salon_vigente_evento on reserva_salon (id_evento, vigente);
 create index idx_reserva_salon_vigente_evento_salon on reserva_salon (id_evento, id_salon, vigente);
 create index idx_reserva_salon_rango on reserva_salon (id_salon, vigente, fecha_hora_inicio, fecha_hora_fin);
+create index idx_montaje_reserva on montaje (id_reserva);
+create index idx_montaje_mesas_montaje on montaje_mesas_reserva (id_montaje);
+create index idx_infraestructura_montaje on infraestructura_reserva (id_montaje);
 create index idx_historial_evento_fecha on historial_estado_evento (id_evento, created_at);
