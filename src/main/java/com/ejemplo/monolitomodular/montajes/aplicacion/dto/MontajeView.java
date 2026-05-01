@@ -8,6 +8,7 @@ public record MontajeView(
         UUID reservaId,
         String observaciones,
         List<MontajeMesaReservaView> mesas,
-        InfraestructuraReservaView infraestructura
+        InfraestructuraReservaView infraestructura,
+        List<AdicionalEventoView> adicionales
 ) {
 }

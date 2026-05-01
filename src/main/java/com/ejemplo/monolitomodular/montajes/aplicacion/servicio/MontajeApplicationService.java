@@ -2,10 +2,13 @@ package com.ejemplo.monolitomodular.montajes.aplicacion.servicio;
 
 import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.MantelRepository;
 import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.SobremantelRepository;
+import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.TipoAdicionalRepository;
 import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.TipoMesaRepository;
 import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.TipoSillaRepository;
 import com.ejemplo.monolitomodular.eventos.dominio.modelo.ReservaSalon;
 import com.ejemplo.monolitomodular.eventos.dominio.puerto.salida.ReservaSalonRepository;
+import com.ejemplo.monolitomodular.montajes.aplicacion.dto.AdicionalEventoCommand;
+import com.ejemplo.monolitomodular.montajes.aplicacion.dto.AdicionalEventoView;
 import com.ejemplo.monolitomodular.montajes.aplicacion.dto.ConfigurarMontajeCommand;
 import com.ejemplo.monolitomodular.montajes.aplicacion.dto.InfraestructuraReservaCommand;
 import com.ejemplo.monolitomodular.montajes.aplicacion.dto.InfraestructuraReservaView;
@@ -14,6 +17,7 @@ import com.ejemplo.monolitomodular.montajes.aplicacion.dto.MontajeMesaReservaVie
 import com.ejemplo.monolitomodular.montajes.aplicacion.dto.MontajeView;
 import com.ejemplo.monolitomodular.montajes.aplicacion.puerto.entrada.ConfigurarMontajeUseCase;
 import com.ejemplo.monolitomodular.montajes.aplicacion.puerto.entrada.ConsultarMontajeUseCase;
+import com.ejemplo.monolitomodular.montajes.dominio.modelo.AdicionalEvento;
 import com.ejemplo.monolitomodular.montajes.dominio.modelo.InfraestructuraReserva;
 import com.ejemplo.monolitomodular.montajes.dominio.modelo.Montaje;
 import com.ejemplo.monolitomodular.montajes.dominio.modelo.MontajeMesaReserva;
@@ -34,6 +38,7 @@ public class MontajeApplicationService implements ConfigurarMontajeUseCase, Cons
     private final TipoSillaRepository tipoSillaRepository;
     private final MantelRepository mantelRepository;
     private final SobremantelRepository sobremantelRepository;
+    private final TipoAdicionalRepository tipoAdicionalRepository;
     private final MontajeRepository montajeRepository;
     private final UsuarioRepository usuarioRepository;
 
@@ -43,6 +48,7 @@ public class MontajeApplicationService implements ConfigurarMontajeUseCase, Cons
             TipoSillaRepository tipoSillaRepository,
             MantelRepository mantelRepository,
             SobremantelRepository sobremantelRepository,
+            TipoAdicionalRepository tipoAdicionalRepository,
             MontajeRepository montajeRepository,
             UsuarioRepository usuarioRepository
     ) {
@@ -51,6 +57,7 @@ public class MontajeApplicationService implements ConfigurarMontajeUseCase, Cons
         this.tipoSillaRepository = tipoSillaRepository;
         this.mantelRepository = mantelRepository;
         this.sobremantelRepository = sobremantelRepository;
+        this.tipoAdicionalRepository = tipoAdicionalRepository;
         this.montajeRepository = montajeRepository;
         this.usuarioRepository = usuarioRepository;
     }
@@ -74,7 +81,18 @@ public class MontajeApplicationService implements ConfigurarMontajeUseCase, Cons
                 .toList();
 
         InfraestructuraReserva infraestructura = toDomain(montajeId, command.infraestructura());
-        Montaje montaje = Montaje.configurar(montajeId, reservaDestino.getId(), command.observaciones(), mesas, infraestructura);
+        List<AdicionalEvento> adicionales = adicionales(command.adicionales()).stream()
+                .peek(this::validarTipoAdicional)
+                .map(adicional -> toDomain(montajeId, adicional))
+                .toList();
+        Montaje montaje = Montaje.configurar(
+                montajeId,
+                reservaDestino.getId(),
+                command.observaciones(),
+                mesas,
+                infraestructura,
+                adicionales
+        );
         return toView(montajeRepository.guardar(montaje));
     }
 
@@ -121,6 +139,12 @@ public class MontajeApplicationService implements ConfigurarMontajeUseCase, Cons
         }
     }
 
+    private void validarTipoAdicional(AdicionalEventoCommand command) {
+        if (!tipoAdicionalRepository.existeActivoPorId(command.tipoAdicionalId())) {
+            throw new DomainException("El tipo adicional no existe o esta inactivo");
+        }
+    }
+
     private MontajeMesaReserva toDomain(UUID montajeId, MontajeMesaReservaCommand command) {
         return MontajeMesaReserva.nueva(
                 montajeId,
@@ -148,14 +172,28 @@ public class MontajeApplicationService implements ConfigurarMontajeUseCase, Cons
         );
     }
 
+    private AdicionalEvento toDomain(UUID montajeId, AdicionalEventoCommand command) {
+        return AdicionalEvento.nuevo(
+                montajeId,
+                command.tipoAdicionalId(),
+                command.cantidad(),
+                command.precioOverride()
+        );
+    }
+
     private MontajeView toView(Montaje montaje) {
         return new MontajeView(
                 montaje.getId(),
                 montaje.getReservaId(),
                 montaje.getObservaciones(),
                 montaje.getMesas().stream().map(this::toView).toList(),
-                toView(montaje.getInfraestructura())
+                toView(montaje.getInfraestructura()),
+                montaje.getAdicionales().stream().map(this::toView).toList()
         );
+    }
+
+    private List<AdicionalEventoCommand> adicionales(List<AdicionalEventoCommand> adicionales) {
+        return adicionales == null ? List.of() : adicionales;
     }
 
     private MontajeMesaReservaView toView(MontajeMesaReserva mesa) {
@@ -179,6 +217,15 @@ public class MontajeApplicationService implements ConfigurarMontajeUseCase, Cons
                 infraestructura.isMesaRegalos(),
                 infraestructura.isEspacioMusicos(),
                 infraestructura.isEstanteBombas()
+        );
+    }
+
+    private AdicionalEventoView toView(AdicionalEvento adicional) {
+        return new AdicionalEventoView(
+                adicional.getId(),
+                adicional.getTipoAdicionalId(),
+                adicional.getCantidad(),
+                adicional.getPrecioOverride()
         );
     }
 }

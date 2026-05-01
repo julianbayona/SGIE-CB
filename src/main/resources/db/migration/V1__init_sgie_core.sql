@@ -162,6 +162,14 @@ create table infraestructura_reserva (
     estante_bombas boolean not null default false
 );
 
+create table adicional_evento (
+    id_adicional_evento uuid primary key,
+    id_montaje uuid not null references montaje(id_montaje),
+    id_tipo_adicional uuid not null references tipo_adicional(id_tipo_adicional),
+    cantidad integer not null,
+    precio_override numeric(12,2)
+);
+
 create table historial_estado_evento (
     id_historial uuid primary key,
     id_evento uuid not null references evento(id_evento),
@@ -196,4 +204,6 @@ create index idx_reserva_salon_rango on reserva_salon (id_salon, vigente, fecha_
 create index idx_montaje_reserva on montaje (id_reserva);
 create index idx_montaje_mesas_montaje on montaje_mesas_reserva (id_montaje);
 create index idx_infraestructura_montaje on infraestructura_reserva (id_montaje);
+create index idx_adicional_evento_montaje on adicional_evento (id_montaje);
+create index idx_adicional_evento_tipo on adicional_evento (id_tipo_adicional);
 create index idx_historial_evento_fecha on historial_estado_evento (id_evento, created_at);

@@ -2,12 +2,15 @@ package com.ejemplo.monolitomodular.montajes.aplicacion.servicio;
 
 import com.ejemplo.monolitomodular.catalogos.dominio.modelo.Mantel;
 import com.ejemplo.monolitomodular.catalogos.dominio.modelo.Sobremantel;
+import com.ejemplo.monolitomodular.catalogos.dominio.modelo.TipoAdicional;
 import com.ejemplo.monolitomodular.catalogos.dominio.modelo.TipoMesa;
 import com.ejemplo.monolitomodular.catalogos.dominio.modelo.TipoSilla;
 import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.MantelRepository;
 import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.SobremantelRepository;
+import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.TipoAdicionalRepository;
 import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.TipoMesaRepository;
 import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.TipoSillaRepository;
+import com.ejemplo.monolitomodular.montajes.aplicacion.dto.AdicionalEventoCommand;
 import com.ejemplo.monolitomodular.eventos.dominio.modelo.ReservaSalon;
 import com.ejemplo.monolitomodular.eventos.dominio.puerto.salida.ReservaSalonRepository;
 import com.ejemplo.monolitomodular.montajes.aplicacion.dto.ConfigurarMontajeCommand;
@@ -21,6 +24,7 @@ import com.ejemplo.monolitomodular.usuarios.dominio.modelo.Usuario;
 import com.ejemplo.monolitomodular.usuarios.dominio.puerto.salida.UsuarioRepository;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -37,6 +41,7 @@ class MontajeApplicationServiceTest {
         UUID tipoSillaId = UUID.randomUUID();
         UUID mantelId = UUID.randomUUID();
         UUID sobremantelId = UUID.randomUUID();
+        UUID tipoAdicionalId = UUID.randomUUID();
         Usuario usuario = Usuario.nuevo("Admin", "$2a$hash", RolUsuario.ADMINISTRADOR);
         ReservaSalon reserva = ReservaSalon.nueva(
                 UUID.randomUUID(),
@@ -53,6 +58,7 @@ class MontajeApplicationServiceTest {
                 new TipoSillaRepositoryStub(Set.of(tipoSillaId)),
                 new MantelRepositoryStub(Set.of(mantelId)),
                 new SobremantelRepositoryStub(Set.of(sobremantelId)),
+                new TipoAdicionalRepositoryStub(Set.of(tipoAdicionalId)),
                 new MontajeRepositoryStub(),
                 new UsuarioRepositoryStub(usuario)
         );
@@ -71,13 +77,16 @@ class MontajeApplicationServiceTest {
                         true,
                         false
                 )),
-                new InfraestructuraReservaCommand(false, false, true, false)
+                new InfraestructuraReservaCommand(false, false, true, false),
+                List.of(new AdicionalEventoCommand(tipoAdicionalId, 1, new BigDecimal("120000.00")))
         ));
 
         assertEquals(reserva.getId(), montaje.reservaId());
         assertEquals(1, montaje.mesas().size());
         assertEquals(10, montaje.mesas().get(0).cantidadMesas());
         assertEquals(true, montaje.infraestructura().espacioMusicos());
+        assertEquals(1, montaje.adicionales().size());
+        assertEquals(new BigDecimal("120000.00"), montaje.adicionales().get(0).precioOverride());
     }
 
     @Test
@@ -102,6 +111,7 @@ class MontajeApplicationServiceTest {
                 new TipoSillaRepositoryStub(Set.of(tipoSillaId)),
                 new MantelRepositoryStub(Set.of(mantelId)),
                 new SobremantelRepositoryStub(Set.of()),
+                new TipoAdicionalRepositoryStub(Set.of()),
                 montajeRepository,
                 new UsuarioRepositoryStub(usuario)
         );
@@ -111,14 +121,16 @@ class MontajeApplicationServiceTest {
                 usuario.getId(),
                 "Montaje inicial",
                 List.of(new MontajeMesaReservaCommand(tipoMesaId, tipoSillaId, 6, 10, mantelId, null, true, false)),
-                new InfraestructuraReservaCommand(false, false, true, false)
+                new InfraestructuraReservaCommand(false, false, true, false),
+                List.of()
         ));
         MontajeView montajeModificado = service.ejecutar(new ConfigurarMontajeCommand(
                 reserva.getReservaRaizId(),
                 usuario.getId(),
                 "Montaje modificado",
                 List.of(new MontajeMesaReservaCommand(tipoMesaId, tipoSillaId, 6, 12, mantelId, null, true, false)),
-                new InfraestructuraReservaCommand(false, true, true, false)
+                new InfraestructuraReservaCommand(false, true, true, false),
+                List.of()
         ));
 
         assertEquals(2, reservaRepository.totalVersiones());
@@ -323,6 +335,40 @@ class MontajeApplicationServiceTest {
 
         @Override
         public List<Sobremantel> listar() {
+            return List.of();
+        }
+
+        @Override
+        public boolean existeActivoPorId(UUID id) {
+            return activos.contains(id);
+        }
+
+        @Override
+        public boolean existePorNombre(String nombre) {
+            return false;
+        }
+    }
+
+    private static class TipoAdicionalRepositoryStub implements TipoAdicionalRepository {
+
+        private final Set<UUID> activos;
+
+        private TipoAdicionalRepositoryStub(Set<UUID> activos) {
+            this.activos = activos;
+        }
+
+        @Override
+        public TipoAdicional guardar(TipoAdicional tipoAdicional) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Optional<TipoAdicional> buscarPorId(UUID id) {
+            return Optional.empty();
+        }
+
+        @Override
+        public List<TipoAdicional> listar() {
             return List.of();
         }
 

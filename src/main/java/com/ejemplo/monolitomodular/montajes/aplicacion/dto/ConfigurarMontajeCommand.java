@@ -8,6 +8,7 @@ public record ConfigurarMontajeCommand(
         UUID usuarioId,
         String observaciones,
         List<MontajeMesaReservaCommand> mesas,
-        InfraestructuraReservaCommand infraestructura
+        InfraestructuraReservaCommand infraestructura,
+        List<AdicionalEventoCommand> adicionales
 ) {
 }

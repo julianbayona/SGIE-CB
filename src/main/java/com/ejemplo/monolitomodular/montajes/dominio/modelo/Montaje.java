@@ -13,13 +13,15 @@ public class Montaje {
     private final String observaciones;
     private final List<MontajeMesaReserva> mesas;
     private final InfraestructuraReserva infraestructura;
+    private final List<AdicionalEvento> adicionales;
 
     private Montaje(
             UUID id,
             UUID reservaId,
             String observaciones,
             List<MontajeMesaReserva> mesas,
-            InfraestructuraReserva infraestructura
+            InfraestructuraReserva infraestructura,
+            List<AdicionalEvento> adicionales
     ) {
         this.id = Objects.requireNonNull(id, "El id del montaje es obligatorio");
         this.reservaId = Objects.requireNonNull(reservaId, "La reserva del montaje es obligatoria");
@@ -29,6 +31,7 @@ public class Montaje {
         }
         this.mesas = List.copyOf(mesas);
         this.infraestructura = Objects.requireNonNull(infraestructura, "La infraestructura del montaje es obligatoria");
+        this.adicionales = adicionales == null ? List.of() : List.copyOf(adicionales);
     }
 
     public static Montaje configurar(
@@ -36,9 +39,10 @@ public class Montaje {
             UUID reservaId,
             String observaciones,
             List<MontajeMesaReserva> mesas,
-            InfraestructuraReserva infraestructura
+            InfraestructuraReserva infraestructura,
+            List<AdicionalEvento> adicionales
     ) {
-        return new Montaje(id, reservaId, observaciones, mesas, infraestructura);
+        return new Montaje(id, reservaId, observaciones, mesas, infraestructura, adicionales);
     }
 
     public static Montaje reconstruir(
@@ -46,9 +50,10 @@ public class Montaje {
             UUID reservaId,
             String observaciones,
             List<MontajeMesaReserva> mesas,
-            InfraestructuraReserva infraestructura
+            InfraestructuraReserva infraestructura,
+            List<AdicionalEvento> adicionales
     ) {
-        return new Montaje(id, reservaId, observaciones, mesas, infraestructura);
+        return new Montaje(id, reservaId, observaciones, mesas, infraestructura, adicionales);
     }
 
     public UUID getId() {
@@ -69,6 +74,10 @@ public class Montaje {
 
     public InfraestructuraReserva getInfraestructura() {
         return infraestructura;
+    }
+
+    public List<AdicionalEvento> getAdicionales() {
+        return adicionales;
     }
 
     private static String normalizarObservaciones(String observaciones) {

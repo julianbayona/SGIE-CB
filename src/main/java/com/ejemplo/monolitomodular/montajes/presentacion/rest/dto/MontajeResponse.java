@@ -8,6 +8,7 @@ public record MontajeResponse(
         UUID reservaId,
         String observaciones,
         List<MontajeMesaReservaResponse> mesas,
-        InfraestructuraReservaResponse infraestructura
+        InfraestructuraReservaResponse infraestructura,
+        List<AdicionalEventoResponse> adicionales
 ) {
 }

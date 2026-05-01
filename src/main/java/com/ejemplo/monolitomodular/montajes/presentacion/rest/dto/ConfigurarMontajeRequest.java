@@ -15,6 +15,7 @@ public record ConfigurarMontajeRequest(
         List<@Valid MontajeMesaReservaRequest> mesas,
         @NotNull(message = "La infraestructura del montaje es obligatoria")
         @Valid
-        InfraestructuraReservaRequest infraestructura
+        InfraestructuraReservaRequest infraestructura,
+        List<@Valid AdicionalEventoRequest> adicionales
 ) {
 }

@@ -1,5 +1,7 @@
 package com.ejemplo.monolitomodular.montajes.presentacion.rest;
 
+import com.ejemplo.monolitomodular.montajes.aplicacion.dto.AdicionalEventoCommand;
+import com.ejemplo.monolitomodular.montajes.aplicacion.dto.AdicionalEventoView;
 import com.ejemplo.monolitomodular.montajes.aplicacion.dto.ConfigurarMontajeCommand;
 import com.ejemplo.monolitomodular.montajes.aplicacion.dto.InfraestructuraReservaCommand;
 import com.ejemplo.monolitomodular.montajes.aplicacion.dto.InfraestructuraReservaView;
@@ -8,6 +10,8 @@ import com.ejemplo.monolitomodular.montajes.aplicacion.dto.MontajeMesaReservaVie
 import com.ejemplo.monolitomodular.montajes.aplicacion.dto.MontajeView;
 import com.ejemplo.monolitomodular.montajes.aplicacion.puerto.entrada.ConfigurarMontajeUseCase;
 import com.ejemplo.monolitomodular.montajes.aplicacion.puerto.entrada.ConsultarMontajeUseCase;
+import com.ejemplo.monolitomodular.montajes.presentacion.rest.dto.AdicionalEventoRequest;
+import com.ejemplo.monolitomodular.montajes.presentacion.rest.dto.AdicionalEventoResponse;
 import com.ejemplo.monolitomodular.montajes.presentacion.rest.dto.ConfigurarMontajeRequest;
 import com.ejemplo.monolitomodular.montajes.presentacion.rest.dto.InfraestructuraReservaRequest;
 import com.ejemplo.monolitomodular.montajes.presentacion.rest.dto.InfraestructuraReservaResponse;
@@ -58,7 +62,8 @@ public class MontajeController {
                 request.usuarioId(),
                 request.observaciones(),
                 request.mesas().stream().map(this::toCommand).toList(),
-                toCommand(request.infraestructura())
+                toCommand(request.infraestructura()),
+                request.adicionales() == null ? java.util.List.of() : request.adicionales().stream().map(this::toCommand).toList()
         );
     }
 
@@ -84,13 +89,22 @@ public class MontajeController {
         );
     }
 
+    private AdicionalEventoCommand toCommand(AdicionalEventoRequest request) {
+        return new AdicionalEventoCommand(
+                request.tipoAdicionalId(),
+                request.cantidad(),
+                request.precioOverride()
+        );
+    }
+
     private MontajeResponse toResponse(MontajeView view) {
         return new MontajeResponse(
                 view.id(),
                 view.reservaId(),
                 view.observaciones(),
                 view.mesas().stream().map(this::toResponse).toList(),
-                toResponse(view.infraestructura())
+                toResponse(view.infraestructura()),
+                view.adicionales().stream().map(this::toResponse).toList()
         );
     }
 
@@ -115,6 +129,15 @@ public class MontajeController {
                 view.mesaRegalos(),
                 view.espacioMusicos(),
                 view.estanteBombas()
+        );
+    }
+
+    private AdicionalEventoResponse toResponse(AdicionalEventoView view) {
+        return new AdicionalEventoResponse(
+                view.id(),
+                view.tipoAdicionalId(),
+                view.cantidad(),
+                view.precioOverride()
         );
     }
 }
