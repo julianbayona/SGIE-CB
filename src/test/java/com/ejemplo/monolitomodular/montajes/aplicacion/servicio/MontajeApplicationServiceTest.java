@@ -10,9 +10,12 @@ import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.SobremantelRe
 import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.TipoAdicionalRepository;
 import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.TipoMesaRepository;
 import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.TipoSillaRepository;
+import com.ejemplo.monolitomodular.eventos.aplicacion.servicio.ReservaSnapshotService;
 import com.ejemplo.monolitomodular.montajes.aplicacion.dto.AdicionalEventoCommand;
 import com.ejemplo.monolitomodular.eventos.dominio.modelo.ReservaSalon;
 import com.ejemplo.monolitomodular.eventos.dominio.puerto.salida.ReservaSalonRepository;
+import com.ejemplo.monolitomodular.menus.dominio.modelo.Menu;
+import com.ejemplo.monolitomodular.menus.dominio.puerto.salida.MenuRepository;
 import com.ejemplo.monolitomodular.montajes.aplicacion.dto.ConfigurarMontajeCommand;
 import com.ejemplo.monolitomodular.montajes.aplicacion.dto.InfraestructuraReservaCommand;
 import com.ejemplo.monolitomodular.montajes.aplicacion.dto.MontajeMesaReservaCommand;
@@ -52,15 +55,19 @@ class MontajeApplicationServiceTest {
                 UUID.randomUUID()
         );
 
+        ReservaSalonRepositoryStub reservaRepository = new ReservaSalonRepositoryStub(reserva);
+        MontajeRepositoryStub montajeRepository = new MontajeRepositoryStub();
+        MenuRepositoryStub menuRepository = new MenuRepositoryStub();
         MontajeApplicationService service = new MontajeApplicationService(
-                new ReservaSalonRepositoryStub(reserva),
+                reservaRepository,
                 new TipoMesaRepositoryStub(Set.of(tipoMesaId)),
                 new TipoSillaRepositoryStub(Set.of(tipoSillaId)),
                 new MantelRepositoryStub(Set.of(mantelId)),
                 new SobremantelRepositoryStub(Set.of(sobremantelId)),
                 new TipoAdicionalRepositoryStub(Set.of(tipoAdicionalId)),
-                new MontajeRepositoryStub(),
-                new UsuarioRepositoryStub(usuario)
+                montajeRepository,
+                new UsuarioRepositoryStub(usuario),
+                new ReservaSnapshotService(reservaRepository, montajeRepository, menuRepository)
         );
 
         MontajeView montaje = service.ejecutar(new ConfigurarMontajeCommand(
@@ -113,7 +120,8 @@ class MontajeApplicationServiceTest {
                 new SobremantelRepositoryStub(Set.of()),
                 new TipoAdicionalRepositoryStub(Set.of()),
                 montajeRepository,
-                new UsuarioRepositoryStub(usuario)
+                new UsuarioRepositoryStub(usuario),
+                new ReservaSnapshotService(reservaRepository, montajeRepository, new MenuRepositoryStub())
         );
 
         MontajeView montajeInicial = service.ejecutar(new ConfigurarMontajeCommand(
@@ -402,6 +410,19 @@ class MontajeApplicationServiceTest {
 
         int totalMontajes() {
             return montajes.size();
+        }
+    }
+
+    private static class MenuRepositoryStub implements MenuRepository {
+
+        @Override
+        public Menu guardar(Menu menu) {
+            return menu;
+        }
+
+        @Override
+        public Optional<Menu> buscarPorReservaId(UUID reservaId) {
+            return Optional.empty();
         }
     }
 

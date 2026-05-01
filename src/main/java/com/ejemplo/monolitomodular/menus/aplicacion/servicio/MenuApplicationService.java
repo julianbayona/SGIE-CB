@@ -1,5 +1,6 @@
 package com.ejemplo.monolitomodular.menus.aplicacion.servicio;
 
+import com.ejemplo.monolitomodular.eventos.aplicacion.servicio.ReservaSnapshotService;
 import com.ejemplo.monolitomodular.eventos.dominio.modelo.ReservaSalon;
 import com.ejemplo.monolitomodular.eventos.dominio.puerto.salida.ReservaSalonRepository;
 import com.ejemplo.monolitomodular.menus.aplicacion.dto.ConfigurarMenuCommand;
@@ -32,19 +33,22 @@ public class MenuApplicationService implements ConfigurarMenuUseCase, ConsultarM
     private final MenuRepository menuRepository;
     private final TipoMomentoMenuRepository tipoMomentoMenuRepository;
     private final PlatoRepository platoRepository;
+    private final ReservaSnapshotService reservaSnapshotService;
 
     public MenuApplicationService(
             ReservaSalonRepository reservaSalonRepository,
             UsuarioRepository usuarioRepository,
             MenuRepository menuRepository,
             TipoMomentoMenuRepository tipoMomentoMenuRepository,
-            PlatoRepository platoRepository
+            PlatoRepository platoRepository,
+            ReservaSnapshotService reservaSnapshotService
     ) {
         this.reservaSalonRepository = reservaSalonRepository;
         this.usuarioRepository = usuarioRepository;
         this.menuRepository = menuRepository;
         this.tipoMomentoMenuRepository = tipoMomentoMenuRepository;
         this.platoRepository = platoRepository;
+        this.reservaSnapshotService = reservaSnapshotService;
     }
 
     @Override
@@ -89,15 +93,7 @@ public class MenuApplicationService implements ConfigurarMenuUseCase, ConsultarM
         if (menuRepository.buscarPorReservaId(reservaActual.getId()).isEmpty()) {
             return reservaActual;
         }
-        ReservaSalon nuevaVersion = reservaActual.crearNuevaVersion(
-                reservaActual.getSalonId(),
-                reservaActual.getNumInvitados(),
-                reservaActual.getFechaHoraInicio(),
-                reservaActual.getFechaHoraFin(),
-                usuarioId
-        );
-        reservaSalonRepository.desactivarReservaVigente(reservaActual.getReservaRaizId());
-        return reservaSalonRepository.guardar(nuevaVersion);
+        return reservaSnapshotService.crearNuevaVersionCopiandoComponentes(reservaActual, usuarioId, true, false);
     }
 
     private SeleccionMenu toDomain(UUID menuId, SeleccionMenuCommand command) {

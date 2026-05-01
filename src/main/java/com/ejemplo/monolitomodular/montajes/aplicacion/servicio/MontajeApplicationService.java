@@ -5,6 +5,7 @@ import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.SobremantelRe
 import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.TipoAdicionalRepository;
 import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.TipoMesaRepository;
 import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.TipoSillaRepository;
+import com.ejemplo.monolitomodular.eventos.aplicacion.servicio.ReservaSnapshotService;
 import com.ejemplo.monolitomodular.eventos.dominio.modelo.ReservaSalon;
 import com.ejemplo.monolitomodular.eventos.dominio.puerto.salida.ReservaSalonRepository;
 import com.ejemplo.monolitomodular.montajes.aplicacion.dto.AdicionalEventoCommand;
@@ -41,6 +42,7 @@ public class MontajeApplicationService implements ConfigurarMontajeUseCase, Cons
     private final TipoAdicionalRepository tipoAdicionalRepository;
     private final MontajeRepository montajeRepository;
     private final UsuarioRepository usuarioRepository;
+    private final ReservaSnapshotService reservaSnapshotService;
 
     public MontajeApplicationService(
             ReservaSalonRepository reservaSalonRepository,
@@ -50,7 +52,8 @@ public class MontajeApplicationService implements ConfigurarMontajeUseCase, Cons
             SobremantelRepository sobremantelRepository,
             TipoAdicionalRepository tipoAdicionalRepository,
             MontajeRepository montajeRepository,
-            UsuarioRepository usuarioRepository
+            UsuarioRepository usuarioRepository,
+            ReservaSnapshotService reservaSnapshotService
     ) {
         this.reservaSalonRepository = reservaSalonRepository;
         this.tipoMesaRepository = tipoMesaRepository;
@@ -60,6 +63,7 @@ public class MontajeApplicationService implements ConfigurarMontajeUseCase, Cons
         this.tipoAdicionalRepository = tipoAdicionalRepository;
         this.montajeRepository = montajeRepository;
         this.usuarioRepository = usuarioRepository;
+        this.reservaSnapshotService = reservaSnapshotService;
     }
 
     @Override
@@ -113,15 +117,7 @@ public class MontajeApplicationService implements ConfigurarMontajeUseCase, Cons
         if (montajeRepository.buscarPorReservaId(reservaActual.getId()).isEmpty()) {
             return reservaActual;
         }
-        ReservaSalon nuevaVersion = reservaActual.crearNuevaVersion(
-                reservaActual.getSalonId(),
-                reservaActual.getNumInvitados(),
-                reservaActual.getFechaHoraInicio(),
-                reservaActual.getFechaHoraFin(),
-                usuarioId
-        );
-        reservaSalonRepository.desactivarReservaVigente(reservaActual.getReservaRaizId());
-        return reservaSalonRepository.guardar(nuevaVersion);
+        return reservaSnapshotService.crearNuevaVersionCopiandoComponentes(reservaActual, usuarioId, false, true);
     }
 
     private void validarCatalogosMesa(MontajeMesaReservaCommand command) {

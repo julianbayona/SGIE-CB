@@ -1,6 +1,7 @@
 package com.ejemplo.monolitomodular.menus.aplicacion.servicio;
 
 import com.ejemplo.monolitomodular.eventos.dominio.modelo.ReservaSalon;
+import com.ejemplo.monolitomodular.eventos.aplicacion.servicio.ReservaSnapshotService;
 import com.ejemplo.monolitomodular.eventos.dominio.puerto.salida.ReservaSalonRepository;
 import com.ejemplo.monolitomodular.menus.aplicacion.dto.ConfigurarMenuCommand;
 import com.ejemplo.monolitomodular.menus.aplicacion.dto.ItemMenuCommand;
@@ -12,6 +13,8 @@ import com.ejemplo.monolitomodular.menus.dominio.modelo.TipoMomentoMenu;
 import com.ejemplo.monolitomodular.menus.dominio.puerto.salida.MenuRepository;
 import com.ejemplo.monolitomodular.menus.dominio.puerto.salida.PlatoRepository;
 import com.ejemplo.monolitomodular.menus.dominio.puerto.salida.TipoMomentoMenuRepository;
+import com.ejemplo.monolitomodular.montajes.dominio.modelo.Montaje;
+import com.ejemplo.monolitomodular.montajes.dominio.puerto.salida.MontajeRepository;
 import com.ejemplo.monolitomodular.usuarios.dominio.modelo.RolUsuario;
 import com.ejemplo.monolitomodular.usuarios.dominio.modelo.Usuario;
 import com.ejemplo.monolitomodular.usuarios.dominio.puerto.salida.UsuarioRepository;
@@ -36,12 +39,16 @@ class MenuApplicationServiceTest {
         Usuario usuario = Usuario.nuevo("Admin", "$2a$hash", RolUsuario.ADMINISTRADOR);
         ReservaSalon reserva = reserva(usuario.getId());
 
+        ReservaSalonRepositoryStub reservaRepository = new ReservaSalonRepositoryStub(reserva);
+        MenuRepositoryStub menuRepository = new MenuRepositoryStub();
+        MontajeRepositoryStub montajeRepository = new MontajeRepositoryStub();
         MenuApplicationService service = new MenuApplicationService(
-                new ReservaSalonRepositoryStub(reserva),
+                reservaRepository,
                 new UsuarioRepositoryStub(usuario),
-                new MenuRepositoryStub(),
+                menuRepository,
                 new TipoMomentoMenuRepositoryStub(Set.of(tipoMomentoId)),
-                new PlatoRepositoryStub(Set.of(new PlatoMomento(platoId, tipoMomentoId)))
+                new PlatoRepositoryStub(Set.of(new PlatoMomento(platoId, tipoMomentoId))),
+                new ReservaSnapshotService(reservaRepository, montajeRepository, menuRepository)
         );
 
         MenuView menu = service.ejecutar(command(reserva.getReservaRaizId(), usuario.getId(), tipoMomentoId, platoId, 80));
@@ -64,7 +71,8 @@ class MenuApplicationServiceTest {
                 new UsuarioRepositoryStub(usuario),
                 menuRepository,
                 new TipoMomentoMenuRepositoryStub(Set.of(tipoMomentoId)),
-                new PlatoRepositoryStub(Set.of(new PlatoMomento(platoId, tipoMomentoId)))
+                new PlatoRepositoryStub(Set.of(new PlatoMomento(platoId, tipoMomentoId))),
+                new ReservaSnapshotService(reservaRepository, new MontajeRepositoryStub(), menuRepository)
         );
 
         MenuView inicial = service.ejecutar(command(reserva.getReservaRaizId(), usuario.getId(), tipoMomentoId, platoId, 80));
@@ -211,6 +219,19 @@ class MenuApplicationServiceTest {
 
         int totalMenus() {
             return menus.size();
+        }
+    }
+
+    private static class MontajeRepositoryStub implements MontajeRepository {
+
+        @Override
+        public Montaje guardar(Montaje montaje) {
+            return montaje;
+        }
+
+        @Override
+        public Optional<Montaje> buscarPorReservaId(UUID reservaId) {
+            return Optional.empty();
         }
     }
 
