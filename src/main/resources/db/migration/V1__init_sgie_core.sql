@@ -79,6 +79,30 @@ create table tipo_adicional (
     updated_at timestamp not null
 );
 
+create table tipo_momento_menu (
+    id_tipo_momento uuid primary key,
+    nombre varchar(120) not null,
+    activo boolean not null default true,
+    created_at timestamp not null,
+    updated_at timestamp not null
+);
+
+create table plato (
+    id_plato uuid primary key,
+    nombre varchar(120) not null,
+    descripcion varchar(500),
+    precio_base numeric(12,2) not null,
+    activo boolean not null default true,
+    created_at timestamp not null,
+    updated_at timestamp not null
+);
+
+create table plato_momento (
+    id_plato uuid not null references plato(id_plato),
+    id_tipo_momento uuid not null references tipo_momento_menu(id_tipo_momento),
+    primary key (id_plato, id_tipo_momento)
+);
+
 create table cliente (
     id_cliente uuid primary key,
     cedula varchar(20) not null unique,
@@ -170,6 +194,29 @@ create table adicional_evento (
     precio_override numeric(12,2)
 );
 
+create table menu (
+    id_menu uuid primary key,
+    id_reserva uuid not null unique references reserva_salon(id_reserva),
+    notas_generales varchar(500),
+    created_at timestamp not null,
+    updated_at timestamp not null
+);
+
+create table seleccion_menu (
+    id_seleccion_menu uuid primary key,
+    id_menu uuid not null references menu(id_menu),
+    id_tipo_momento uuid not null references tipo_momento_menu(id_tipo_momento)
+);
+
+create table item_menu (
+    id_item_menu uuid primary key,
+    id_seleccion_menu uuid not null references seleccion_menu(id_seleccion_menu),
+    id_plato uuid not null references plato(id_plato),
+    cantidad integer not null,
+    excepciones varchar(500),
+    precio_override numeric(12,2)
+);
+
 create table historial_estado_evento (
     id_historial uuid primary key,
     id_evento uuid not null references evento(id_evento),
@@ -189,6 +236,9 @@ create index idx_mantel_color on mantel (id_color);
 create index idx_sobremantel_nombre on sobremantel (nombre);
 create index idx_sobremantel_color on sobremantel (id_color);
 create index idx_tipo_adicional_nombre on tipo_adicional (nombre);
+create index idx_tipo_momento_menu_nombre on tipo_momento_menu (nombre);
+create index idx_plato_nombre on plato (nombre);
+create index idx_plato_momento_momento on plato_momento (id_tipo_momento);
 create index idx_cliente_cedula on cliente (cedula);
 create index idx_salon_nombre on salon (nombre);
 create index idx_evento_cliente on evento (id_cliente);
@@ -206,4 +256,8 @@ create index idx_montaje_mesas_montaje on montaje_mesas_reserva (id_montaje);
 create index idx_infraestructura_montaje on infraestructura_reserva (id_montaje);
 create index idx_adicional_evento_montaje on adicional_evento (id_montaje);
 create index idx_adicional_evento_tipo on adicional_evento (id_tipo_adicional);
+create index idx_menu_reserva on menu (id_reserva);
+create index idx_seleccion_menu_menu on seleccion_menu (id_menu);
+create index idx_item_menu_seleccion on item_menu (id_seleccion_menu);
+create index idx_item_menu_plato on item_menu (id_plato);
 create index idx_historial_evento_fecha on historial_estado_evento (id_evento, created_at);
