@@ -7,4 +7,8 @@ import java.util.UUID;
 public interface EnviarCotizacionUseCase {
 
     CotizacionView enviar(UUID cotizacionId);
+
+    CotizacionView aceptar(UUID cotizacionId);
+
+    CotizacionView rechazar(UUID cotizacionId);
 }

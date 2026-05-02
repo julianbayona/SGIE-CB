@@ -126,6 +126,22 @@ public class CotizacionApplicationService implements
         return toView(cotizacionRepository.guardar(cotizacion.enviar()));
     }
 
+    @Override
+    @Transactional
+    public CotizacionView aceptar(UUID cotizacionId) {
+        Cotizacion cotizacion = cotizacionRepository.buscarPorId(cotizacionId)
+                .orElseThrow(() -> new DomainException("Cotizacion no encontrada"));
+        return toView(cotizacionRepository.guardar(cotizacion.aceptar()));
+    }
+
+    @Override
+    @Transactional
+    public CotizacionView rechazar(UUID cotizacionId) {
+        Cotizacion cotizacion = cotizacionRepository.buscarPorId(cotizacionId)
+                .orElseThrow(() -> new DomainException("Cotizacion no encontrada"));
+        return toView(cotizacionRepository.guardar(cotizacion.rechazar()));
+    }
+
     private List<CotizacionItem> construirItemsDesdeReserva(UUID cotizacionId, ReservaSalon reserva) {
         Menu menu = menuRepository.buscarPorReservaId(reserva.getId())
                 .orElseThrow(() -> new DomainException("No existe menu configurado para la reserva"));

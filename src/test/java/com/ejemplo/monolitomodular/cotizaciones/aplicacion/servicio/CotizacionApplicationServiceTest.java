@@ -245,6 +245,46 @@ class CotizacionApplicationServiceTest {
         )));
     }
 
+    @Test
+    void deberiaAceptarCotizacionEnviada() {
+        EscenarioCotizacion escenario = escenario();
+        CotizacionView borrador = escenario.service().ejecutar(command(escenario.reserva().getReservaRaizId(), escenario.usuario().getId()));
+        CotizacionView generada = escenario.service().generar(borrador.id());
+        CotizacionView enviada = escenario.service().enviar(generada.id());
+
+        CotizacionView aceptada = escenario.service().aceptar(enviada.id());
+
+        assertEquals(EstadoCotizacion.ACEPTADA, aceptada.estado());
+    }
+
+    @Test
+    void deberiaRechazarCotizacionEnviada() {
+        EscenarioCotizacion escenario = escenario();
+        CotizacionView borrador = escenario.service().ejecutar(command(escenario.reserva().getReservaRaizId(), escenario.usuario().getId()));
+        CotizacionView generada = escenario.service().generar(borrador.id());
+        CotizacionView enviada = escenario.service().enviar(generada.id());
+
+        CotizacionView rechazada = escenario.service().rechazar(enviada.id());
+
+        assertEquals(EstadoCotizacion.RECHAZADA, rechazada.estado());
+    }
+
+    @Test
+    void noDeberiaAceptarCotizacionSiNoEstaEnviada() {
+        EscenarioCotizacion escenario = escenario();
+        CotizacionView borrador = escenario.service().ejecutar(command(escenario.reserva().getReservaRaizId(), escenario.usuario().getId()));
+
+        assertThrows(DomainException.class, () -> escenario.service().aceptar(borrador.id()));
+    }
+
+    @Test
+    void noDeberiaRechazarCotizacionSiNoEstaEnviada() {
+        EscenarioCotizacion escenario = escenario();
+        CotizacionView borrador = escenario.service().ejecutar(command(escenario.reserva().getReservaRaizId(), escenario.usuario().getId()));
+
+        assertThrows(DomainException.class, () -> escenario.service().rechazar(borrador.id()));
+    }
+
     private static ReservaSalon reserva(UUID usuarioId) {
         return ReservaSalon.nueva(
                 UUID.randomUUID(),

@@ -79,6 +79,27 @@ public class Cotizacion {
         return new Cotizacion(id, reservaId, usuarioId, EstadoCotizacion.ENVIADA, descuento, observaciones, items);
     }
 
+    public Cotizacion aceptar() {
+        if (estado != EstadoCotizacion.ENVIADA) {
+            throw new DomainException("Solo una cotizacion enviada puede ser aceptada");
+        }
+        return new Cotizacion(id, reservaId, usuarioId, EstadoCotizacion.ACEPTADA, descuento, observaciones, items);
+    }
+
+    public Cotizacion rechazar() {
+        if (estado != EstadoCotizacion.ENVIADA) {
+            throw new DomainException("Solo una cotizacion enviada puede ser rechazada");
+        }
+        return new Cotizacion(id, reservaId, usuarioId, EstadoCotizacion.RECHAZADA, descuento, observaciones, items);
+    }
+
+    public Cotizacion desactualizar() {
+        if (estado == EstadoCotizacion.RECHAZADA || estado == EstadoCotizacion.DESACTUALIZADA) {
+            return this;
+        }
+        return new Cotizacion(id, reservaId, usuarioId, EstadoCotizacion.DESACTUALIZADA, descuento, observaciones, items);
+    }
+
     public static Cotizacion reconstruir(
             UUID id,
             UUID reservaId,

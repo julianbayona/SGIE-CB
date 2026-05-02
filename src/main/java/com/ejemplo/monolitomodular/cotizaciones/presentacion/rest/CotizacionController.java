@@ -84,6 +84,16 @@ public class CotizacionController {
         return toResponse(enviarCotizacionUseCase.enviar(id));
     }
 
+    @PatchMapping("/cotizaciones/{id}/aceptar")
+    public CotizacionResponse aceptar(@PathVariable UUID id) {
+        return toResponse(enviarCotizacionUseCase.aceptar(id));
+    }
+
+    @PatchMapping("/cotizaciones/{id}/rechazar")
+    public CotizacionResponse rechazar(@PathVariable UUID id) {
+        return toResponse(enviarCotizacionUseCase.rechazar(id));
+    }
+
     private GenerarCotizacionCommand toCommand(UUID reservaRaizId, GenerarCotizacionRequest request) {
         return new GenerarCotizacionCommand(
                 reservaRaizId,
