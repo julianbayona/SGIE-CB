@@ -67,13 +67,14 @@ class MenuApplicationServiceTest {
         ReservaSalon reserva = reserva(usuario.getId());
         ReservaSalonRepositoryStub reservaRepository = new ReservaSalonRepositoryStub(reserva);
         MenuRepositoryStub menuRepository = new MenuRepositoryStub();
+        CotizacionRepositoryStub cotizacionRepository = new CotizacionRepositoryStub();
         MenuApplicationService service = new MenuApplicationService(
                 reservaRepository,
                 new UsuarioRepositoryStub(usuario),
                 menuRepository,
                 new TipoMomentoMenuRepositoryStub(Set.of(tipoMomentoId)),
                 new PlatoRepositoryStub(Set.of(new PlatoMomento(platoId, tipoMomentoId))),
-                new ReservaSnapshotService(reservaRepository, new MontajeRepositoryStub(), menuRepository, new CotizacionRepositoryStub())
+                new ReservaSnapshotService(reservaRepository, new MontajeRepositoryStub(), menuRepository, cotizacionRepository)
         );
 
         MenuView inicial = service.ejecutar(command(reserva.getReservaRaizId(), usuario.getId(), tipoMomentoId, platoId, 80));
@@ -84,6 +85,7 @@ class MenuApplicationServiceTest {
         assertEquals(reserva.getId(), inicial.reservaId());
         assertEquals(reservaRepository.reservaVigente().getId(), modificado.reservaId());
         assertEquals(2, menuRepository.totalMenus());
+        assertEquals(reserva.getId(), cotizacionRepository.reservaDesactualizada());
     }
 
     private static ReservaSalon reserva(UUID usuarioId) {
@@ -276,6 +278,8 @@ class MenuApplicationServiceTest {
 
     private static class CotizacionRepositoryStub implements CotizacionRepository {
 
+        private UUID reservaDesactualizada;
+
         @Override
         public Cotizacion guardar(Cotizacion cotizacion) {
             return cotizacion;
@@ -298,6 +302,11 @@ class MenuApplicationServiceTest {
 
         @Override
         public void desactualizarActivasPorReservaId(UUID reservaId) {
+            reservaDesactualizada = reservaId;
+        }
+
+        UUID reservaDesactualizada() {
+            return reservaDesactualizada;
         }
     }
 }

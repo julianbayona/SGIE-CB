@@ -113,6 +113,7 @@ class MontajeApplicationServiceTest {
         );
         ReservaSalonRepositoryStub reservaRepository = new ReservaSalonRepositoryStub(reserva);
         MontajeRepositoryStub montajeRepository = new MontajeRepositoryStub();
+        CotizacionRepositoryStub cotizacionRepository = new CotizacionRepositoryStub();
         MontajeApplicationService service = new MontajeApplicationService(
                 reservaRepository,
                 new TipoMesaRepositoryStub(Set.of(tipoMesaId)),
@@ -122,7 +123,7 @@ class MontajeApplicationServiceTest {
                 new TipoAdicionalRepositoryStub(Set.of()),
                 montajeRepository,
                 new UsuarioRepositoryStub(usuario),
-                new ReservaSnapshotService(reservaRepository, montajeRepository, new MenuRepositoryStub(), new CotizacionRepositoryStub())
+                new ReservaSnapshotService(reservaRepository, montajeRepository, new MenuRepositoryStub(), cotizacionRepository)
         );
 
         MontajeView montajeInicial = service.ejecutar(new ConfigurarMontajeCommand(
@@ -148,6 +149,7 @@ class MontajeApplicationServiceTest {
         assertEquals(reserva.getId(), montajeInicial.reservaId());
         assertEquals(reservaRepository.reservaVigente().getId(), montajeModificado.reservaId());
         assertEquals(2, montajeRepository.totalMontajes());
+        assertEquals(reserva.getId(), cotizacionRepository.reservaDesactualizada());
     }
 
     private static class ReservaSalonRepositoryStub implements ReservaSalonRepository {
@@ -451,6 +453,8 @@ class MontajeApplicationServiceTest {
 
     private static class CotizacionRepositoryStub implements CotizacionRepository {
 
+        private UUID reservaDesactualizada;
+
         @Override
         public Cotizacion guardar(Cotizacion cotizacion) {
             return cotizacion;
@@ -473,6 +477,11 @@ class MontajeApplicationServiceTest {
 
         @Override
         public void desactualizarActivasPorReservaId(UUID reservaId) {
+            reservaDesactualizada = reservaId;
+        }
+
+        UUID reservaDesactualizada() {
+            return reservaDesactualizada;
         }
     }
 }
