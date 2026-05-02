@@ -63,7 +63,7 @@ public class MenuController {
     }
 
     private ItemMenuCommand toCommand(ItemMenuRequest request) {
-        return new ItemMenuCommand(request.platoId(), request.cantidad(), request.excepciones(), request.precioOverride());
+        return new ItemMenuCommand(request.platoId(), request.cantidad(), request.excepciones());
     }
 
     private MenuResponse toResponse(MenuView view) {
@@ -84,6 +84,6 @@ public class MenuController {
     }
 
     private ItemMenuResponse toResponse(ItemMenuView view) {
-        return new ItemMenuResponse(view.id(), view.platoId(), view.cantidad(), view.excepciones(), view.precioOverride());
+        return new ItemMenuResponse(view.id(), view.platoId(), view.cantidad(), view.excepciones());
     }
 }

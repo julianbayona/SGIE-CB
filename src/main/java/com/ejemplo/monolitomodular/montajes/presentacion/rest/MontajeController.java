@@ -92,8 +92,7 @@ public class MontajeController {
     private AdicionalEventoCommand toCommand(AdicionalEventoRequest request) {
         return new AdicionalEventoCommand(
                 request.tipoAdicionalId(),
-                request.cantidad(),
-                request.precioOverride()
+                request.cantidad()
         );
     }
 
@@ -136,8 +135,7 @@ public class MontajeController {
         return new AdicionalEventoResponse(
                 view.id(),
                 view.tipoAdicionalId(),
-                view.cantidad(),
-                view.precioOverride()
+                view.cantidad()
         );
     }
 }

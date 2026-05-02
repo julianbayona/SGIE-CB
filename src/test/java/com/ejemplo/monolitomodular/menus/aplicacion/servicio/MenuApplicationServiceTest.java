@@ -1,5 +1,7 @@
 package com.ejemplo.monolitomodular.menus.aplicacion.servicio;
 
+import com.ejemplo.monolitomodular.cotizaciones.dominio.modelo.Cotizacion;
+import com.ejemplo.monolitomodular.cotizaciones.dominio.puerto.salida.CotizacionRepository;
 import com.ejemplo.monolitomodular.eventos.dominio.modelo.ReservaSalon;
 import com.ejemplo.monolitomodular.eventos.aplicacion.servicio.ReservaSnapshotService;
 import com.ejemplo.monolitomodular.eventos.dominio.puerto.salida.ReservaSalonRepository;
@@ -20,7 +22,6 @@ import com.ejemplo.monolitomodular.usuarios.dominio.modelo.Usuario;
 import com.ejemplo.monolitomodular.usuarios.dominio.puerto.salida.UsuarioRepository;
 import org.junit.jupiter.api.Test;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,7 +49,7 @@ class MenuApplicationServiceTest {
                 menuRepository,
                 new TipoMomentoMenuRepositoryStub(Set.of(tipoMomentoId)),
                 new PlatoRepositoryStub(Set.of(new PlatoMomento(platoId, tipoMomentoId))),
-                new ReservaSnapshotService(reservaRepository, montajeRepository, menuRepository)
+                new ReservaSnapshotService(reservaRepository, montajeRepository, menuRepository, new CotizacionRepositoryStub())
         );
 
         MenuView menu = service.ejecutar(command(reserva.getReservaRaizId(), usuario.getId(), tipoMomentoId, platoId, 80));
@@ -72,7 +73,7 @@ class MenuApplicationServiceTest {
                 menuRepository,
                 new TipoMomentoMenuRepositoryStub(Set.of(tipoMomentoId)),
                 new PlatoRepositoryStub(Set.of(new PlatoMomento(platoId, tipoMomentoId))),
-                new ReservaSnapshotService(reservaRepository, new MontajeRepositoryStub(), menuRepository)
+                new ReservaSnapshotService(reservaRepository, new MontajeRepositoryStub(), menuRepository, new CotizacionRepositoryStub())
         );
 
         MenuView inicial = service.ejecutar(command(reserva.getReservaRaizId(), usuario.getId(), tipoMomentoId, platoId, 80));
@@ -103,7 +104,7 @@ class MenuApplicationServiceTest {
                 "Sin lactosa",
                 List.of(new SeleccionMenuCommand(
                         tipoMomentoId,
-                        List.of(new ItemMenuCommand(platoId, cantidad, "Sin sal", new BigDecimal("25000.00")))
+                        List.of(new ItemMenuCommand(platoId, cantidad, "Sin sal"))
                 ))
         );
     }
@@ -270,6 +271,33 @@ class MenuApplicationServiceTest {
         @Override
         public boolean existeActivoParaMomento(UUID platoId, UUID tipoMomentoId) {
             return activos.contains(new PlatoMomento(platoId, tipoMomentoId));
+        }
+    }
+
+    private static class CotizacionRepositoryStub implements CotizacionRepository {
+
+        @Override
+        public Cotizacion guardar(Cotizacion cotizacion) {
+            return cotizacion;
+        }
+
+        @Override
+        public Optional<Cotizacion> buscarPorId(UUID id) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<Cotizacion> buscarActivaPorReservaId(UUID reservaId) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<Cotizacion> buscarUltimaPorReservaRaizId(UUID reservaRaizId) {
+            return Optional.empty();
+        }
+
+        @Override
+        public void desactualizarActivasPorReservaId(UUID reservaId) {
         }
     }
 }

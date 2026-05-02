@@ -1,5 +1,7 @@
 package com.ejemplo.monolitomodular.eventos.aplicacion.servicio;
 
+import com.ejemplo.monolitomodular.cotizaciones.dominio.modelo.Cotizacion;
+import com.ejemplo.monolitomodular.cotizaciones.dominio.puerto.salida.CotizacionRepository;
 import com.ejemplo.monolitomodular.eventos.dominio.modelo.ReservaSalon;
 import com.ejemplo.monolitomodular.eventos.dominio.puerto.salida.ReservaSalonRepository;
 import com.ejemplo.monolitomodular.menus.dominio.modelo.ItemMenu;
@@ -13,7 +15,6 @@ import com.ejemplo.monolitomodular.montajes.dominio.modelo.MontajeMesaReserva;
 import com.ejemplo.monolitomodular.montajes.dominio.puerto.salida.MontajeRepository;
 import org.junit.jupiter.api.Test;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,10 +40,16 @@ class ReservaSnapshotServiceTest {
         ReservaSalonRepositoryStub reservaRepository = new ReservaSalonRepositoryStub(reserva);
         MontajeRepositoryStub montajeRepository = new MontajeRepositoryStub();
         MenuRepositoryStub menuRepository = new MenuRepositoryStub();
+        CotizacionRepositoryStub cotizacionRepository = new CotizacionRepositoryStub();
         montajeRepository.guardar(montaje(reserva.getId()));
         menuRepository.guardar(menu(reserva.getId()));
 
-        ReservaSnapshotService service = new ReservaSnapshotService(reservaRepository, montajeRepository, menuRepository);
+        ReservaSnapshotService service = new ReservaSnapshotService(
+                reservaRepository,
+                montajeRepository,
+                menuRepository,
+                cotizacionRepository
+        );
 
         ReservaSalon nueva = service.crearNuevaVersionCopiandoComponentes(reserva, usuarioId, true, true);
 
@@ -53,6 +60,7 @@ class ReservaSnapshotServiceTest {
         assertEquals(nueva.getId(), menuRepository.buscarPorReservaId(nueva.getId()).orElseThrow().getReservaId());
         assertEquals(2, montajeRepository.totalMontajes());
         assertEquals(2, menuRepository.totalMenus());
+        assertEquals(reserva.getId(), cotizacionRepository.reservaDesactualizada());
     }
 
     private static Montaje montaje(UUID reservaId) {
@@ -73,7 +81,7 @@ class ReservaSnapshotServiceTest {
                         false
                 )),
                 InfraestructuraReserva.nueva(montajeId, false, true, false, false),
-                List.of(AdicionalEvento.nuevo(montajeId, UUID.randomUUID(), 1, new BigDecimal("120000.00")))
+                List.of(AdicionalEvento.nuevo(montajeId, UUID.randomUUID(), 1))
         );
     }
 
@@ -88,7 +96,7 @@ class ReservaSnapshotServiceTest {
                         seleccionId,
                         menuId,
                         UUID.randomUUID(),
-                        List.of(ItemMenu.nuevo(seleccionId, UUID.randomUUID(), 80, "Sin sal", new BigDecimal("25000.00")))
+                        List.of(ItemMenu.nuevo(seleccionId, UUID.randomUUID(), 80, "Sin sal"))
                 ))
         );
     }
@@ -198,6 +206,40 @@ class ReservaSnapshotServiceTest {
 
         int totalMenus() {
             return menus.size();
+        }
+    }
+
+    private static class CotizacionRepositoryStub implements CotizacionRepository {
+
+        private UUID reservaDesactualizada;
+
+        @Override
+        public Cotizacion guardar(Cotizacion cotizacion) {
+            return cotizacion;
+        }
+
+        @Override
+        public Optional<Cotizacion> buscarPorId(UUID id) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<Cotizacion> buscarActivaPorReservaId(UUID reservaId) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<Cotizacion> buscarUltimaPorReservaRaizId(UUID reservaRaizId) {
+            return Optional.empty();
+        }
+
+        @Override
+        public void desactualizarActivasPorReservaId(UUID reservaId) {
+            reservaDesactualizada = reservaId;
+        }
+
+        UUID reservaDesactualizada() {
+            return reservaDesactualizada;
         }
     }
 }

@@ -5,7 +5,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-import java.math.BigDecimal;
 import java.util.UUID;
 
 @Entity
@@ -28,19 +27,15 @@ public class ItemMenuJpaEntity {
     @Column(length = 500)
     private String excepciones;
 
-    @Column(name = "precio_override", precision = 12, scale = 2)
-    private BigDecimal precioOverride;
-
     protected ItemMenuJpaEntity() {
     }
 
-    public ItemMenuJpaEntity(UUID id, UUID seleccionMenuId, UUID platoId, int cantidad, String excepciones, BigDecimal precioOverride) {
+    public ItemMenuJpaEntity(UUID id, UUID seleccionMenuId, UUID platoId, int cantidad, String excepciones) {
         this.id = id;
         this.seleccionMenuId = seleccionMenuId;
         this.platoId = platoId;
         this.cantidad = cantidad;
         this.excepciones = excepciones;
-        this.precioOverride = precioOverride;
     }
 
     public UUID getId() {
@@ -61,9 +56,5 @@ public class ItemMenuJpaEntity {
 
     public String getExcepciones() {
         return excepciones;
-    }
-
-    public BigDecimal getPrecioOverride() {
-        return precioOverride;
     }
 }

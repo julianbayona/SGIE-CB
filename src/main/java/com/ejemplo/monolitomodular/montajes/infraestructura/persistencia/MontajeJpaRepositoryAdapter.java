@@ -109,8 +109,7 @@ public class MontajeJpaRepositoryAdapter implements MontajeRepository {
                 adicional.getId(),
                 adicional.getMontajeId(),
                 adicional.getTipoAdicionalId(),
-                adicional.getCantidad(),
-                adicional.getPrecioOverride()
+                adicional.getCantidad()
         );
     }
 
@@ -145,8 +144,7 @@ public class MontajeJpaRepositoryAdapter implements MontajeRepository {
                 entity.getId(),
                 entity.getMontajeId(),
                 entity.getTipoAdicionalId(),
-                entity.getCantidad(),
-                entity.getPrecioOverride()
+                entity.getCantidad()
         );
     }
 }

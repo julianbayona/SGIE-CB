@@ -172,8 +172,7 @@ public class MontajeApplicationService implements ConfigurarMontajeUseCase, Cons
         return AdicionalEvento.nuevo(
                 montajeId,
                 command.tipoAdicionalId(),
-                command.cantidad(),
-                command.precioOverride()
+                command.cantidad()
         );
     }
 
@@ -220,8 +219,7 @@ public class MontajeApplicationService implements ConfigurarMontajeUseCase, Cons
         return new AdicionalEventoView(
                 adicional.getId(),
                 adicional.getTipoAdicionalId(),
-                adicional.getCantidad(),
-                adicional.getPrecioOverride()
+                adicional.getCantidad()
         );
     }
 }

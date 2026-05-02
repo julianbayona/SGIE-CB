@@ -118,8 +118,7 @@ public class MenuApplicationService implements ConfigurarMenuUseCase, ConsultarM
                 seleccionId,
                 command.platoId(),
                 command.cantidad(),
-                command.excepciones(),
-                command.precioOverride()
+                command.excepciones()
         );
     }
 
@@ -145,8 +144,7 @@ public class MenuApplicationService implements ConfigurarMenuUseCase, ConsultarM
                 item.getId(),
                 item.getPlatoId(),
                 item.getCantidad(),
-                item.getExcepciones(),
-                item.getPrecioOverride()
+                item.getExcepciones()
         );
     }
 }

@@ -10,6 +10,8 @@ import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.SobremantelRe
 import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.TipoAdicionalRepository;
 import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.TipoMesaRepository;
 import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.TipoSillaRepository;
+import com.ejemplo.monolitomodular.cotizaciones.dominio.modelo.Cotizacion;
+import com.ejemplo.monolitomodular.cotizaciones.dominio.puerto.salida.CotizacionRepository;
 import com.ejemplo.monolitomodular.eventos.aplicacion.servicio.ReservaSnapshotService;
 import com.ejemplo.monolitomodular.montajes.aplicacion.dto.AdicionalEventoCommand;
 import com.ejemplo.monolitomodular.eventos.dominio.modelo.ReservaSalon;
@@ -27,7 +29,6 @@ import com.ejemplo.monolitomodular.usuarios.dominio.modelo.Usuario;
 import com.ejemplo.monolitomodular.usuarios.dominio.puerto.salida.UsuarioRepository;
 import org.junit.jupiter.api.Test;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -67,7 +68,7 @@ class MontajeApplicationServiceTest {
                 new TipoAdicionalRepositoryStub(Set.of(tipoAdicionalId)),
                 montajeRepository,
                 new UsuarioRepositoryStub(usuario),
-                new ReservaSnapshotService(reservaRepository, montajeRepository, menuRepository)
+                new ReservaSnapshotService(reservaRepository, montajeRepository, menuRepository, new CotizacionRepositoryStub())
         );
 
         MontajeView montaje = service.ejecutar(new ConfigurarMontajeCommand(
@@ -85,7 +86,7 @@ class MontajeApplicationServiceTest {
                         false
                 )),
                 new InfraestructuraReservaCommand(false, false, true, false),
-                List.of(new AdicionalEventoCommand(tipoAdicionalId, 1, new BigDecimal("120000.00")))
+                List.of(new AdicionalEventoCommand(tipoAdicionalId, 1))
         ));
 
         assertEquals(reserva.getId(), montaje.reservaId());
@@ -93,7 +94,7 @@ class MontajeApplicationServiceTest {
         assertEquals(10, montaje.mesas().get(0).cantidadMesas());
         assertEquals(true, montaje.infraestructura().espacioMusicos());
         assertEquals(1, montaje.adicionales().size());
-        assertEquals(new BigDecimal("120000.00"), montaje.adicionales().get(0).precioOverride());
+        assertEquals(1, montaje.adicionales().get(0).cantidad());
     }
 
     @Test
@@ -121,7 +122,7 @@ class MontajeApplicationServiceTest {
                 new TipoAdicionalRepositoryStub(Set.of()),
                 montajeRepository,
                 new UsuarioRepositoryStub(usuario),
-                new ReservaSnapshotService(reservaRepository, montajeRepository, new MenuRepositoryStub())
+                new ReservaSnapshotService(reservaRepository, montajeRepository, new MenuRepositoryStub(), new CotizacionRepositoryStub())
         );
 
         MontajeView montajeInicial = service.ejecutar(new ConfigurarMontajeCommand(
@@ -445,6 +446,33 @@ class MontajeApplicationServiceTest {
                 return Optional.of(usuario);
             }
             return Optional.empty();
+        }
+    }
+
+    private static class CotizacionRepositoryStub implements CotizacionRepository {
+
+        @Override
+        public Cotizacion guardar(Cotizacion cotizacion) {
+            return cotizacion;
+        }
+
+        @Override
+        public Optional<Cotizacion> buscarPorId(UUID id) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<Cotizacion> buscarActivaPorReservaId(UUID reservaId) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<Cotizacion> buscarUltimaPorReservaRaizId(UUID reservaRaizId) {
+            return Optional.empty();
+        }
+
+        @Override
+        public void desactualizarActivasPorReservaId(UUID reservaId) {
         }
     }
 }

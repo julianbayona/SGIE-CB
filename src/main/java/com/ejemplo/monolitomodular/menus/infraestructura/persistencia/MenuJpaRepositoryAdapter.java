@@ -65,8 +65,7 @@ public class MenuJpaRepositoryAdapter implements MenuRepository {
                 entity.getSeleccionMenuId(),
                 entity.getPlatoId(),
                 entity.getCantidad(),
-                entity.getExcepciones(),
-                entity.getPrecioOverride()
+                entity.getExcepciones()
         );
     }
 
@@ -80,8 +79,7 @@ public class MenuJpaRepositoryAdapter implements MenuRepository {
                 item.getSeleccionMenuId(),
                 item.getPlatoId(),
                 item.getCantidad(),
-                item.getExcepciones(),
-                item.getPrecioOverride()
+                item.getExcepciones()
         );
     }
 }

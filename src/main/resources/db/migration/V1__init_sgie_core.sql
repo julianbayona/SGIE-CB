@@ -190,8 +190,7 @@ create table adicional_evento (
     id_adicional_evento uuid primary key,
     id_montaje uuid not null references montaje(id_montaje),
     id_tipo_adicional uuid not null references tipo_adicional(id_tipo_adicional),
-    cantidad integer not null,
-    precio_override numeric(12,2)
+    cantidad integer not null
 );
 
 create table menu (
@@ -213,8 +212,32 @@ create table item_menu (
     id_seleccion_menu uuid not null references seleccion_menu(id_seleccion_menu),
     id_plato uuid not null references plato(id_plato),
     cantidad integer not null,
-    excepciones varchar(500),
-    precio_override numeric(12,2)
+    excepciones varchar(500)
+);
+
+create table cotizacion (
+    id_cotizacion uuid primary key,
+    id_reserva uuid not null references reserva_salon(id_reserva),
+    id_usuario uuid not null references usuario(id_usuario),
+    estado varchar(40) not null,
+    valor_subtotal numeric(12,2) not null,
+    descuento numeric(12,2) not null,
+    valor_total numeric(12,2) not null,
+    observaciones varchar(500),
+    created_at timestamp not null,
+    updated_at timestamp not null
+);
+
+create table cotizacion_item (
+    id_cotizacion_item uuid primary key,
+    id_cotizacion uuid not null references cotizacion(id_cotizacion),
+    tipo_concepto varchar(60) not null,
+    origen_id uuid not null,
+    descripcion varchar(500) not null,
+    precio_base numeric(12,2) not null,
+    precio_override numeric(12,2),
+    cantidad integer not null,
+    subtotal numeric(12,2) not null
 );
 
 create table historial_estado_evento (
@@ -260,4 +283,8 @@ create index idx_menu_reserva on menu (id_reserva);
 create index idx_seleccion_menu_menu on seleccion_menu (id_menu);
 create index idx_item_menu_seleccion on item_menu (id_seleccion_menu);
 create index idx_item_menu_plato on item_menu (id_plato);
+create index idx_cotizacion_reserva on cotizacion (id_reserva);
+create index idx_cotizacion_estado on cotizacion (estado);
+create index idx_cotizacion_item_cotizacion on cotizacion_item (id_cotizacion);
+create index idx_cotizacion_item_origen on cotizacion_item (tipo_concepto, origen_id);
 create index idx_historial_evento_fecha on historial_estado_evento (id_evento, created_at);

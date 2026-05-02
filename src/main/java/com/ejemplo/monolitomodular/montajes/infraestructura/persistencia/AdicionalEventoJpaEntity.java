@@ -5,7 +5,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-import java.math.BigDecimal;
 import java.util.UUID;
 
 @Entity
@@ -25,18 +24,14 @@ public class AdicionalEventoJpaEntity {
     @Column(nullable = false)
     private int cantidad;
 
-    @Column(name = "precio_override", precision = 12, scale = 2)
-    private BigDecimal precioOverride;
-
     protected AdicionalEventoJpaEntity() {
     }
 
-    public AdicionalEventoJpaEntity(UUID id, UUID montajeId, UUID tipoAdicionalId, int cantidad, BigDecimal precioOverride) {
+    public AdicionalEventoJpaEntity(UUID id, UUID montajeId, UUID tipoAdicionalId, int cantidad) {
         this.id = id;
         this.montajeId = montajeId;
         this.tipoAdicionalId = tipoAdicionalId;
         this.cantidad = cantidad;
-        this.precioOverride = precioOverride;
     }
 
     public UUID getId() {
@@ -53,9 +48,5 @@ public class AdicionalEventoJpaEntity {
 
     public int getCantidad() {
         return cantidad;
-    }
-
-    public BigDecimal getPrecioOverride() {
-        return precioOverride;
     }
 }

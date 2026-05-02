@@ -1,5 +1,6 @@
 package com.ejemplo.monolitomodular.eventos.aplicacion.servicio;
 
+import com.ejemplo.monolitomodular.cotizaciones.dominio.puerto.salida.CotizacionRepository;
 import com.ejemplo.monolitomodular.eventos.dominio.modelo.ReservaSalon;
 import com.ejemplo.monolitomodular.eventos.dominio.puerto.salida.ReservaSalonRepository;
 import com.ejemplo.monolitomodular.menus.dominio.modelo.ItemMenu;
@@ -22,15 +23,18 @@ public class ReservaSnapshotService {
     private final ReservaSalonRepository reservaSalonRepository;
     private final MontajeRepository montajeRepository;
     private final MenuRepository menuRepository;
+    private final CotizacionRepository cotizacionRepository;
 
     public ReservaSnapshotService(
             ReservaSalonRepository reservaSalonRepository,
             MontajeRepository montajeRepository,
-            MenuRepository menuRepository
+            MenuRepository menuRepository,
+            CotizacionRepository cotizacionRepository
     ) {
         this.reservaSalonRepository = reservaSalonRepository;
         this.montajeRepository = montajeRepository;
         this.menuRepository = menuRepository;
+        this.cotizacionRepository = cotizacionRepository;
     }
 
     public ReservaSalon crearNuevaVersionCopiandoComponentes(
@@ -47,6 +51,7 @@ public class ReservaSnapshotService {
                 usuarioId
         );
         reservaSalonRepository.desactivarReservaVigente(reservaActual.getReservaRaizId());
+        cotizacionRepository.desactualizarActivasPorReservaId(reservaActual.getId());
         ReservaSalon guardada = reservaSalonRepository.guardar(nuevaVersion);
 
         if (copiarMontaje) {
@@ -89,8 +94,7 @@ public class ReservaSnapshotService {
                 .map(adicional -> AdicionalEvento.nuevo(
                         nuevoMontajeId,
                         adicional.getTipoAdicionalId(),
-                        adicional.getCantidad(),
-                        adicional.getPrecioOverride()
+                        adicional.getCantidad()
                 ))
                 .toList();
         return Montaje.configurar(
@@ -118,8 +122,7 @@ public class ReservaSnapshotService {
                         nuevaSeleccionId,
                         item.getPlatoId(),
                         item.getCantidad(),
-                        item.getExcepciones(),
-                        item.getPrecioOverride()
+                        item.getExcepciones()
                 ))
                 .toList();
         return SeleccionMenu.nueva(nuevaSeleccionId, nuevoMenuId, seleccionAnterior.getTipoMomentoId(), items);
