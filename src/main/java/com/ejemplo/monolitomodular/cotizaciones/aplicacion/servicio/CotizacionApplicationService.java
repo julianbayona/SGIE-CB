@@ -9,6 +9,8 @@ import com.ejemplo.monolitomodular.cotizaciones.aplicacion.dto.CotizacionView;
 import com.ejemplo.monolitomodular.cotizaciones.aplicacion.dto.GenerarCotizacionCommand;
 import com.ejemplo.monolitomodular.cotizaciones.aplicacion.puerto.entrada.ActualizarItemCotizacionUseCase;
 import com.ejemplo.monolitomodular.cotizaciones.aplicacion.puerto.entrada.ConsultarCotizacionUseCase;
+import com.ejemplo.monolitomodular.cotizaciones.aplicacion.puerto.entrada.EnviarCotizacionUseCase;
+import com.ejemplo.monolitomodular.cotizaciones.aplicacion.puerto.entrada.GenerarDocumentoCotizacionUseCase;
 import com.ejemplo.monolitomodular.cotizaciones.aplicacion.puerto.entrada.GenerarCotizacionUseCase;
 import com.ejemplo.monolitomodular.cotizaciones.dominio.modelo.Cotizacion;
 import com.ejemplo.monolitomodular.cotizaciones.dominio.modelo.CotizacionItem;
@@ -36,7 +38,12 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
-public class CotizacionApplicationService implements GenerarCotizacionUseCase, ConsultarCotizacionUseCase, ActualizarItemCotizacionUseCase {
+public class CotizacionApplicationService implements
+        GenerarCotizacionUseCase,
+        ConsultarCotizacionUseCase,
+        ActualizarItemCotizacionUseCase,
+        GenerarDocumentoCotizacionUseCase,
+        EnviarCotizacionUseCase {
 
     private final ReservaSalonRepository reservaSalonRepository;
     private final UsuarioRepository usuarioRepository;
@@ -101,6 +108,22 @@ public class CotizacionApplicationService implements GenerarCotizacionUseCase, C
         Cotizacion cotizacion = cotizacionRepository.buscarPorId(command.cotizacionId())
                 .orElseThrow(() -> new DomainException("Cotizacion no encontrada"));
         return toView(cotizacionRepository.guardar(cotizacion.actualizarItem(command.itemId(), command.precioOverride())));
+    }
+
+    @Override
+    @Transactional
+    public CotizacionView generar(UUID cotizacionId) {
+        Cotizacion cotizacion = cotizacionRepository.buscarPorId(cotizacionId)
+                .orElseThrow(() -> new DomainException("Cotizacion no encontrada"));
+        return toView(cotizacionRepository.guardar(cotizacion.generarDocumento()));
+    }
+
+    @Override
+    @Transactional
+    public CotizacionView enviar(UUID cotizacionId) {
+        Cotizacion cotizacion = cotizacionRepository.buscarPorId(cotizacionId)
+                .orElseThrow(() -> new DomainException("Cotizacion no encontrada"));
+        return toView(cotizacionRepository.guardar(cotizacion.enviar()));
     }
 
     private List<CotizacionItem> construirItemsDesdeReserva(UUID cotizacionId, ReservaSalon reserva) {

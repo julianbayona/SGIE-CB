@@ -65,6 +65,20 @@ public class Cotizacion {
         return new Cotizacion(id, reservaId, usuarioId, estado, descuento, observaciones, itemsActualizados);
     }
 
+    public Cotizacion generarDocumento() {
+        if (estado != EstadoCotizacion.BORRADOR) {
+            throw new DomainException("Solo una cotizacion en borrador puede pasar a generada");
+        }
+        return new Cotizacion(id, reservaId, usuarioId, EstadoCotizacion.GENERADA, descuento, observaciones, items);
+    }
+
+    public Cotizacion enviar() {
+        if (estado != EstadoCotizacion.GENERADA) {
+            throw new DomainException("Solo una cotizacion generada puede pasar a enviada");
+        }
+        return new Cotizacion(id, reservaId, usuarioId, EstadoCotizacion.ENVIADA, descuento, observaciones, items);
+    }
+
     public static Cotizacion reconstruir(
             UUID id,
             UUID reservaId,

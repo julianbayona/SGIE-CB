@@ -211,6 +211,40 @@ class CotizacionApplicationServiceTest {
         assertEquals(new BigDecimal("2185000.00"), borradorV2.valorTotal());
     }
 
+    @Test
+    void deberiaGenerarYEnviarCotizacionEnOrden() {
+        EscenarioCotizacion escenario = escenario();
+        CotizacionView borrador = escenario.service().ejecutar(command(escenario.reserva().getReservaRaizId(), escenario.usuario().getId()));
+
+        CotizacionView generada = escenario.service().generar(borrador.id());
+        CotizacionView enviada = escenario.service().enviar(generada.id());
+
+        assertEquals(EstadoCotizacion.GENERADA, generada.estado());
+        assertEquals(EstadoCotizacion.ENVIADA, enviada.estado());
+    }
+
+    @Test
+    void noDeberiaEnviarCotizacionSiSigueEnBorrador() {
+        EscenarioCotizacion escenario = escenario();
+        CotizacionView borrador = escenario.service().ejecutar(command(escenario.reserva().getReservaRaizId(), escenario.usuario().getId()));
+
+        assertThrows(DomainException.class, () -> escenario.service().enviar(borrador.id()));
+    }
+
+    @Test
+    void noDeberiaActualizarItemCuandoCotizacionYaEstaGenerada() {
+        EscenarioCotizacion escenario = escenario();
+        CotizacionView borrador = escenario.service().ejecutar(command(escenario.reserva().getReservaRaizId(), escenario.usuario().getId()));
+        CotizacionView generada = escenario.service().generar(borrador.id());
+        UUID itemId = generada.items().get(0).id();
+
+        assertThrows(DomainException.class, () -> escenario.service().ejecutar(new ActualizarItemCotizacionCommand(
+                generada.id(),
+                itemId,
+                new BigDecimal("23000.00")
+        )));
+    }
+
     private static ReservaSalon reserva(UUID usuarioId) {
         return ReservaSalon.nueva(
                 UUID.randomUUID(),
@@ -267,6 +301,37 @@ class CotizacionApplicationServiceTest {
                 InfraestructuraReserva.nueva(montajeId, false, false, true, false),
                 List.of(AdicionalEvento.nuevo(montajeId, tipoAdicionalId, 5))
         );
+    }
+
+    private static EscenarioCotizacion escenario() {
+        Usuario usuario = Usuario.nuevo("Admin", "$2a$hash", RolUsuario.ADMINISTRADOR);
+        ReservaSalon reserva = reserva(usuario.getId());
+        CotizacionRepositoryStub cotizacionRepository = new CotizacionRepositoryStub();
+        UUID platoId = UUID.randomUUID();
+        UUID tipoAdicionalId = UUID.randomUUID();
+        CotizacionApplicationService service = new CotizacionApplicationService(
+                new ReservaSalonRepositoryStub(reserva),
+                new UsuarioRepositoryStub(usuario),
+                cotizacionRepository,
+                new MenuRepositoryStub(menu(reserva.getId(), platoId, 80)),
+                new MontajeRepositoryStub(montaje(reserva.getId(), tipoAdicionalId)),
+                new PlatoRepositoryStub(Plato.reconstruir(platoId, "Almuerzo ejecutivo", null, new BigDecimal("25000.00"), true)),
+                new TipoAdicionalRepositoryStub(TipoAdicional.reconstruir(
+                        tipoAdicionalId,
+                        "Sonido",
+                        ModoCobroAdicional.SERVICIO,
+                        new BigDecimal("120000.00"),
+                        true
+                ))
+        );
+        return new EscenarioCotizacion(usuario, reserva, service);
+    }
+
+    private record EscenarioCotizacion(
+            Usuario usuario,
+            ReservaSalon reserva,
+            CotizacionApplicationService service
+    ) {
     }
 
     private static class ReservaSalonRepositoryStub implements ReservaSalonRepository {

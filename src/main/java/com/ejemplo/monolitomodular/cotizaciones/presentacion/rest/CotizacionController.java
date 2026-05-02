@@ -6,6 +6,8 @@ import com.ejemplo.monolitomodular.cotizaciones.aplicacion.dto.CotizacionView;
 import com.ejemplo.monolitomodular.cotizaciones.aplicacion.dto.GenerarCotizacionCommand;
 import com.ejemplo.monolitomodular.cotizaciones.aplicacion.puerto.entrada.ActualizarItemCotizacionUseCase;
 import com.ejemplo.monolitomodular.cotizaciones.aplicacion.puerto.entrada.ConsultarCotizacionUseCase;
+import com.ejemplo.monolitomodular.cotizaciones.aplicacion.puerto.entrada.EnviarCotizacionUseCase;
+import com.ejemplo.monolitomodular.cotizaciones.aplicacion.puerto.entrada.GenerarDocumentoCotizacionUseCase;
 import com.ejemplo.monolitomodular.cotizaciones.aplicacion.puerto.entrada.GenerarCotizacionUseCase;
 import com.ejemplo.monolitomodular.cotizaciones.presentacion.rest.dto.ActualizarItemCotizacionRequest;
 import com.ejemplo.monolitomodular.cotizaciones.presentacion.rest.dto.CotizacionItemResponse;
@@ -29,15 +31,21 @@ public class CotizacionController {
     private final GenerarCotizacionUseCase generarCotizacionUseCase;
     private final ConsultarCotizacionUseCase consultarCotizacionUseCase;
     private final ActualizarItemCotizacionUseCase actualizarItemCotizacionUseCase;
+    private final GenerarDocumentoCotizacionUseCase generarDocumentoCotizacionUseCase;
+    private final EnviarCotizacionUseCase enviarCotizacionUseCase;
 
     public CotizacionController(
             GenerarCotizacionUseCase generarCotizacionUseCase,
             ConsultarCotizacionUseCase consultarCotizacionUseCase,
-            ActualizarItemCotizacionUseCase actualizarItemCotizacionUseCase
+            ActualizarItemCotizacionUseCase actualizarItemCotizacionUseCase,
+            GenerarDocumentoCotizacionUseCase generarDocumentoCotizacionUseCase,
+            EnviarCotizacionUseCase enviarCotizacionUseCase
     ) {
         this.generarCotizacionUseCase = generarCotizacionUseCase;
         this.consultarCotizacionUseCase = consultarCotizacionUseCase;
         this.actualizarItemCotizacionUseCase = actualizarItemCotizacionUseCase;
+        this.generarDocumentoCotizacionUseCase = generarDocumentoCotizacionUseCase;
+        this.enviarCotizacionUseCase = enviarCotizacionUseCase;
     }
 
     @PostMapping("/reservas/{reservaRaizId}/cotizaciones")
@@ -64,6 +72,16 @@ public class CotizacionController {
                 itemId,
                 request.precioOverride()
         )));
+    }
+
+    @PatchMapping("/cotizaciones/{id}/generar")
+    public CotizacionResponse generarDocumento(@PathVariable UUID id) {
+        return toResponse(generarDocumentoCotizacionUseCase.generar(id));
+    }
+
+    @PatchMapping("/cotizaciones/{id}/enviar")
+    public CotizacionResponse enviar(@PathVariable UUID id) {
+        return toResponse(enviarCotizacionUseCase.enviar(id));
     }
 
     private GenerarCotizacionCommand toCommand(UUID reservaRaizId, GenerarCotizacionRequest request) {
