@@ -1,6 +1,7 @@
 package com.ejemplo.monolitomodular.cotizaciones.presentacion.rest;
 
 import com.ejemplo.monolitomodular.cotizaciones.aplicacion.dto.ActualizarItemCotizacionCommand;
+import com.ejemplo.monolitomodular.cotizaciones.aplicacion.dto.ActualizarItemsCotizacionCommand;
 import com.ejemplo.monolitomodular.cotizaciones.aplicacion.dto.CotizacionItemView;
 import com.ejemplo.monolitomodular.cotizaciones.aplicacion.dto.CotizacionView;
 import com.ejemplo.monolitomodular.cotizaciones.aplicacion.dto.GenerarCotizacionCommand;
@@ -10,6 +11,7 @@ import com.ejemplo.monolitomodular.cotizaciones.aplicacion.puerto.entrada.Enviar
 import com.ejemplo.monolitomodular.cotizaciones.aplicacion.puerto.entrada.GenerarDocumentoCotizacionUseCase;
 import com.ejemplo.monolitomodular.cotizaciones.aplicacion.puerto.entrada.GenerarCotizacionUseCase;
 import com.ejemplo.monolitomodular.cotizaciones.presentacion.rest.dto.ActualizarItemCotizacionRequest;
+import com.ejemplo.monolitomodular.cotizaciones.presentacion.rest.dto.ActualizarItemsCotizacionRequest;
 import com.ejemplo.monolitomodular.cotizaciones.presentacion.rest.dto.CotizacionItemResponse;
 import com.ejemplo.monolitomodular.cotizaciones.presentacion.rest.dto.CotizacionResponse;
 import com.ejemplo.monolitomodular.cotizaciones.presentacion.rest.dto.GenerarCotizacionRequest;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -71,6 +74,19 @@ public class CotizacionController {
                 cotizacionId,
                 itemId,
                 request.precioOverride()
+        )));
+    }
+
+    @PutMapping("/cotizaciones/{cotizacionId}/items")
+    public CotizacionResponse actualizarItems(
+            @PathVariable UUID cotizacionId,
+            @Valid @RequestBody ActualizarItemsCotizacionRequest request
+    ) {
+        return toResponse(actualizarItemCotizacionUseCase.ejecutar(new ActualizarItemsCotizacionCommand(
+                cotizacionId,
+                request.items().stream()
+                        .map(item -> new ActualizarItemsCotizacionCommand.Item(item.itemId(), item.precioOverride()))
+                        .toList()
         )));
     }
 

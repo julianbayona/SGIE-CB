@@ -4,6 +4,7 @@ import com.ejemplo.monolitomodular.catalogos.dominio.modelo.ModoCobroAdicional;
 import com.ejemplo.monolitomodular.catalogos.dominio.modelo.TipoAdicional;
 import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.TipoAdicionalRepository;
 import com.ejemplo.monolitomodular.cotizaciones.aplicacion.dto.ActualizarItemCotizacionCommand;
+import com.ejemplo.monolitomodular.cotizaciones.aplicacion.dto.ActualizarItemsCotizacionCommand;
 import com.ejemplo.monolitomodular.cotizaciones.aplicacion.dto.CotizacionView;
 import com.ejemplo.monolitomodular.cotizaciones.aplicacion.dto.GenerarCotizacionCommand;
 import com.ejemplo.monolitomodular.cotizaciones.dominio.modelo.Cotizacion;
@@ -159,6 +160,81 @@ class CotizacionApplicationServiceTest {
         assertEquals(new BigDecimal("1840000.00"), ajustada.valorTotal());
         assertEquals(new BigDecimal("23000.00"), ajustada.items().stream()
                 .filter(item -> item.id().equals(itemMenuId))
+                .findFirst()
+                .orElseThrow()
+                .precioOverride());
+    }
+
+    @Test
+    void deberiaActualizarVariosItemsDeCotizacionEnBorrador() {
+        EscenarioCotizacion escenario = escenario();
+        CotizacionView borrador = escenario.service().ejecutar(command(escenario.reserva().getReservaRaizId(), escenario.usuario().getId()));
+        UUID itemMenuId = borrador.items().stream()
+                .filter(item -> item.tipoConcepto().equals("MENU"))
+                .findFirst()
+                .orElseThrow()
+                .id();
+        UUID itemAdicionalId = borrador.items().stream()
+                .filter(item -> item.tipoConcepto().equals("ADICIONAL"))
+                .findFirst()
+                .orElseThrow()
+                .id();
+
+        CotizacionView ajustada = escenario.service().ejecutar(new ActualizarItemsCotizacionCommand(
+                borrador.id(),
+                List.of(
+                        new ActualizarItemsCotizacionCommand.Item(itemMenuId, new BigDecimal("23000.00")),
+                        new ActualizarItemsCotizacionCommand.Item(itemAdicionalId, new BigDecimal("100000.00"))
+                )
+        ));
+
+        assertEquals(new BigDecimal("1940000.00"), ajustada.valorSubtotal());
+        assertEquals(new BigDecimal("1820000.00"), ajustada.valorTotal());
+    }
+
+    @Test
+    void noDeberiaActualizarItemsBatchConItemDuplicado() {
+        EscenarioCotizacion escenario = escenario();
+        CotizacionView borrador = escenario.service().ejecutar(command(escenario.reserva().getReservaRaizId(), escenario.usuario().getId()));
+        UUID itemId = borrador.items().get(0).id();
+
+        assertThrows(DomainException.class, () -> escenario.service().ejecutar(new ActualizarItemsCotizacionCommand(
+                borrador.id(),
+                List.of(
+                        new ActualizarItemsCotizacionCommand.Item(itemId, new BigDecimal("23000.00")),
+                        new ActualizarItemsCotizacionCommand.Item(itemId, new BigDecimal("24000.00"))
+                )
+        )));
+    }
+
+    @Test
+    void noDeberiaActualizarItemsBatchConItemInexistente() {
+        EscenarioCotizacion escenario = escenario();
+        CotizacionView borrador = escenario.service().ejecutar(command(escenario.reserva().getReservaRaizId(), escenario.usuario().getId()));
+
+        assertThrows(DomainException.class, () -> escenario.service().ejecutar(new ActualizarItemsCotizacionCommand(
+                borrador.id(),
+                List.of(new ActualizarItemsCotizacionCommand.Item(UUID.randomUUID(), new BigDecimal("23000.00")))
+        )));
+    }
+
+    @Test
+    void deberiaLimpiarPrecioOverrideDesdeActualizacionBatch() {
+        EscenarioCotizacion escenario = escenario();
+        CotizacionView borrador = escenario.service().ejecutar(command(escenario.reserva().getReservaRaizId(), escenario.usuario().getId()));
+        UUID itemId = borrador.items().get(0).id();
+        escenario.service().ejecutar(new ActualizarItemsCotizacionCommand(
+                borrador.id(),
+                List.of(new ActualizarItemsCotizacionCommand.Item(itemId, new BigDecimal("23000.00")))
+        ));
+
+        CotizacionView ajustada = escenario.service().ejecutar(new ActualizarItemsCotizacionCommand(
+                borrador.id(),
+                List.of(new ActualizarItemsCotizacionCommand.Item(itemId, null))
+        ));
+
+        assertEquals(null, ajustada.items().stream()
+                .filter(item -> item.id().equals(itemId))
                 .findFirst()
                 .orElseThrow()
                 .precioOverride());

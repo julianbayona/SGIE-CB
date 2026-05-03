@@ -4,6 +4,7 @@ import com.ejemplo.monolitomodular.catalogos.dominio.modelo.ModoCobroAdicional;
 import com.ejemplo.monolitomodular.catalogos.dominio.modelo.TipoAdicional;
 import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.TipoAdicionalRepository;
 import com.ejemplo.monolitomodular.cotizaciones.aplicacion.dto.ActualizarItemCotizacionCommand;
+import com.ejemplo.monolitomodular.cotizaciones.aplicacion.dto.ActualizarItemsCotizacionCommand;
 import com.ejemplo.monolitomodular.cotizaciones.aplicacion.dto.CotizacionItemView;
 import com.ejemplo.monolitomodular.cotizaciones.aplicacion.dto.CotizacionView;
 import com.ejemplo.monolitomodular.cotizaciones.aplicacion.dto.GenerarCotizacionCommand;
@@ -37,6 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -122,6 +124,26 @@ public class CotizacionApplicationService implements
         Cotizacion cotizacion = cotizacionRepository.buscarPorId(command.cotizacionId())
                 .orElseThrow(() -> new DomainException("Cotizacion no encontrada"));
         return toView(cotizacionRepository.guardar(cotizacion.actualizarItem(command.itemId(), command.precioOverride())));
+    }
+
+    @Override
+    @Transactional
+    public CotizacionView ejecutar(ActualizarItemsCotizacionCommand command) {
+        Cotizacion cotizacion = cotizacionRepository.buscarPorId(command.cotizacionId())
+                .orElseThrow(() -> new DomainException("Cotizacion no encontrada"));
+        Map<UUID, BigDecimal> preciosOverridePorItem = construirMapaPrecios(command);
+        return toView(cotizacionRepository.guardar(cotizacion.actualizarItems(preciosOverridePorItem)));
+    }
+
+    private Map<UUID, BigDecimal> construirMapaPrecios(ActualizarItemsCotizacionCommand command) {
+        Map<UUID, BigDecimal> preciosOverridePorItem = new LinkedHashMap<>();
+        for (ActualizarItemsCotizacionCommand.Item item : command.items()) {
+            if (preciosOverridePorItem.containsKey(item.itemId())) {
+                throw new DomainException("No se puede enviar el mismo item de cotizacion mas de una vez");
+            }
+            preciosOverridePorItem.put(item.itemId(), item.precioOverride());
+        }
+        return preciosOverridePorItem;
     }
 
     @Override

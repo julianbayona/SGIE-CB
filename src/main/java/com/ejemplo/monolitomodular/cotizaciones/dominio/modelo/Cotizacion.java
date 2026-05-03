@@ -4,8 +4,11 @@ import com.ejemplo.monolitomodular.shared.dominio.excepcion.DomainException;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class Cotizacion {
 
@@ -62,6 +65,27 @@ public class Cotizacion {
         if (!existeItem) {
             throw new DomainException("Item de cotizacion no encontrado");
         }
+        return new Cotizacion(id, reservaId, usuarioId, estado, descuento, observaciones, itemsActualizados);
+    }
+
+    public Cotizacion actualizarItems(Map<UUID, BigDecimal> preciosOverridePorItem) {
+        if (estado != EstadoCotizacion.BORRADOR) {
+            throw new DomainException("Solo se pueden modificar items de una cotizacion en borrador");
+        }
+        if (preciosOverridePorItem == null || preciosOverridePorItem.isEmpty()) {
+            throw new DomainException("Debe enviar al menos un item de cotizacion para actualizar");
+        }
+        Set<UUID> idsActuales = items.stream()
+                .map(CotizacionItem::getId)
+                .collect(Collectors.toSet());
+        if (!idsActuales.containsAll(preciosOverridePorItem.keySet())) {
+            throw new DomainException("Uno o mas items de cotizacion no existen");
+        }
+        List<CotizacionItem> itemsActualizados = items.stream()
+                .map(item -> preciosOverridePorItem.containsKey(item.getId())
+                        ? item.actualizarPrecioOverride(preciosOverridePorItem.get(item.getId()))
+                        : item)
+                .toList();
         return new Cotizacion(id, reservaId, usuarioId, estado, descuento, observaciones, itemsActualizados);
     }
 
