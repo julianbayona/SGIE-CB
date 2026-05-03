@@ -83,6 +83,18 @@ public class CotizacionItem {
         return new CotizacionItem(id, cotizacionId, tipoConcepto, origenId, descripcion, precioBase, precioOverride, cantidad);
     }
 
+    public CotizacionItem copiarParaCotizacion(UUID nuevaCotizacionId, BigDecimal nuevoPrecioOverride) {
+        return CotizacionItem.nuevo(
+                nuevaCotizacionId,
+                tipoConcepto,
+                origenId,
+                descripcion,
+                precioBase,
+                nuevoPrecioOverride,
+                cantidad
+        );
+    }
+
     public BigDecimal precioUnitario() {
         return precioOverride == null ? precioBase : precioOverride;
     }

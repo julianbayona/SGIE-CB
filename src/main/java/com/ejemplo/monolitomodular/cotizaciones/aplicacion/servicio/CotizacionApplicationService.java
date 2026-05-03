@@ -15,6 +15,7 @@ import com.ejemplo.monolitomodular.cotizaciones.aplicacion.puerto.entrada.Genera
 import com.ejemplo.monolitomodular.cotizaciones.aplicacion.puerto.entrada.GenerarCotizacionUseCase;
 import com.ejemplo.monolitomodular.cotizaciones.dominio.modelo.Cotizacion;
 import com.ejemplo.monolitomodular.cotizaciones.dominio.modelo.CotizacionItem;
+import com.ejemplo.monolitomodular.cotizaciones.dominio.modelo.EstadoCotizacion;
 import com.ejemplo.monolitomodular.cotizaciones.dominio.puerto.salida.CotizacionRepository;
 import com.ejemplo.monolitomodular.eventos.dominio.modelo.Evento;
 import com.ejemplo.monolitomodular.eventos.dominio.modelo.HistorialEstadoEvento;
@@ -123,7 +124,9 @@ public class CotizacionApplicationService implements
     public CotizacionView ejecutar(ActualizarItemCotizacionCommand command) {
         Cotizacion cotizacion = cotizacionRepository.buscarPorId(command.cotizacionId())
                 .orElseThrow(() -> new DomainException("Cotizacion no encontrada"));
-        return toView(cotizacionRepository.guardar(cotizacion.actualizarItem(command.itemId(), command.precioOverride())));
+        Map<UUID, BigDecimal> preciosOverridePorItem = new LinkedHashMap<>();
+        preciosOverridePorItem.put(command.itemId(), command.precioOverride());
+        return actualizarItems(cotizacion, preciosOverridePorItem);
     }
 
     @Override
@@ -132,7 +135,19 @@ public class CotizacionApplicationService implements
         Cotizacion cotizacion = cotizacionRepository.buscarPorId(command.cotizacionId())
                 .orElseThrow(() -> new DomainException("Cotizacion no encontrada"));
         Map<UUID, BigDecimal> preciosOverridePorItem = construirMapaPrecios(command);
-        return toView(cotizacionRepository.guardar(cotizacion.actualizarItems(preciosOverridePorItem)));
+        return actualizarItems(cotizacion, preciosOverridePorItem);
+    }
+
+    private CotizacionView actualizarItems(Cotizacion cotizacion, Map<UUID, BigDecimal> preciosOverridePorItem) {
+        if (cotizacion.getEstado() == EstadoCotizacion.BORRADOR) {
+            return toView(cotizacionRepository.guardar(cotizacion.actualizarItems(preciosOverridePorItem)));
+        }
+        if (cotizacion.getEstado() == EstadoCotizacion.GENERADA || cotizacion.getEstado() == EstadoCotizacion.ENVIADA) {
+            Cotizacion nuevaCotizacion = cotizacion.crearBorradorActualizado(UUID.randomUUID(), preciosOverridePorItem);
+            cotizacionRepository.guardar(cotizacion.desactualizar());
+            return toView(cotizacionRepository.guardar(nuevaCotizacion));
+        }
+        throw new DomainException("No se pueden modificar items de una cotizacion en estado " + cotizacion.getEstado());
     }
 
     private Map<UUID, BigDecimal> construirMapaPrecios(ActualizarItemsCotizacionCommand command) {

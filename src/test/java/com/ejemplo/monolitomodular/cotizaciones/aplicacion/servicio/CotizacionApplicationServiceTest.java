@@ -47,6 +47,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class CotizacionApplicationServiceTest {
@@ -334,14 +335,54 @@ class CotizacionApplicationServiceTest {
     }
 
     @Test
-    void noDeberiaActualizarItemCuandoCotizacionYaEstaGenerada() {
+    void deberiaCrearNuevoBorradorCuandoSeEditaCotizacionGenerada() {
         EscenarioCotizacion escenario = escenario();
         CotizacionView borrador = escenario.service().ejecutar(command(escenario.reserva().getReservaRaizId(), escenario.usuario().getId()));
         CotizacionView generada = escenario.service().generar(borrador.id());
         UUID itemId = generada.items().get(0).id();
 
-        assertThrows(DomainException.class, () -> escenario.service().ejecutar(new ActualizarItemCotizacionCommand(
+        CotizacionView nueva = escenario.service().ejecutar(new ActualizarItemCotizacionCommand(
                 generada.id(),
+                itemId,
+                new BigDecimal("23000.00")
+        ));
+
+        assertNotEquals(generada.id(), nueva.id());
+        assertEquals(EstadoCotizacion.BORRADOR, nueva.estado());
+        assertEquals(EstadoCotizacion.DESACTUALIZADA, escenario.service().obtenerPorId(generada.id()).estado());
+        assertEquals(new BigDecimal("1840000.00"), nueva.valorTotal());
+    }
+
+    @Test
+    void deberiaCrearNuevoBorradorCuandoSeEditaCotizacionEnviada() {
+        EscenarioCotizacion escenario = escenario();
+        CotizacionView borrador = escenario.service().ejecutar(command(escenario.reserva().getReservaRaizId(), escenario.usuario().getId()));
+        CotizacionView generada = escenario.service().generar(borrador.id());
+        CotizacionView enviada = escenario.service().enviar(generada.id());
+        UUID itemId = enviada.items().get(0).id();
+
+        CotizacionView nueva = escenario.service().ejecutar(new ActualizarItemsCotizacionCommand(
+                enviada.id(),
+                List.of(new ActualizarItemsCotizacionCommand.Item(itemId, new BigDecimal("23000.00")))
+        ));
+
+        assertNotEquals(enviada.id(), nueva.id());
+        assertEquals(EstadoCotizacion.BORRADOR, nueva.estado());
+        assertEquals(EstadoCotizacion.DESACTUALIZADA, escenario.service().obtenerPorId(enviada.id()).estado());
+        assertEquals(EstadoEvento.COTIZACION_ENVIADA, escenario.eventoRepository().estado());
+    }
+
+    @Test
+    void noDeberiaEditarItemsDeCotizacionAceptada() {
+        EscenarioCotizacion escenario = escenario();
+        CotizacionView borrador = escenario.service().ejecutar(command(escenario.reserva().getReservaRaizId(), escenario.usuario().getId()));
+        CotizacionView generada = escenario.service().generar(borrador.id());
+        CotizacionView enviada = escenario.service().enviar(generada.id());
+        CotizacionView aceptada = escenario.service().aceptar(enviada.id());
+        UUID itemId = aceptada.items().get(0).id();
+
+        assertThrows(DomainException.class, () -> escenario.service().ejecutar(new ActualizarItemCotizacionCommand(
+                aceptada.id(),
                 itemId,
                 new BigDecimal("23000.00")
         )));

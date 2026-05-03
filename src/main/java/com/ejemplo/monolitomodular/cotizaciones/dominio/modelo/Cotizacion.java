@@ -72,6 +72,32 @@ public class Cotizacion {
         if (estado != EstadoCotizacion.BORRADOR) {
             throw new DomainException("Solo se pueden modificar items de una cotizacion en borrador");
         }
+        validarItemsActualizables(preciosOverridePorItem);
+        List<CotizacionItem> itemsActualizados = items.stream()
+                .map(item -> preciosOverridePorItem.containsKey(item.getId())
+                        ? item.actualizarPrecioOverride(preciosOverridePorItem.get(item.getId()))
+                        : item)
+                .toList();
+        return new Cotizacion(id, reservaId, usuarioId, estado, descuento, observaciones, itemsActualizados);
+    }
+
+    public Cotizacion crearBorradorActualizado(UUID nuevaCotizacionId, Map<UUID, BigDecimal> preciosOverridePorItem) {
+        if (estado != EstadoCotizacion.GENERADA && estado != EstadoCotizacion.ENVIADA) {
+            throw new DomainException("Solo una cotizacion generada o enviada puede versionarse por cambios de items");
+        }
+        validarItemsActualizables(preciosOverridePorItem);
+        List<CotizacionItem> itemsCopiados = items.stream()
+                .map(item -> item.copiarParaCotizacion(
+                        nuevaCotizacionId,
+                        preciosOverridePorItem.containsKey(item.getId())
+                                ? preciosOverridePorItem.get(item.getId())
+                                : item.getPrecioOverride()
+                ))
+                .toList();
+        return crearBorrador(nuevaCotizacionId, reservaId, usuarioId, descuento, observaciones, itemsCopiados);
+    }
+
+    private void validarItemsActualizables(Map<UUID, BigDecimal> preciosOverridePorItem) {
         if (preciosOverridePorItem == null || preciosOverridePorItem.isEmpty()) {
             throw new DomainException("Debe enviar al menos un item de cotizacion para actualizar");
         }
@@ -81,12 +107,6 @@ public class Cotizacion {
         if (!idsActuales.containsAll(preciosOverridePorItem.keySet())) {
             throw new DomainException("Uno o mas items de cotizacion no existen");
         }
-        List<CotizacionItem> itemsActualizados = items.stream()
-                .map(item -> preciosOverridePorItem.containsKey(item.getId())
-                        ? item.actualizarPrecioOverride(preciosOverridePorItem.get(item.getId()))
-                        : item)
-                .toList();
-        return new Cotizacion(id, reservaId, usuarioId, estado, descuento, observaciones, itemsActualizados);
     }
 
     public Cotizacion generarDocumento() {
