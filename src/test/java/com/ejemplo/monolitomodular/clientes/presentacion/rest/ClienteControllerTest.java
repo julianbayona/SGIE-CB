@@ -143,4 +143,60 @@ class ClienteControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());
     }
+
+        @Test
+    void deberiaRetornar400ConMensajeEspecificoCuandoCedulaEsDuplicada() throws Exception {
+        when(registrarClienteUseCase.ejecutar(any()))
+                .thenThrow(new DomainException("Ya existe un cliente con la cedula indicada"));
+ 
+        mockMvc.perform(post("/api/clientes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "cedula": "123",
+                                    "nombreCompleto": "Ana Pérez",
+                                    "telefono": "3001234567",
+                                    "correo": "ana@mail.com",
+                                    "tipoCliente": "SOCIO"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensaje").value("Ya existe un cliente con la cedula indicada"));
+    }
+ 
+    // PI003 — Crear cliente con usuario creador inexistente
+    @Test
+    void deberiaRetornar400CuandoUsuarioCreadorEsInexistente() throws Exception {
+        when(registrarClienteUseCase.ejecutar(any()))
+                .thenThrow(new DomainException("Usuario no encontrado"));
+ 
+        mockMvc.perform(post("/api/clientes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "cedula": "123",
+                                    "nombreCompleto": "Ana Pérez",
+                                    "telefono": "3001234567",
+                                    "correo": "ana@mail.com",
+                                    "tipoCliente": "SOCIO",
+                                    "usuarioCreadorId": "00000000-0000-0000-0000-000000000099"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensaje").value("Usuario no encontrado"));
+    }
+ 
+    // PI006 — Obtener cliente inexistente por ID
+    @Test
+    void deberiaRetornar400AlObtenerClienteConIdInexistente() throws Exception {
+        UUID idInexistente = UUID.randomUUID();
+        when(consultarClienteUseCase.obtenerPorId(idInexistente))
+                .thenThrow(new DomainException("Cliente no encontrado"));
+ 
+        mockMvc.perform(get("/api/clientes/" + idInexistente))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensaje").value("Cliente no encontrado"));
+    }
+
 }
+

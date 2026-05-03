@@ -7,6 +7,7 @@ import com.ejemplo.monolitomodular.eventos.aplicacion.puerto.entrada.CrearEvento
 import com.ejemplo.monolitomodular.eventos.aplicacion.puerto.entrada.CrearReservaSalonUseCase;
 import com.ejemplo.monolitomodular.eventos.aplicacion.puerto.entrada.ModificarReservaSalonUseCase;
 import com.ejemplo.monolitomodular.eventos.dominio.modelo.EstadoEvento;
+import com.ejemplo.monolitomodular.shared.dominio.excepcion.DomainException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.BeforeEach;
@@ -178,4 +179,50 @@ class EventoControllerTest {
                         .content(body))
                 .andExpect(status().isBadRequest());
     }
+
+  @Test
+    void deberiaRetornarEventoConReservasVigentesAlConsultarPorId() throws Exception {
+        when(consultarEventoUseCase.obtenerPorId(EVENTO_ID)).thenReturn(eventoView());
+ 
+        mockMvc.perform(get("/api/eventos/" + EVENTO_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(EVENTO_ID.toString()))
+                .andExpect(jsonPath("$.reservas").isArray())
+                .andExpect(jsonPath("$.reservas[0].vigente").value(true))
+                .andExpect(jsonPath("$.reservas[0].salonId").value(SALON_ID.toString()));
+    }
+ 
+    // PI027 — Listar eventos con reservas
+    @Test
+    void deberiaRetornarListaDeEventosConSusReservasVigentes() throws Exception {
+        when(consultarEventoUseCase.listar()).thenReturn(List.of(eventoView()));
+ 
+        mockMvc.perform(get("/api/eventos"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(EVENTO_ID.toString()))
+                .andExpect(jsonPath("$[0].reservas").isArray())
+                .andExpect(jsonPath("$[0].reservas[0].vigente").value(true));
+    }
+ 
+    // PI028 — Manejo transversal de DomainException (complemento)
+    @Test
+    void deberiaRetornar400ConMensajeControladoCuandoCrearEventoLanzaDomainException() throws Exception {
+        when(crearEventoUseCase.ejecutar(any()))
+                .thenThrow(new DomainException("Cliente no encontrado"));
+ 
+        String body = String.format(
+                "{\"clienteId\":\"%s\",\"tipoEventoId\":\"%s\",\"tipoComidaId\":\"%s\"," +
+                "\"usuarioCreadorId\":\"%s\",\"fechaHoraInicio\":\"2026-06-15T18:00:00\"," +
+                "\"fechaHoraFin\":\"2026-06-15T22:00:00\"}",
+                CLIENTE_ID, TIPO_EVENTO, TIPO_COMIDA, USUARIO_ID
+        );
+ 
+        mockMvc.perform(post("/api/eventos")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensaje").value("Cliente no encontrado"))
+                .andExpect(jsonPath("$.timestamp").exists());
+    }
+    
 }

@@ -107,4 +107,39 @@ class SalonControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.mensaje").value("Ya existe un salon con el nombre indicado"));
     }
+
+@Test
+    void deberiaRetornar400ConMensajeEspecificoCuandoNombreSalonEsDuplicado() throws Exception {
+        when(registrarSalonUseCase.ejecutar(any()))
+                .thenThrow(new DomainException("Ya existe un salon con el nombre indicado"));
+ 
+        mockMvc.perform(post("/api/salones")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombre\":\"Salón República\",\"capacidad\":120,\"descripcion\":\"Principal\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensaje").value("Ya existe un salon con el nombre indicado"));
+    }
+ 
+    // PI009 — Crear salón con capacidad inválida (negativa)
+    @Test
+    void deberiaRetornar400SiCapacidadEsNegativa() throws Exception {
+        mockMvc.perform(post("/api/salones")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombre\":\"Salón B\",\"capacidad\":-10}"))
+                .andExpect(status().isBadRequest());
+    }
+ 
+    // PI010/PI011 — Consultar disponibilidad con DomainException (fechas inválidas)
+    @Test
+    void deberiaRetornar400CuandoConsultaDisponibilidadLanzaDomainException() throws Exception {
+        when(consultarSalonUseCase.consultarDisponibilidad(any()))
+                .thenThrow(new DomainException("Las fechas de consulta son inválidas"));
+ 
+        mockMvc.perform(get("/api/salones/disponibilidad")
+                        .param("fechaHoraInicio", "2025-06-01T10:00:00")
+                        .param("fechaHoraFin", "2025-06-01T09:00:00"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensaje").value("Las fechas de consulta son inválidas"));
+    }
+
 }
