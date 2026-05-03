@@ -145,7 +145,9 @@ public class CotizacionApplicationService implements
         if (cotizacion.getEstado() == EstadoCotizacion.GENERADA || cotizacion.getEstado() == EstadoCotizacion.ENVIADA) {
             Cotizacion nuevaCotizacion = cotizacion.crearBorradorActualizado(UUID.randomUUID(), preciosOverridePorItem);
             cotizacionRepository.guardar(cotizacion.desactualizar());
-            return toView(cotizacionRepository.guardar(nuevaCotizacion));
+            Cotizacion guardada = cotizacionRepository.guardar(nuevaCotizacion);
+            actualizarEvento(cotizacion, Evento::volverAPendientePorCotizacionDesactualizada);
+            return toView(guardada);
         }
         throw new DomainException("No se pueden modificar items de una cotizacion en estado " + cotizacion.getEstado());
     }

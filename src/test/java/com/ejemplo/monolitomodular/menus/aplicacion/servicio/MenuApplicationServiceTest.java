@@ -2,8 +2,13 @@ package com.ejemplo.monolitomodular.menus.aplicacion.servicio;
 
 import com.ejemplo.monolitomodular.cotizaciones.dominio.modelo.Cotizacion;
 import com.ejemplo.monolitomodular.cotizaciones.dominio.puerto.salida.CotizacionRepository;
-import com.ejemplo.monolitomodular.eventos.dominio.modelo.ReservaSalon;
 import com.ejemplo.monolitomodular.eventos.aplicacion.servicio.ReservaSnapshotService;
+import com.ejemplo.monolitomodular.eventos.dominio.modelo.EstadoEvento;
+import com.ejemplo.monolitomodular.eventos.dominio.modelo.Evento;
+import com.ejemplo.monolitomodular.eventos.dominio.modelo.HistorialEstadoEvento;
+import com.ejemplo.monolitomodular.eventos.dominio.modelo.ReservaSalon;
+import com.ejemplo.monolitomodular.eventos.dominio.puerto.salida.EventoRepository;
+import com.ejemplo.monolitomodular.eventos.dominio.puerto.salida.HistorialEstadoEventoRepository;
 import com.ejemplo.monolitomodular.eventos.dominio.puerto.salida.ReservaSalonRepository;
 import com.ejemplo.monolitomodular.menus.aplicacion.dto.ConfigurarMenuCommand;
 import com.ejemplo.monolitomodular.menus.aplicacion.dto.ItemMenuCommand;
@@ -49,7 +54,7 @@ class MenuApplicationServiceTest {
                 menuRepository,
                 new TipoMomentoMenuRepositoryStub(Set.of(tipoMomentoId)),
                 new PlatoRepositoryStub(Set.of(new PlatoMomento(platoId, tipoMomentoId))),
-                new ReservaSnapshotService(reservaRepository, montajeRepository, menuRepository, new CotizacionRepositoryStub())
+                snapshotService(reservaRepository, montajeRepository, menuRepository, new CotizacionRepositoryStub(), reserva)
         );
 
         MenuView menu = service.ejecutar(command(reserva.getReservaRaizId(), usuario.getId(), tipoMomentoId, platoId, 80));
@@ -74,7 +79,7 @@ class MenuApplicationServiceTest {
                 menuRepository,
                 new TipoMomentoMenuRepositoryStub(Set.of(tipoMomentoId)),
                 new PlatoRepositoryStub(Set.of(new PlatoMomento(platoId, tipoMomentoId))),
-                new ReservaSnapshotService(reservaRepository, new MontajeRepositoryStub(), menuRepository, cotizacionRepository)
+                snapshotService(reservaRepository, new MontajeRepositoryStub(), menuRepository, cotizacionRepository, reserva)
         );
 
         MenuView inicial = service.ejecutar(command(reserva.getReservaRaizId(), usuario.getId(), tipoMomentoId, platoId, 80));
@@ -108,6 +113,37 @@ class MenuApplicationServiceTest {
                         tipoMomentoId,
                         List.of(new ItemMenuCommand(platoId, cantidad, "Sin sal"))
                 ))
+        );
+    }
+
+    private static ReservaSnapshotService snapshotService(
+            ReservaSalonRepository reservaRepository,
+            MontajeRepository montajeRepository,
+            MenuRepository menuRepository,
+            CotizacionRepository cotizacionRepository,
+            ReservaSalon reserva
+    ) {
+        return new ReservaSnapshotService(
+                reservaRepository,
+                montajeRepository,
+                menuRepository,
+                cotizacionRepository,
+                new EventoRepositoryStub(evento(reserva)),
+                new HistorialRepositoryStub()
+        );
+    }
+
+    private static Evento evento(ReservaSalon reserva) {
+        return Evento.reconstruir(
+                reserva.getEventoId(),
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                reserva.getCreadoPor(),
+                reserva.getFechaHoraInicio(),
+                reserva.getFechaHoraFin(),
+                EstadoEvento.PENDIENTE,
+                null
         );
     }
 
@@ -312,6 +348,39 @@ class MenuApplicationServiceTest {
 
         UUID reservaDesactualizada() {
             return reservaDesactualizada;
+        }
+    }
+
+    private static class EventoRepositoryStub implements EventoRepository {
+
+        private Evento evento;
+
+        private EventoRepositoryStub(Evento evento) {
+            this.evento = evento;
+        }
+
+        @Override
+        public Evento guardar(Evento evento) {
+            this.evento = evento;
+            return evento;
+        }
+
+        @Override
+        public Optional<Evento> buscarPorId(UUID id) {
+            return evento.getId().equals(id) ? Optional.of(evento) : Optional.empty();
+        }
+
+        @Override
+        public List<Evento> listar() {
+            return List.of(evento);
+        }
+    }
+
+    private static class HistorialRepositoryStub implements HistorialEstadoEventoRepository {
+
+        @Override
+        public HistorialEstadoEvento guardar(HistorialEstadoEvento historialEstadoEvento) {
+            return historialEstadoEvento;
         }
     }
 }

@@ -108,6 +108,16 @@ public class Evento {
         return cambiarEstado(EstadoEvento.CONFIRMADO);
     }
 
+    public Evento volverAPendientePorCotizacionDesactualizada() {
+        if (estado == EstadoEvento.CANCELADO) {
+            throw new DomainException("No se puede reabrir un evento cancelado por cambios de cotizacion");
+        }
+        if (estado == EstadoEvento.CONFIRMADO || estado == EstadoEvento.PENDIENTE) {
+            return this;
+        }
+        return cambiarEstado(EstadoEvento.PENDIENTE);
+    }
+
     private Evento cambiarEstado(EstadoEvento nuevoEstado) {
         return new Evento(
                 id,

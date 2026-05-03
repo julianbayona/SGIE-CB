@@ -351,6 +351,8 @@ class CotizacionApplicationServiceTest {
         assertEquals(EstadoCotizacion.BORRADOR, nueva.estado());
         assertEquals(EstadoCotizacion.DESACTUALIZADA, escenario.service().obtenerPorId(generada.id()).estado());
         assertEquals(new BigDecimal("1840000.00"), nueva.valorTotal());
+        assertEquals(EstadoEvento.PENDIENTE, escenario.eventoRepository().estado());
+        assertEquals(0, escenario.historialRepository().total());
     }
 
     @Test
@@ -369,7 +371,8 @@ class CotizacionApplicationServiceTest {
         assertNotEquals(enviada.id(), nueva.id());
         assertEquals(EstadoCotizacion.BORRADOR, nueva.estado());
         assertEquals(EstadoCotizacion.DESACTUALIZADA, escenario.service().obtenerPorId(enviada.id()).estado());
-        assertEquals(EstadoEvento.COTIZACION_ENVIADA, escenario.eventoRepository().estado());
+        assertEquals(EstadoEvento.PENDIENTE, escenario.eventoRepository().estado());
+        assertEquals(2, escenario.historialRepository().total());
     }
 
     @Test

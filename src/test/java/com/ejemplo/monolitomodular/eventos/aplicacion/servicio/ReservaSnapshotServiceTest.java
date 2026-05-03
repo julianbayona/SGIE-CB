@@ -2,7 +2,12 @@ package com.ejemplo.monolitomodular.eventos.aplicacion.servicio;
 
 import com.ejemplo.monolitomodular.cotizaciones.dominio.modelo.Cotizacion;
 import com.ejemplo.monolitomodular.cotizaciones.dominio.puerto.salida.CotizacionRepository;
+import com.ejemplo.monolitomodular.eventos.dominio.modelo.EstadoEvento;
+import com.ejemplo.monolitomodular.eventos.dominio.modelo.Evento;
+import com.ejemplo.monolitomodular.eventos.dominio.modelo.HistorialEstadoEvento;
 import com.ejemplo.monolitomodular.eventos.dominio.modelo.ReservaSalon;
+import com.ejemplo.monolitomodular.eventos.dominio.puerto.salida.EventoRepository;
+import com.ejemplo.monolitomodular.eventos.dominio.puerto.salida.HistorialEstadoEventoRepository;
 import com.ejemplo.monolitomodular.eventos.dominio.puerto.salida.ReservaSalonRepository;
 import com.ejemplo.monolitomodular.menus.dominio.modelo.ItemMenu;
 import com.ejemplo.monolitomodular.menus.dominio.modelo.Menu;
@@ -41,6 +46,8 @@ class ReservaSnapshotServiceTest {
         MontajeRepositoryStub montajeRepository = new MontajeRepositoryStub();
         MenuRepositoryStub menuRepository = new MenuRepositoryStub();
         CotizacionRepositoryStub cotizacionRepository = new CotizacionRepositoryStub();
+        EventoRepositoryStub eventoRepository = new EventoRepositoryStub(evento(reserva, EstadoEvento.COTIZACION_APROBADA));
+        HistorialRepositoryStub historialRepository = new HistorialRepositoryStub();
         montajeRepository.guardar(montaje(reserva.getId()));
         menuRepository.guardar(menu(reserva.getId()));
 
@@ -48,7 +55,9 @@ class ReservaSnapshotServiceTest {
                 reservaRepository,
                 montajeRepository,
                 menuRepository,
-                cotizacionRepository
+                cotizacionRepository,
+                eventoRepository,
+                historialRepository
         );
 
         ReservaSalon nueva = service.crearNuevaVersionCopiandoComponentes(reserva, usuarioId, true, true);
@@ -61,6 +70,51 @@ class ReservaSnapshotServiceTest {
         assertEquals(2, montajeRepository.totalMontajes());
         assertEquals(2, menuRepository.totalMenus());
         assertEquals(reserva.getId(), cotizacionRepository.reservaDesactualizada());
+        assertEquals(EstadoEvento.PENDIENTE, eventoRepository.estado());
+        assertEquals(1, historialRepository.total());
+    }
+
+    @Test
+    void noDeberiaRetrocederEventoConfirmadoAlCrearNuevaVersionDeReserva() {
+        UUID usuarioId = UUID.randomUUID();
+        ReservaSalon reserva = ReservaSalon.nueva(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                80,
+                LocalDateTime.of(2026, 9, 10, 8, 0),
+                LocalDateTime.of(2026, 9, 10, 12, 0),
+                usuarioId
+        );
+        ReservaSalonRepositoryStub reservaRepository = new ReservaSalonRepositoryStub(reserva);
+        EventoRepositoryStub eventoRepository = new EventoRepositoryStub(evento(reserva, EstadoEvento.CONFIRMADO));
+        HistorialRepositoryStub historialRepository = new HistorialRepositoryStub();
+        ReservaSnapshotService service = new ReservaSnapshotService(
+                reservaRepository,
+                new MontajeRepositoryStub(),
+                new MenuRepositoryStub(),
+                new CotizacionRepositoryStub(),
+                eventoRepository,
+                historialRepository
+        );
+
+        service.crearNuevaVersionCopiandoComponentes(reserva, usuarioId, false, false);
+
+        assertEquals(EstadoEvento.CONFIRMADO, eventoRepository.estado());
+        assertEquals(0, historialRepository.total());
+    }
+
+    private static Evento evento(ReservaSalon reserva, EstadoEvento estado) {
+        return Evento.reconstruir(
+                reserva.getEventoId(),
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                reserva.getCreadoPor(),
+                reserva.getFechaHoraInicio(),
+                reserva.getFechaHoraFin(),
+                estado,
+                null
+        );
     }
 
     private static Montaje montaje(UUID reservaId) {
@@ -245,6 +299,50 @@ class ReservaSnapshotServiceTest {
 
         UUID reservaDesactualizada() {
             return reservaDesactualizada;
+        }
+    }
+
+    private static class EventoRepositoryStub implements EventoRepository {
+
+        private Evento evento;
+
+        private EventoRepositoryStub(Evento evento) {
+            this.evento = evento;
+        }
+
+        @Override
+        public Evento guardar(Evento evento) {
+            this.evento = evento;
+            return evento;
+        }
+
+        @Override
+        public Optional<Evento> buscarPorId(UUID id) {
+            return evento.getId().equals(id) ? Optional.of(evento) : Optional.empty();
+        }
+
+        @Override
+        public List<Evento> listar() {
+            return List.of(evento);
+        }
+
+        EstadoEvento estado() {
+            return evento.getEstado();
+        }
+    }
+
+    private static class HistorialRepositoryStub implements HistorialEstadoEventoRepository {
+
+        private final List<HistorialEstadoEvento> historiales = new ArrayList<>();
+
+        @Override
+        public HistorialEstadoEvento guardar(HistorialEstadoEvento historialEstadoEvento) {
+            historiales.add(historialEstadoEvento);
+            return historialEstadoEvento;
+        }
+
+        int total() {
+            return historiales.size();
         }
     }
 }

@@ -1,8 +1,13 @@
 package com.ejemplo.monolitomodular.eventos.aplicacion.servicio;
 
 import com.ejemplo.monolitomodular.cotizaciones.dominio.puerto.salida.CotizacionRepository;
+import com.ejemplo.monolitomodular.eventos.dominio.modelo.Evento;
+import com.ejemplo.monolitomodular.eventos.dominio.modelo.HistorialEstadoEvento;
 import com.ejemplo.monolitomodular.eventos.dominio.modelo.ReservaSalon;
+import com.ejemplo.monolitomodular.eventos.dominio.puerto.salida.EventoRepository;
+import com.ejemplo.monolitomodular.eventos.dominio.puerto.salida.HistorialEstadoEventoRepository;
 import com.ejemplo.monolitomodular.eventos.dominio.puerto.salida.ReservaSalonRepository;
+import com.ejemplo.monolitomodular.shared.dominio.excepcion.DomainException;
 import com.ejemplo.monolitomodular.menus.dominio.modelo.ItemMenu;
 import com.ejemplo.monolitomodular.menus.dominio.modelo.Menu;
 import com.ejemplo.monolitomodular.menus.dominio.modelo.SeleccionMenu;
@@ -24,17 +29,23 @@ public class ReservaSnapshotService {
     private final MontajeRepository montajeRepository;
     private final MenuRepository menuRepository;
     private final CotizacionRepository cotizacionRepository;
+    private final EventoRepository eventoRepository;
+    private final HistorialEstadoEventoRepository historialEstadoEventoRepository;
 
     public ReservaSnapshotService(
             ReservaSalonRepository reservaSalonRepository,
             MontajeRepository montajeRepository,
             MenuRepository menuRepository,
-            CotizacionRepository cotizacionRepository
+            CotizacionRepository cotizacionRepository,
+            EventoRepository eventoRepository,
+            HistorialEstadoEventoRepository historialEstadoEventoRepository
     ) {
         this.reservaSalonRepository = reservaSalonRepository;
         this.montajeRepository = montajeRepository;
         this.menuRepository = menuRepository;
         this.cotizacionRepository = cotizacionRepository;
+        this.eventoRepository = eventoRepository;
+        this.historialEstadoEventoRepository = historialEstadoEventoRepository;
     }
 
     public ReservaSalon crearNuevaVersionCopiandoComponentes(
@@ -52,6 +63,7 @@ public class ReservaSnapshotService {
         );
         reservaSalonRepository.desactivarReservaVigente(reservaActual.getReservaRaizId());
         cotizacionRepository.desactualizarActivasPorReservaId(reservaActual.getId());
+        volverEventoAPendienteSiAplica(reservaActual, usuarioId);
         ReservaSalon guardada = reservaSalonRepository.guardar(nuevaVersion);
 
         if (copiarMontaje) {
@@ -66,6 +78,21 @@ public class ReservaSnapshotService {
         }
 
         return guardada;
+    }
+
+    private void volverEventoAPendienteSiAplica(ReservaSalon reservaActual, UUID usuarioId) {
+        Evento evento = eventoRepository.buscarPorId(reservaActual.getEventoId())
+                .orElseThrow(() -> new DomainException("Evento asociado a la reserva no encontrado"));
+        Evento actualizado = evento.volverAPendientePorCotizacionDesactualizada();
+        if (actualizado.getEstado() != evento.getEstado()) {
+            eventoRepository.guardar(actualizado);
+            historialEstadoEventoRepository.guardar(HistorialEstadoEvento.registrarCambio(
+                    evento.getId(),
+                    usuarioId,
+                    evento.getEstado(),
+                    actualizado.getEstado()
+            ));
+        }
     }
 
     private Montaje copiarMontaje(Montaje montajeAnterior, UUID nuevaReservaId) {
