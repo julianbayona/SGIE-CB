@@ -64,6 +64,11 @@ public class CotizacionController {
         return toResponse(consultarCotizacionUseCase.obtenerPorId(id));
     }
 
+    @GetMapping("/reservas/{reservaRaizId}/cotizacion-vigente")
+    public CotizacionResponse obtenerVigente(@PathVariable UUID reservaRaizId) {
+        return toResponse(consultarCotizacionUseCase.obtenerVigentePorReservaRaizId(reservaRaizId));
+    }
+
     @PatchMapping("/cotizaciones/{cotizacionId}/items/{itemId}")
     public CotizacionResponse actualizarItem(
             @PathVariable UUID cotizacionId,
@@ -125,6 +130,7 @@ public class CotizacionController {
                 view.reservaId(),
                 view.usuarioId(),
                 view.estado(),
+                view.vigente(),
                 view.valorSubtotal(),
                 view.descuento(),
                 view.valorTotal(),

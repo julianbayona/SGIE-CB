@@ -7,4 +7,6 @@ import java.util.UUID;
 public interface ConsultarCotizacionUseCase {
 
     CotizacionView obtenerPorId(UUID id);
+
+    CotizacionView obtenerVigentePorReservaRaizId(UUID reservaRaizId);
 }

@@ -30,6 +30,9 @@ public class CotizacionJpaEntity {
     @Column(name = "estado", nullable = false, length = 40)
     private EstadoCotizacion estado;
 
+    @Column(name = "vigente", nullable = false)
+    private boolean vigente;
+
     @Column(name = "valor_subtotal", nullable = false)
     private BigDecimal valorSubtotal;
 
@@ -56,6 +59,7 @@ public class CotizacionJpaEntity {
             UUID reservaId,
             UUID usuarioId,
             EstadoCotizacion estado,
+            boolean vigente,
             BigDecimal valorSubtotal,
             BigDecimal descuento,
             BigDecimal valorTotal,
@@ -67,6 +71,7 @@ public class CotizacionJpaEntity {
         this.reservaId = reservaId;
         this.usuarioId = usuarioId;
         this.estado = estado;
+        this.vigente = vigente;
         this.valorSubtotal = valorSubtotal;
         this.descuento = descuento;
         this.valorTotal = valorTotal;
@@ -89,6 +94,10 @@ public class CotizacionJpaEntity {
 
     public EstadoCotizacion getEstado() {
         return estado;
+    }
+
+    public boolean isVigente() {
+        return vigente;
     }
 
     public BigDecimal getDescuento() {

@@ -11,6 +11,7 @@ public record CotizacionResponse(
         UUID reservaId,
         UUID usuarioId,
         EstadoCotizacion estado,
+        boolean vigente,
         BigDecimal valorSubtotal,
         BigDecimal descuento,
         BigDecimal valorTotal,

@@ -2,7 +2,6 @@ package com.ejemplo.monolitomodular.cotizaciones.infraestructura.persistencia;
 
 import com.ejemplo.monolitomodular.cotizaciones.dominio.modelo.Cotizacion;
 import com.ejemplo.monolitomodular.cotizaciones.dominio.modelo.CotizacionItem;
-import com.ejemplo.monolitomodular.cotizaciones.dominio.modelo.EstadoCotizacion;
 import com.ejemplo.monolitomodular.cotizaciones.dominio.puerto.salida.CotizacionRepository;
 import org.springframework.stereotype.Repository;
 
@@ -13,11 +12,6 @@ import java.util.UUID;
 
 @Repository
 public class CotizacionJpaRepositoryAdapter implements CotizacionRepository {
-
-    private static final List<EstadoCotizacion> ESTADOS_INACTIVOS = List.of(
-            EstadoCotizacion.RECHAZADA,
-            EstadoCotizacion.DESACTUALIZADA
-    );
 
     private final SpringDataCotizacionJpaRepository cotizacionRepository;
     private final SpringDataCotizacionItemJpaRepository itemRepository;
@@ -38,6 +32,7 @@ public class CotizacionJpaRepositoryAdapter implements CotizacionRepository {
                 cotizacion.getReservaId(),
                 cotizacion.getUsuarioId(),
                 cotizacion.getEstado(),
+                cotizacion.isVigente(),
                 cotizacion.getValorSubtotal(),
                 cotizacion.getDescuento(),
                 cotizacion.getValorTotal(),
@@ -56,7 +51,7 @@ public class CotizacionJpaRepositoryAdapter implements CotizacionRepository {
 
     @Override
     public Optional<Cotizacion> buscarActivaPorReservaId(UUID reservaId) {
-        return cotizacionRepository.findByReservaIdAndEstadoNotInOrderByCreatedAtDesc(reservaId, ESTADOS_INACTIVOS)
+        return cotizacionRepository.findByReservaIdAndVigenteTrueOrderByCreatedAtDesc(reservaId)
                 .stream()
                 .findFirst()
                 .map(this::toDomain);
@@ -84,6 +79,7 @@ public class CotizacionJpaRepositoryAdapter implements CotizacionRepository {
                 entity.getReservaId(),
                 entity.getUsuarioId(),
                 entity.getEstado(),
+                entity.isVigente(),
                 entity.getDescuento(),
                 entity.getObservaciones(),
                 items

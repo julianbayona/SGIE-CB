@@ -82,6 +82,7 @@ class CotizacionApplicationServiceTest {
 
         assertEquals(reserva.getId(), cotizacion.reservaId());
         assertEquals(EstadoCotizacion.BORRADOR, cotizacion.estado());
+        assertEquals(true, cotizacion.vigente());
         assertEquals(new BigDecimal("2120000.00"), cotizacion.valorSubtotal());
         assertEquals(new BigDecimal("120000.00"), cotizacion.descuento());
         assertEquals(new BigDecimal("2000000.00"), cotizacion.valorTotal());
@@ -349,7 +350,9 @@ class CotizacionApplicationServiceTest {
 
         assertNotEquals(generada.id(), nueva.id());
         assertEquals(EstadoCotizacion.BORRADOR, nueva.estado());
+        assertEquals(true, nueva.vigente());
         assertEquals(EstadoCotizacion.DESACTUALIZADA, escenario.service().obtenerPorId(generada.id()).estado());
+        assertEquals(false, escenario.service().obtenerPorId(generada.id()).vigente());
         assertEquals(new BigDecimal("1840000.00"), nueva.valorTotal());
         assertEquals(EstadoEvento.PENDIENTE, escenario.eventoRepository().estado());
         assertEquals(0, escenario.historialRepository().total());
@@ -370,9 +373,29 @@ class CotizacionApplicationServiceTest {
 
         assertNotEquals(enviada.id(), nueva.id());
         assertEquals(EstadoCotizacion.BORRADOR, nueva.estado());
+        assertEquals(true, nueva.vigente());
         assertEquals(EstadoCotizacion.DESACTUALIZADA, escenario.service().obtenerPorId(enviada.id()).estado());
+        assertEquals(false, escenario.service().obtenerPorId(enviada.id()).vigente());
         assertEquals(EstadoEvento.PENDIENTE, escenario.eventoRepository().estado());
         assertEquals(2, escenario.historialRepository().total());
+    }
+
+    @Test
+    void deberiaConsultarCotizacionVigenteDeReservaRaiz() {
+        EscenarioCotizacion escenario = escenario();
+        CotizacionView borrador = escenario.service().ejecutar(command(escenario.reserva().getReservaRaizId(), escenario.usuario().getId()));
+        CotizacionView generada = escenario.service().generar(borrador.id());
+        UUID itemId = generada.items().get(0).id();
+        CotizacionView nueva = escenario.service().ejecutar(new ActualizarItemCotizacionCommand(
+                generada.id(),
+                itemId,
+                new BigDecimal("23000.00")
+        ));
+
+        CotizacionView vigente = escenario.service().obtenerVigentePorReservaRaizId(escenario.reserva().getReservaRaizId());
+
+        assertEquals(nueva.id(), vigente.id());
+        assertEquals(true, vigente.vigente());
     }
 
     @Test
@@ -703,8 +726,7 @@ class CotizacionApplicationServiceTest {
         public Optional<Cotizacion> buscarActivaPorReservaId(UUID reservaId) {
             return cotizaciones.stream()
                     .filter(cotizacion -> cotizacion.getReservaId().equals(reservaId))
-                    .filter(cotizacion -> cotizacion.getEstado() != EstadoCotizacion.RECHAZADA)
-                    .filter(cotizacion -> cotizacion.getEstado() != EstadoCotizacion.DESACTUALIZADA)
+                    .filter(Cotizacion::isVigente)
                     .findFirst();
         }
 

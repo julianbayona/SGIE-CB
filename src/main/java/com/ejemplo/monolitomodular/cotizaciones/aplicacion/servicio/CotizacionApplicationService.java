@@ -120,6 +120,15 @@ public class CotizacionApplicationService implements
     }
 
     @Override
+    public CotizacionView obtenerVigentePorReservaRaizId(UUID reservaRaizId) {
+        ReservaSalon reserva = reservaSalonRepository.buscarVigentePorRaizId(reservaRaizId)
+                .orElseThrow(() -> new DomainException("No existe una reserva vigente para el identificador indicado"));
+        return cotizacionRepository.buscarActivaPorReservaId(reserva.getId())
+                .map(this::toView)
+                .orElseThrow(() -> new DomainException("No existe una cotizacion vigente para la reserva indicada"));
+    }
+
+    @Override
     @Transactional
     public CotizacionView ejecutar(ActualizarItemCotizacionCommand command) {
         Cotizacion cotizacion = cotizacionRepository.buscarPorId(command.cotizacionId())
@@ -294,6 +303,7 @@ public class CotizacionApplicationService implements
                 cotizacion.getReservaId(),
                 cotizacion.getUsuarioId(),
                 cotizacion.getEstado(),
+                cotizacion.isVigente(),
                 cotizacion.getValorSubtotal(),
                 cotizacion.getDescuento(),
                 cotizacion.getValorTotal(),

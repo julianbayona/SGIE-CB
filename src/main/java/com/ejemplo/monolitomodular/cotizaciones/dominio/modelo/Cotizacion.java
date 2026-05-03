@@ -16,6 +16,7 @@ public class Cotizacion {
     private final UUID reservaId;
     private final UUID usuarioId;
     private final EstadoCotizacion estado;
+    private final boolean vigente;
     private final BigDecimal valorSubtotal;
     private final BigDecimal descuento;
     private final BigDecimal valorTotal;
@@ -27,6 +28,7 @@ public class Cotizacion {
             UUID reservaId,
             UUID usuarioId,
             EstadoCotizacion estado,
+            boolean vigente,
             BigDecimal descuento,
             String observaciones,
             List<CotizacionItem> items
@@ -35,6 +37,7 @@ public class Cotizacion {
         this.reservaId = Objects.requireNonNull(reservaId, "La reserva de la cotizacion es obligatoria");
         this.usuarioId = Objects.requireNonNull(usuarioId, "El usuario de la cotizacion es obligatorio");
         this.estado = Objects.requireNonNull(estado, "El estado de la cotizacion es obligatorio");
+        this.vigente = vigente;
         this.descuento = validarDescuento(descuento);
         this.observaciones = observaciones == null || observaciones.isBlank() ? null : observaciones.trim();
         if (items == null || items.isEmpty()) {
@@ -51,7 +54,7 @@ public class Cotizacion {
     }
 
     public static Cotizacion crearBorrador(UUID id, UUID reservaId, UUID usuarioId, BigDecimal descuento, String observaciones, List<CotizacionItem> items) {
-        return new Cotizacion(id, reservaId, usuarioId, EstadoCotizacion.BORRADOR, descuento, observaciones, items);
+        return new Cotizacion(id, reservaId, usuarioId, EstadoCotizacion.BORRADOR, true, descuento, observaciones, items);
     }
 
     public Cotizacion actualizarItem(UUID itemId, BigDecimal precioOverride) {
@@ -65,7 +68,7 @@ public class Cotizacion {
         if (!existeItem) {
             throw new DomainException("Item de cotizacion no encontrado");
         }
-        return new Cotizacion(id, reservaId, usuarioId, estado, descuento, observaciones, itemsActualizados);
+        return new Cotizacion(id, reservaId, usuarioId, estado, vigente, descuento, observaciones, itemsActualizados);
     }
 
     public Cotizacion actualizarItems(Map<UUID, BigDecimal> preciosOverridePorItem) {
@@ -78,7 +81,7 @@ public class Cotizacion {
                         ? item.actualizarPrecioOverride(preciosOverridePorItem.get(item.getId()))
                         : item)
                 .toList();
-        return new Cotizacion(id, reservaId, usuarioId, estado, descuento, observaciones, itemsActualizados);
+        return new Cotizacion(id, reservaId, usuarioId, estado, vigente, descuento, observaciones, itemsActualizados);
     }
 
     public Cotizacion crearBorradorActualizado(UUID nuevaCotizacionId, Map<UUID, BigDecimal> preciosOverridePorItem) {
@@ -113,35 +116,45 @@ public class Cotizacion {
         if (estado != EstadoCotizacion.BORRADOR) {
             throw new DomainException("Solo una cotizacion en borrador puede pasar a generada");
         }
-        return new Cotizacion(id, reservaId, usuarioId, EstadoCotizacion.GENERADA, descuento, observaciones, items);
+        return new Cotizacion(id, reservaId, usuarioId, EstadoCotizacion.GENERADA, vigente, descuento, observaciones, items);
     }
 
     public Cotizacion enviar() {
         if (estado != EstadoCotizacion.GENERADA) {
             throw new DomainException("Solo una cotizacion generada puede pasar a enviada");
         }
-        return new Cotizacion(id, reservaId, usuarioId, EstadoCotizacion.ENVIADA, descuento, observaciones, items);
+        return new Cotizacion(id, reservaId, usuarioId, EstadoCotizacion.ENVIADA, vigente, descuento, observaciones, items);
     }
 
     public Cotizacion aceptar() {
         if (estado != EstadoCotizacion.ENVIADA) {
             throw new DomainException("Solo una cotizacion enviada puede ser aceptada");
         }
-        return new Cotizacion(id, reservaId, usuarioId, EstadoCotizacion.ACEPTADA, descuento, observaciones, items);
+        return new Cotizacion(id, reservaId, usuarioId, EstadoCotizacion.ACEPTADA, vigente, descuento, observaciones, items);
     }
 
     public Cotizacion rechazar() {
         if (estado != EstadoCotizacion.ENVIADA) {
             throw new DomainException("Solo una cotizacion enviada puede ser rechazada");
         }
-        return new Cotizacion(id, reservaId, usuarioId, EstadoCotizacion.RECHAZADA, descuento, observaciones, items);
+        return new Cotizacion(id, reservaId, usuarioId, EstadoCotizacion.RECHAZADA, false, descuento, observaciones, items);
     }
 
     public Cotizacion desactualizar() {
         if (estado == EstadoCotizacion.RECHAZADA || estado == EstadoCotizacion.DESACTUALIZADA) {
+            return marcarNoVigente();
+        }
+        if (estado == EstadoCotizacion.ACEPTADA) {
+            return marcarNoVigente();
+        }
+        return new Cotizacion(id, reservaId, usuarioId, EstadoCotizacion.DESACTUALIZADA, false, descuento, observaciones, items);
+    }
+
+    public Cotizacion marcarNoVigente() {
+        if (!vigente) {
             return this;
         }
-        return new Cotizacion(id, reservaId, usuarioId, EstadoCotizacion.DESACTUALIZADA, descuento, observaciones, items);
+        return new Cotizacion(id, reservaId, usuarioId, estado, false, descuento, observaciones, items);
     }
 
     public static Cotizacion reconstruir(
@@ -149,11 +162,12 @@ public class Cotizacion {
             UUID reservaId,
             UUID usuarioId,
             EstadoCotizacion estado,
+            boolean vigente,
             BigDecimal descuento,
             String observaciones,
             List<CotizacionItem> items
     ) {
-        return new Cotizacion(id, reservaId, usuarioId, estado, descuento, observaciones, items);
+        return new Cotizacion(id, reservaId, usuarioId, estado, vigente, descuento, observaciones, items);
     }
 
     private static BigDecimal validarDescuento(BigDecimal descuento) {
@@ -180,6 +194,10 @@ public class Cotizacion {
 
     public EstadoCotizacion getEstado() {
         return estado;
+    }
+
+    public boolean isVigente() {
+        return vigente;
     }
 
     public BigDecimal getValorSubtotal() {

@@ -1,6 +1,5 @@
 package com.ejemplo.monolitomodular.cotizaciones.infraestructura.persistencia;
 
-import com.ejemplo.monolitomodular.cotizaciones.dominio.modelo.EstadoCotizacion;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -11,7 +10,7 @@ import java.util.UUID;
 
 public interface SpringDataCotizacionJpaRepository extends JpaRepository<CotizacionJpaEntity, UUID> {
 
-    List<CotizacionJpaEntity> findByReservaIdAndEstadoNotInOrderByCreatedAtDesc(UUID reservaId, List<EstadoCotizacion> estados);
+    List<CotizacionJpaEntity> findByReservaIdAndVigenteTrueOrderByCreatedAtDesc(UUID reservaId);
 
     @Query("""
             select c
@@ -29,13 +28,16 @@ public interface SpringDataCotizacionJpaRepository extends JpaRepository<Cotizac
     @Modifying
     @Query("""
             update CotizacionJpaEntity c
-               set c.estado = com.ejemplo.monolitomodular.cotizaciones.dominio.modelo.EstadoCotizacion.DESACTUALIZADA,
+               set c.estado =
+                   case
+                       when c.estado = com.ejemplo.monolitomodular.cotizaciones.dominio.modelo.EstadoCotizacion.ACEPTADA
+                       then com.ejemplo.monolitomodular.cotizaciones.dominio.modelo.EstadoCotizacion.ACEPTADA
+                       else com.ejemplo.monolitomodular.cotizaciones.dominio.modelo.EstadoCotizacion.DESACTUALIZADA
+                   end,
+                   c.vigente = false,
                    c.updatedAt = :updatedAt
              where c.reservaId = :reservaId
-               and c.estado not in (
-                   com.ejemplo.monolitomodular.cotizaciones.dominio.modelo.EstadoCotizacion.RECHAZADA,
-                   com.ejemplo.monolitomodular.cotizaciones.dominio.modelo.EstadoCotizacion.DESACTUALIZADA
-               )
+               and c.vigente = true
             """)
     int desactualizarActivasPorReservaId(UUID reservaId, LocalDateTime updatedAt);
 }
