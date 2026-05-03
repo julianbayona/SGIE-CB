@@ -39,6 +39,22 @@ public class HistorialEstadoEvento {
         );
     }
 
+    public static HistorialEstadoEvento registrarCambio(
+            UUID eventoId,
+            UUID usuarioId,
+            EstadoEvento estadoAnterior,
+            EstadoEvento estadoNuevo
+    ) {
+        return new HistorialEstadoEvento(
+                UUID.randomUUID(),
+                eventoId,
+                usuarioId,
+                estadoAnterior,
+                estadoNuevo,
+                LocalDateTime.now()
+        );
+    }
+
     public static HistorialEstadoEvento reconstruir(
             UUID id,
             UUID eventoId,

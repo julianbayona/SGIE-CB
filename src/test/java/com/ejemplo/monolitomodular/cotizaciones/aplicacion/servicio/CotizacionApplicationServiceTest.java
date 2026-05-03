@@ -9,7 +9,12 @@ import com.ejemplo.monolitomodular.cotizaciones.aplicacion.dto.GenerarCotizacion
 import com.ejemplo.monolitomodular.cotizaciones.dominio.modelo.Cotizacion;
 import com.ejemplo.monolitomodular.cotizaciones.dominio.modelo.EstadoCotizacion;
 import com.ejemplo.monolitomodular.cotizaciones.dominio.puerto.salida.CotizacionRepository;
+import com.ejemplo.monolitomodular.eventos.dominio.modelo.EstadoEvento;
+import com.ejemplo.monolitomodular.eventos.dominio.modelo.Evento;
+import com.ejemplo.monolitomodular.eventos.dominio.modelo.HistorialEstadoEvento;
 import com.ejemplo.monolitomodular.eventos.dominio.modelo.ReservaSalon;
+import com.ejemplo.monolitomodular.eventos.dominio.puerto.salida.EventoRepository;
+import com.ejemplo.monolitomodular.eventos.dominio.puerto.salida.HistorialEstadoEventoRepository;
 import com.ejemplo.monolitomodular.eventos.dominio.puerto.salida.ReservaSalonRepository;
 import com.ejemplo.monolitomodular.menus.dominio.modelo.ItemMenu;
 import com.ejemplo.monolitomodular.menus.dominio.modelo.Menu;
@@ -61,7 +66,9 @@ class CotizacionApplicationServiceTest {
                         ModoCobroAdicional.SERVICIO,
                         new BigDecimal("120000.00"),
                         true
-                ))
+                )),
+                new EventoRepositoryStub(evento(reserva)),
+                new HistorialRepositoryStub()
         );
 
         CotizacionView cotizacion = service.ejecutar(command(reserva.getReservaRaizId(), usuario.getId()));
@@ -95,7 +102,9 @@ class CotizacionApplicationServiceTest {
                         ModoCobroAdicional.SERVICIO,
                         new BigDecimal("120000.00"),
                         true
-                ))
+                )),
+                new EventoRepositoryStub(evento(reserva)),
+                new HistorialRepositoryStub()
         );
         service.ejecutar(command(reserva.getReservaRaizId(), usuario.getId()));
 
@@ -122,7 +131,9 @@ class CotizacionApplicationServiceTest {
                         ModoCobroAdicional.SERVICIO,
                         new BigDecimal("120000.00"),
                         true
-                ))
+                )),
+                new EventoRepositoryStub(evento(reserva)),
+                new HistorialRepositoryStub()
         );
         CotizacionView borrador = service.ejecutar(command(reserva.getReservaRaizId(), usuario.getId()));
         UUID itemMenuId = borrador.items().stream()
@@ -175,7 +186,9 @@ class CotizacionApplicationServiceTest {
                 new MenuRepositoryStub(menu(reservaV1.getId(), platoId, 80)),
                 new MontajeRepositoryStub(montaje(reservaV1.getId(), tipoAdicionalId)),
                 new PlatoRepositoryStub(plato),
-                new TipoAdicionalRepositoryStub(tipoAdicional)
+                new TipoAdicionalRepositoryStub(tipoAdicional),
+                new EventoRepositoryStub(evento(reservaV1)),
+                new HistorialRepositoryStub()
         );
         CotizacionView borradorV1 = serviceV1.ejecutar(command(reservaV1.getReservaRaizId(), usuario.getId()));
         UUID itemMenuId = borradorV1.items().stream()
@@ -196,7 +209,9 @@ class CotizacionApplicationServiceTest {
                 new MenuRepositoryStub(menu(reservaV2.getId(), platoId, 95)),
                 new MontajeRepositoryStub(montaje(reservaV2.getId(), tipoAdicionalId)),
                 new PlatoRepositoryStub(plato),
-                new TipoAdicionalRepositoryStub(tipoAdicional)
+                new TipoAdicionalRepositoryStub(tipoAdicional),
+                new EventoRepositoryStub(evento(reservaV2)),
+                new HistorialRepositoryStub()
         );
 
         CotizacionView borradorV2 = serviceV2.ejecutar(command(reservaV2.getReservaRaizId(), usuario.getId()));
@@ -221,6 +236,8 @@ class CotizacionApplicationServiceTest {
 
         assertEquals(EstadoCotizacion.GENERADA, generada.estado());
         assertEquals(EstadoCotizacion.ENVIADA, enviada.estado());
+        assertEquals(EstadoEvento.COTIZACION_ENVIADA, escenario.eventoRepository().estado());
+        assertEquals(1, escenario.historialRepository().total());
     }
 
     @Test
@@ -255,6 +272,8 @@ class CotizacionApplicationServiceTest {
         CotizacionView aceptada = escenario.service().aceptar(enviada.id());
 
         assertEquals(EstadoCotizacion.ACEPTADA, aceptada.estado());
+        assertEquals(EstadoEvento.COTIZACION_APROBADA, escenario.eventoRepository().estado());
+        assertEquals(2, escenario.historialRepository().total());
     }
 
     @Test
@@ -267,6 +286,8 @@ class CotizacionApplicationServiceTest {
         CotizacionView rechazada = escenario.service().rechazar(enviada.id());
 
         assertEquals(EstadoCotizacion.RECHAZADA, rechazada.estado());
+        assertEquals(EstadoEvento.COTIZACION_ENVIADA, escenario.eventoRepository().estado());
+        assertEquals(1, escenario.historialRepository().total());
     }
 
     @Test
@@ -293,6 +314,20 @@ class CotizacionApplicationServiceTest {
                 LocalDateTime.of(2026, 9, 10, 8, 0),
                 LocalDateTime.of(2026, 9, 10, 12, 0),
                 usuarioId
+        );
+    }
+
+    private static Evento evento(ReservaSalon reserva) {
+        return Evento.reconstruir(
+                reserva.getEventoId(),
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                reserva.getCreadoPor(),
+                reserva.getFechaHoraInicio(),
+                reserva.getFechaHoraFin(),
+                EstadoEvento.PENDIENTE,
+                null
         );
     }
 
@@ -347,6 +382,8 @@ class CotizacionApplicationServiceTest {
         Usuario usuario = Usuario.nuevo("Admin", "$2a$hash", RolUsuario.ADMINISTRADOR);
         ReservaSalon reserva = reserva(usuario.getId());
         CotizacionRepositoryStub cotizacionRepository = new CotizacionRepositoryStub();
+        EventoRepositoryStub eventoRepository = new EventoRepositoryStub(evento(reserva));
+        HistorialRepositoryStub historialRepository = new HistorialRepositoryStub();
         UUID platoId = UUID.randomUUID();
         UUID tipoAdicionalId = UUID.randomUUID();
         CotizacionApplicationService service = new CotizacionApplicationService(
@@ -362,15 +399,19 @@ class CotizacionApplicationServiceTest {
                         ModoCobroAdicional.SERVICIO,
                         new BigDecimal("120000.00"),
                         true
-                ))
+                )),
+                eventoRepository,
+                historialRepository
         );
-        return new EscenarioCotizacion(usuario, reserva, service);
+        return new EscenarioCotizacion(usuario, reserva, service, eventoRepository, historialRepository);
     }
 
     private record EscenarioCotizacion(
             Usuario usuario,
             ReservaSalon reserva,
-            CotizacionApplicationService service
+            CotizacionApplicationService service,
+            EventoRepositoryStub eventoRepository,
+            HistorialRepositoryStub historialRepository
     ) {
     }
 
@@ -415,6 +456,11 @@ class CotizacionApplicationServiceTest {
         @Override
         public Optional<ReservaSalon> buscarVigentePorEventoYSalon(UUID eventoId, UUID salonId) {
             return Optional.empty();
+        }
+
+        @Override
+        public Optional<ReservaSalon> buscarPorId(UUID id) {
+            return reserva.getId().equals(id) ? Optional.of(reserva) : Optional.empty();
         }
 
         @Override
@@ -580,6 +626,50 @@ class CotizacionApplicationServiceTest {
         @Override
         public boolean existePorNombre(String nombre) {
             return false;
+        }
+    }
+
+    private static class EventoRepositoryStub implements EventoRepository {
+
+        private Evento evento;
+
+        private EventoRepositoryStub(Evento evento) {
+            this.evento = evento;
+        }
+
+        @Override
+        public Evento guardar(Evento evento) {
+            this.evento = evento;
+            return evento;
+        }
+
+        @Override
+        public Optional<Evento> buscarPorId(UUID id) {
+            return evento.getId().equals(id) ? Optional.of(evento) : Optional.empty();
+        }
+
+        @Override
+        public List<Evento> listar() {
+            return List.of(evento);
+        }
+
+        EstadoEvento estado() {
+            return evento.getEstado();
+        }
+    }
+
+    private static class HistorialRepositoryStub implements HistorialEstadoEventoRepository {
+
+        private final List<HistorialEstadoEvento> historiales = new ArrayList<>();
+
+        @Override
+        public HistorialEstadoEvento guardar(HistorialEstadoEvento historialEstadoEvento) {
+            historiales.add(historialEstadoEvento);
+            return historialEstadoEvento;
+        }
+
+        int total() {
+            return historiales.size();
         }
     }
 }

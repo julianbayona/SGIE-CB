@@ -15,7 +15,11 @@ import com.ejemplo.monolitomodular.cotizaciones.aplicacion.puerto.entrada.Genera
 import com.ejemplo.monolitomodular.cotizaciones.dominio.modelo.Cotizacion;
 import com.ejemplo.monolitomodular.cotizaciones.dominio.modelo.CotizacionItem;
 import com.ejemplo.monolitomodular.cotizaciones.dominio.puerto.salida.CotizacionRepository;
+import com.ejemplo.monolitomodular.eventos.dominio.modelo.Evento;
+import com.ejemplo.monolitomodular.eventos.dominio.modelo.HistorialEstadoEvento;
 import com.ejemplo.monolitomodular.eventos.dominio.modelo.ReservaSalon;
+import com.ejemplo.monolitomodular.eventos.dominio.puerto.salida.EventoRepository;
+import com.ejemplo.monolitomodular.eventos.dominio.puerto.salida.HistorialEstadoEventoRepository;
 import com.ejemplo.monolitomodular.eventos.dominio.puerto.salida.ReservaSalonRepository;
 import com.ejemplo.monolitomodular.menus.dominio.modelo.ItemMenu;
 import com.ejemplo.monolitomodular.menus.dominio.modelo.Menu;
@@ -52,6 +56,8 @@ public class CotizacionApplicationService implements
     private final MontajeRepository montajeRepository;
     private final PlatoRepository platoRepository;
     private final TipoAdicionalRepository tipoAdicionalRepository;
+    private final EventoRepository eventoRepository;
+    private final HistorialEstadoEventoRepository historialEstadoEventoRepository;
 
     public CotizacionApplicationService(
             ReservaSalonRepository reservaSalonRepository,
@@ -60,7 +66,9 @@ public class CotizacionApplicationService implements
             MenuRepository menuRepository,
             MontajeRepository montajeRepository,
             PlatoRepository platoRepository,
-            TipoAdicionalRepository tipoAdicionalRepository
+            TipoAdicionalRepository tipoAdicionalRepository,
+            EventoRepository eventoRepository,
+            HistorialEstadoEventoRepository historialEstadoEventoRepository
     ) {
         this.reservaSalonRepository = reservaSalonRepository;
         this.usuarioRepository = usuarioRepository;
@@ -69,6 +77,8 @@ public class CotizacionApplicationService implements
         this.montajeRepository = montajeRepository;
         this.platoRepository = platoRepository;
         this.tipoAdicionalRepository = tipoAdicionalRepository;
+        this.eventoRepository = eventoRepository;
+        this.historialEstadoEventoRepository = historialEstadoEventoRepository;
     }
 
     @Override
@@ -123,7 +133,9 @@ public class CotizacionApplicationService implements
     public CotizacionView enviar(UUID cotizacionId) {
         Cotizacion cotizacion = cotizacionRepository.buscarPorId(cotizacionId)
                 .orElseThrow(() -> new DomainException("Cotizacion no encontrada"));
-        return toView(cotizacionRepository.guardar(cotizacion.enviar()));
+        Cotizacion enviada = cotizacionRepository.guardar(cotizacion.enviar());
+        actualizarEvento(enviada, Evento::marcarCotizacionEnviada);
+        return toView(enviada);
     }
 
     @Override
@@ -131,7 +143,9 @@ public class CotizacionApplicationService implements
     public CotizacionView aceptar(UUID cotizacionId) {
         Cotizacion cotizacion = cotizacionRepository.buscarPorId(cotizacionId)
                 .orElseThrow(() -> new DomainException("Cotizacion no encontrada"));
-        return toView(cotizacionRepository.guardar(cotizacion.aceptar()));
+        Cotizacion aceptada = cotizacionRepository.guardar(cotizacion.aceptar());
+        actualizarEvento(aceptada, Evento::marcarCotizacionAprobada);
+        return toView(aceptada);
     }
 
     @Override
@@ -140,6 +154,23 @@ public class CotizacionApplicationService implements
         Cotizacion cotizacion = cotizacionRepository.buscarPorId(cotizacionId)
                 .orElseThrow(() -> new DomainException("Cotizacion no encontrada"));
         return toView(cotizacionRepository.guardar(cotizacion.rechazar()));
+    }
+
+    private void actualizarEvento(Cotizacion cotizacion, java.util.function.Function<Evento, Evento> transicion) {
+        ReservaSalon reserva = reservaSalonRepository.buscarPorId(cotizacion.getReservaId())
+                .orElseThrow(() -> new DomainException("Reserva asociada a la cotizacion no encontrada"));
+        Evento evento = eventoRepository.buscarPorId(reserva.getEventoId())
+                .orElseThrow(() -> new DomainException("Evento asociado a la cotizacion no encontrado"));
+        Evento actualizado = transicion.apply(evento);
+        if (actualizado.getEstado() != evento.getEstado()) {
+            eventoRepository.guardar(actualizado);
+            historialEstadoEventoRepository.guardar(HistorialEstadoEvento.registrarCambio(
+                    evento.getId(),
+                    cotizacion.getUsuarioId(),
+                    evento.getEstado(),
+                    actualizado.getEstado()
+            ));
+        }
     }
 
     private List<CotizacionItem> construirItemsDesdeReserva(UUID cotizacionId, ReservaSalon reserva) {

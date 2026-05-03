@@ -198,6 +198,11 @@ class MontajeApplicationServiceTest {
         }
 
         @Override
+        public Optional<ReservaSalon> buscarPorId(UUID id) {
+            return reservas.stream().filter(reserva -> reserva.getId().equals(id)).findFirst();
+        }
+
+        @Override
         public Optional<ReservaSalon> buscarVigentePorRaizId(UUID reservaRaizId) {
             return reservas.stream()
                     .filter(ReservaSalon::isVigente)

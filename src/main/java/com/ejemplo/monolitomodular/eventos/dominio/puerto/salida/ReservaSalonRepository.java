@@ -24,6 +24,8 @@ public interface ReservaSalonRepository {
 
     Optional<ReservaSalon> buscarVigentePorEventoYSalon(UUID eventoId, UUID salonId);
 
+    Optional<ReservaSalon> buscarPorId(UUID id);
+
     Optional<ReservaSalon> buscarVigentePorRaizId(UUID reservaRaizId);
 
     void desactivarReservaVigente(UUID reservaRaizId);

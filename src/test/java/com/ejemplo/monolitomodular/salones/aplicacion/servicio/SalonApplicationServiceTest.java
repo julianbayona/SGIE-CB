@@ -640,6 +640,11 @@ class SalonApplicationServiceTest {
         }
 
         @Override
+        public Optional<ReservaSalon> buscarPorId(UUID id) {
+            return Optional.empty();
+        }
+
+        @Override
         public Optional<ReservaSalon> buscarVigentePorRaizId(UUID reservaRaizId) {
             return Optional.empty();
         }

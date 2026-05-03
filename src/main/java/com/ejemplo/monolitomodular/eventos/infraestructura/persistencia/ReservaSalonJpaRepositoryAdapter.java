@@ -91,6 +91,11 @@ public class ReservaSalonJpaRepositoryAdapter implements ReservaSalonRepository 
     }
 
     @Override
+    public Optional<ReservaSalon> buscarPorId(UUID id) {
+        return repository.findById(id).map(this::toDomain);
+    }
+
+    @Override
     public Optional<ReservaSalon> buscarVigentePorRaizId(UUID reservaRaizId) {
         return repository.findByReservaRaizIdAndVigenteTrue(reservaRaizId).map(this::toDomain);
     }
