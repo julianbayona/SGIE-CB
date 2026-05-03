@@ -57,8 +57,12 @@ public class PagoApplicationService implements RegistrarAnticipoUseCase {
         if (cotizacion.getEstado() != EstadoCotizacion.ACEPTADA) {
             throw new DomainException("Solo se pueden registrar anticipos sobre una cotizacion aceptada");
         }
+        ReservaSalon reserva = reservaSalonRepository.buscarPorId(cotizacion.getReservaId())
+                .orElseThrow(() -> new DomainException("Reserva asociada a la cotizacion no encontrada"));
+        Evento evento = eventoRepository.buscarPorId(reserva.getEventoId())
+                .orElseThrow(() -> new DomainException("Evento asociado a la cotizacion no encontrado"));
 
-        BigDecimal totalActual = anticipoRepository.totalPorCotizacionId(cotizacion.getId());
+        BigDecimal totalActual = anticipoRepository.totalPorEventoId(evento.getId());
         Anticipo anticipo = Anticipo.nuevo(
                 cotizacion.getId(),
                 command.usuarioId(),
@@ -73,15 +77,11 @@ public class PagoApplicationService implements RegistrarAnticipoUseCase {
         }
 
         Anticipo guardado = anticipoRepository.guardar(anticipo);
-        confirmarEventoSiAplica(cotizacion, command.usuarioId());
+        confirmarEventoSiAplica(evento, command.usuarioId());
         return toView(guardado, nuevoTotal, cotizacion.getValorTotal());
     }
 
-    private void confirmarEventoSiAplica(Cotizacion cotizacion, java.util.UUID usuarioId) {
-        ReservaSalon reserva = reservaSalonRepository.buscarPorId(cotizacion.getReservaId())
-                .orElseThrow(() -> new DomainException("Reserva asociada a la cotizacion no encontrada"));
-        Evento evento = eventoRepository.buscarPorId(reserva.getEventoId())
-                .orElseThrow(() -> new DomainException("Evento asociado a la cotizacion no encontrado"));
+    private void confirmarEventoSiAplica(Evento evento, java.util.UUID usuarioId) {
         Evento confirmado = evento.confirmarConAnticipo();
         if (confirmado.getEstado() != evento.getEstado()) {
             eventoRepository.guardar(confirmado);

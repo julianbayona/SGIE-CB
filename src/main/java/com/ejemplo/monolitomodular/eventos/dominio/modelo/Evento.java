@@ -79,13 +79,19 @@ public class Evento {
     }
 
     public Evento marcarCotizacionEnviada() {
-        if (estado == EstadoEvento.CANCELADO || estado == EstadoEvento.CONFIRMADO) {
-            throw new DomainException("No se puede marcar cotizacion enviada para un evento cancelado o confirmado");
+        if (estado == EstadoEvento.CANCELADO) {
+            throw new DomainException("No se puede marcar cotizacion enviada para un evento cancelado");
+        }
+        if (estado == EstadoEvento.CONFIRMADO) {
+            return this;
         }
         return cambiarEstado(EstadoEvento.COTIZACION_ENVIADA);
     }
 
     public Evento marcarCotizacionAprobada() {
+        if (estado == EstadoEvento.CONFIRMADO) {
+            return this;
+        }
         if (estado != EstadoEvento.COTIZACION_ENVIADA) {
             throw new DomainException("Solo un evento con cotizacion enviada puede pasar a cotizacion aprobada");
         }

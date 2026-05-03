@@ -42,6 +42,11 @@ public class AnticipoJpaRepositoryAdapter implements AnticipoRepository {
         return repository.totalPorCotizacionId(cotizacionId);
     }
 
+    @Override
+    public BigDecimal totalPorEventoId(UUID eventoId) {
+        return repository.totalPorEventoId(eventoId);
+    }
+
     private Anticipo toDomain(AnticipoJpaEntity entity) {
         return Anticipo.reconstruir(
                 entity.getId(),

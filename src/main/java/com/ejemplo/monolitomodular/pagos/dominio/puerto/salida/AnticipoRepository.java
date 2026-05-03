@@ -13,4 +13,6 @@ public interface AnticipoRepository {
     List<Anticipo> listarPorCotizacionId(UUID cotizacionId);
 
     BigDecimal totalPorCotizacionId(UUID cotizacionId);
+
+    BigDecimal totalPorEventoId(UUID eventoId);
 }

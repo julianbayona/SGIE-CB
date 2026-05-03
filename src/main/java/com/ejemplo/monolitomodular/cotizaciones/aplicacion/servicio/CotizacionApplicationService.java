@@ -29,6 +29,7 @@ import com.ejemplo.monolitomodular.menus.dominio.puerto.salida.PlatoRepository;
 import com.ejemplo.monolitomodular.montajes.dominio.modelo.AdicionalEvento;
 import com.ejemplo.monolitomodular.montajes.dominio.modelo.Montaje;
 import com.ejemplo.monolitomodular.montajes.dominio.puerto.salida.MontajeRepository;
+import com.ejemplo.monolitomodular.pagos.dominio.puerto.salida.AnticipoRepository;
 import com.ejemplo.monolitomodular.shared.dominio.excepcion.DomainException;
 import com.ejemplo.monolitomodular.usuarios.dominio.puerto.salida.UsuarioRepository;
 import org.springframework.stereotype.Service;
@@ -58,6 +59,7 @@ public class CotizacionApplicationService implements
     private final TipoAdicionalRepository tipoAdicionalRepository;
     private final EventoRepository eventoRepository;
     private final HistorialEstadoEventoRepository historialEstadoEventoRepository;
+    private final AnticipoRepository anticipoRepository;
 
     public CotizacionApplicationService(
             ReservaSalonRepository reservaSalonRepository,
@@ -68,7 +70,8 @@ public class CotizacionApplicationService implements
             PlatoRepository platoRepository,
             TipoAdicionalRepository tipoAdicionalRepository,
             EventoRepository eventoRepository,
-            HistorialEstadoEventoRepository historialEstadoEventoRepository
+            HistorialEstadoEventoRepository historialEstadoEventoRepository,
+            AnticipoRepository anticipoRepository
     ) {
         this.reservaSalonRepository = reservaSalonRepository;
         this.usuarioRepository = usuarioRepository;
@@ -79,6 +82,7 @@ public class CotizacionApplicationService implements
         this.tipoAdicionalRepository = tipoAdicionalRepository;
         this.eventoRepository = eventoRepository;
         this.historialEstadoEventoRepository = historialEstadoEventoRepository;
+        this.anticipoRepository = anticipoRepository;
     }
 
     @Override
@@ -143,7 +147,9 @@ public class CotizacionApplicationService implements
     public CotizacionView aceptar(UUID cotizacionId) {
         Cotizacion cotizacion = cotizacionRepository.buscarPorId(cotizacionId)
                 .orElseThrow(() -> new DomainException("Cotizacion no encontrada"));
-        Cotizacion aceptada = cotizacionRepository.guardar(cotizacion.aceptar());
+        Cotizacion aceptada = cotizacion.aceptar();
+        validarTotalContraAnticiposDelEvento(aceptada);
+        aceptada = cotizacionRepository.guardar(aceptada);
         actualizarEvento(aceptada, Evento::marcarCotizacionAprobada);
         return toView(aceptada);
     }
@@ -170,6 +176,17 @@ public class CotizacionApplicationService implements
                     evento.getEstado(),
                     actualizado.getEstado()
             ));
+        }
+    }
+
+    private void validarTotalContraAnticiposDelEvento(Cotizacion cotizacion) {
+        ReservaSalon reserva = reservaSalonRepository.buscarPorId(cotizacion.getReservaId())
+                .orElseThrow(() -> new DomainException("Reserva asociada a la cotizacion no encontrada"));
+        Evento evento = eventoRepository.buscarPorId(reserva.getEventoId())
+                .orElseThrow(() -> new DomainException("Evento asociado a la cotizacion no encontrado"));
+        BigDecimal totalAnticipos = anticipoRepository.totalPorEventoId(evento.getId());
+        if (totalAnticipos.compareTo(cotizacion.getValorTotal()) > 0) {
+            throw new DomainException("El total de la cotizacion no puede ser menor a los anticipos registrados del evento");
         }
     }
 

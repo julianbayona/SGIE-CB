@@ -13,4 +13,17 @@ public interface SpringDataAnticipoJpaRepository extends JpaRepository<AnticipoJ
 
     @Query("select coalesce(sum(a.valor), 0) from AnticipoJpaEntity a where a.cotizacionId = :cotizacionId")
     BigDecimal totalPorCotizacionId(UUID cotizacionId);
+
+    @Query("""
+            select coalesce(sum(a.valor), 0)
+            from AnticipoJpaEntity a
+            where exists (
+                select 1
+                from CotizacionJpaEntity c, ReservaSalonJpaEntity r
+                where c.id = a.cotizacionId
+                  and r.id = c.reservaId
+                  and r.eventoId = :eventoId
+            )
+            """)
+    BigDecimal totalPorEventoId(UUID eventoId);
 }

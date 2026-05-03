@@ -27,6 +27,8 @@ import com.ejemplo.monolitomodular.montajes.dominio.modelo.InfraestructuraReserv
 import com.ejemplo.monolitomodular.montajes.dominio.modelo.Montaje;
 import com.ejemplo.monolitomodular.montajes.dominio.modelo.MontajeMesaReserva;
 import com.ejemplo.monolitomodular.montajes.dominio.puerto.salida.MontajeRepository;
+import com.ejemplo.monolitomodular.pagos.dominio.modelo.Anticipo;
+import com.ejemplo.monolitomodular.pagos.dominio.puerto.salida.AnticipoRepository;
 import com.ejemplo.monolitomodular.shared.dominio.excepcion.DomainException;
 import com.ejemplo.monolitomodular.usuarios.dominio.modelo.RolUsuario;
 import com.ejemplo.monolitomodular.usuarios.dominio.modelo.Usuario;
@@ -36,7 +38,9 @@ import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -68,7 +72,8 @@ class CotizacionApplicationServiceTest {
                         true
                 )),
                 new EventoRepositoryStub(evento(reserva)),
-                new HistorialRepositoryStub()
+                new HistorialRepositoryStub(),
+                new AnticipoRepositoryStub()
         );
 
         CotizacionView cotizacion = service.ejecutar(command(reserva.getReservaRaizId(), usuario.getId()));
@@ -104,7 +109,8 @@ class CotizacionApplicationServiceTest {
                         true
                 )),
                 new EventoRepositoryStub(evento(reserva)),
-                new HistorialRepositoryStub()
+                new HistorialRepositoryStub(),
+                new AnticipoRepositoryStub()
         );
         service.ejecutar(command(reserva.getReservaRaizId(), usuario.getId()));
 
@@ -133,7 +139,8 @@ class CotizacionApplicationServiceTest {
                         true
                 )),
                 new EventoRepositoryStub(evento(reserva)),
-                new HistorialRepositoryStub()
+                new HistorialRepositoryStub(),
+                new AnticipoRepositoryStub()
         );
         CotizacionView borrador = service.ejecutar(command(reserva.getReservaRaizId(), usuario.getId()));
         UUID itemMenuId = borrador.items().stream()
@@ -188,7 +195,8 @@ class CotizacionApplicationServiceTest {
                 new PlatoRepositoryStub(plato),
                 new TipoAdicionalRepositoryStub(tipoAdicional),
                 new EventoRepositoryStub(evento(reservaV1)),
-                new HistorialRepositoryStub()
+                new HistorialRepositoryStub(),
+                new AnticipoRepositoryStub()
         );
         CotizacionView borradorV1 = serviceV1.ejecutar(command(reservaV1.getReservaRaizId(), usuario.getId()));
         UUID itemMenuId = borradorV1.items().stream()
@@ -211,7 +219,8 @@ class CotizacionApplicationServiceTest {
                 new PlatoRepositoryStub(plato),
                 new TipoAdicionalRepositoryStub(tipoAdicional),
                 new EventoRepositoryStub(evento(reservaV2)),
-                new HistorialRepositoryStub()
+                new HistorialRepositoryStub(),
+                new AnticipoRepositoryStub()
         );
 
         CotizacionView borradorV2 = serviceV2.ejecutar(command(reservaV2.getReservaRaizId(), usuario.getId()));
@@ -306,6 +315,55 @@ class CotizacionApplicationServiceTest {
         assertThrows(DomainException.class, () -> escenario.service().rechazar(borrador.id()));
     }
 
+    @Test
+    void deberiaAceptarNuevaCotizacionSinCambiarEventoConfirmado() {
+        EscenarioCotizacion escenario = escenario(EstadoEvento.CONFIRMADO);
+        CotizacionView borrador = escenario.service().ejecutar(command(escenario.reserva().getReservaRaizId(), escenario.usuario().getId()));
+        CotizacionView generada = escenario.service().generar(borrador.id());
+        CotizacionView enviada = escenario.service().enviar(generada.id());
+
+        CotizacionView aceptada = escenario.service().aceptar(enviada.id());
+
+        assertEquals(EstadoCotizacion.ACEPTADA, aceptada.estado());
+        assertEquals(EstadoEvento.CONFIRMADO, escenario.eventoRepository().estado());
+        assertEquals(0, escenario.historialRepository().total());
+    }
+
+    @Test
+    void noDeberiaAceptarCotizacionConTotalMenorALosAnticiposDelEvento() {
+        Usuario usuario = Usuario.nuevo("Admin", "$2a$hash", RolUsuario.ADMINISTRADOR);
+        ReservaSalon reserva = reserva(usuario.getId());
+        CotizacionRepositoryStub cotizacionRepository = new CotizacionRepositoryStub();
+        EventoRepositoryStub eventoRepository = new EventoRepositoryStub(evento(reserva));
+        AnticipoRepositoryStub anticipoRepository = new AnticipoRepositoryStub();
+        anticipoRepository.definirTotalPorEvento(reserva.getEventoId(), new BigDecimal("2500000.00"));
+        UUID platoId = UUID.randomUUID();
+        UUID tipoAdicionalId = UUID.randomUUID();
+        CotizacionApplicationService service = new CotizacionApplicationService(
+                new ReservaSalonRepositoryStub(reserva),
+                new UsuarioRepositoryStub(usuario),
+                cotizacionRepository,
+                new MenuRepositoryStub(menu(reserva.getId(), platoId, 80)),
+                new MontajeRepositoryStub(montaje(reserva.getId(), tipoAdicionalId)),
+                new PlatoRepositoryStub(Plato.reconstruir(platoId, "Almuerzo ejecutivo", null, new BigDecimal("25000.00"), true)),
+                new TipoAdicionalRepositoryStub(TipoAdicional.reconstruir(
+                        tipoAdicionalId,
+                        "Sonido",
+                        ModoCobroAdicional.SERVICIO,
+                        new BigDecimal("120000.00"),
+                        true
+                )),
+                eventoRepository,
+                new HistorialRepositoryStub(),
+                anticipoRepository
+        );
+        CotizacionView borrador = service.ejecutar(command(reserva.getReservaRaizId(), usuario.getId()));
+        CotizacionView generada = service.generar(borrador.id());
+        CotizacionView enviada = service.enviar(generada.id());
+
+        assertThrows(DomainException.class, () -> service.aceptar(enviada.id()));
+    }
+
     private static ReservaSalon reserva(UUID usuarioId) {
         return ReservaSalon.nueva(
                 UUID.randomUUID(),
@@ -318,6 +376,10 @@ class CotizacionApplicationServiceTest {
     }
 
     private static Evento evento(ReservaSalon reserva) {
+        return evento(reserva, EstadoEvento.PENDIENTE);
+    }
+
+    private static Evento evento(ReservaSalon reserva, EstadoEvento estado) {
         return Evento.reconstruir(
                 reserva.getEventoId(),
                 UUID.randomUUID(),
@@ -326,7 +388,7 @@ class CotizacionApplicationServiceTest {
                 reserva.getCreadoPor(),
                 reserva.getFechaHoraInicio(),
                 reserva.getFechaHoraFin(),
-                EstadoEvento.PENDIENTE,
+                estado,
                 null
         );
     }
@@ -379,10 +441,14 @@ class CotizacionApplicationServiceTest {
     }
 
     private static EscenarioCotizacion escenario() {
+        return escenario(EstadoEvento.PENDIENTE);
+    }
+
+    private static EscenarioCotizacion escenario(EstadoEvento estadoEvento) {
         Usuario usuario = Usuario.nuevo("Admin", "$2a$hash", RolUsuario.ADMINISTRADOR);
         ReservaSalon reserva = reserva(usuario.getId());
         CotizacionRepositoryStub cotizacionRepository = new CotizacionRepositoryStub();
-        EventoRepositoryStub eventoRepository = new EventoRepositoryStub(evento(reserva));
+        EventoRepositoryStub eventoRepository = new EventoRepositoryStub(evento(reserva, estadoEvento));
         HistorialRepositoryStub historialRepository = new HistorialRepositoryStub();
         UUID platoId = UUID.randomUUID();
         UUID tipoAdicionalId = UUID.randomUUID();
@@ -401,7 +467,8 @@ class CotizacionApplicationServiceTest {
                         true
                 )),
                 eventoRepository,
-                historialRepository
+                historialRepository,
+                new AnticipoRepositoryStub()
         );
         return new EscenarioCotizacion(usuario, reserva, service, eventoRepository, historialRepository);
     }
@@ -670,6 +737,35 @@ class CotizacionApplicationServiceTest {
 
         int total() {
             return historiales.size();
+        }
+    }
+
+    private static class AnticipoRepositoryStub implements AnticipoRepository {
+
+        private final Map<UUID, BigDecimal> totalPorEvento = new HashMap<>();
+
+        void definirTotalPorEvento(UUID eventoId, BigDecimal total) {
+            totalPorEvento.put(eventoId, total);
+        }
+
+        @Override
+        public Anticipo guardar(Anticipo anticipo) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public List<Anticipo> listarPorCotizacionId(UUID cotizacionId) {
+            return List.of();
+        }
+
+        @Override
+        public BigDecimal totalPorCotizacionId(UUID cotizacionId) {
+            return BigDecimal.ZERO;
+        }
+
+        @Override
+        public BigDecimal totalPorEventoId(UUID eventoId) {
+            return totalPorEvento.getOrDefault(eventoId, BigDecimal.ZERO);
         }
     }
 }

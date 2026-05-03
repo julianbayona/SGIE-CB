@@ -111,20 +111,44 @@ class PagoApplicationServiceTest {
         assertEquals(1, escenario.historialRepository().total());
     }
 
+    @Test
+    void deberiaCalcularSaldoConAnticiposPreviosDelEvento() {
+        EscenarioPago escenario = escenario(cotizacionAceptada(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID()));
+        escenario.anticipoRepository().agregar(Anticipo.nuevo(
+                UUID.randomUUID(),
+                escenario.usuario().getId(),
+                new BigDecimal("400000.00"),
+                "TRANSFERENCIA",
+                LocalDate.of(2026, 8, 20),
+                "Anticipo de cotizacion anterior"
+        ));
+
+        AnticipoView view = escenario.service().ejecutar(command(
+                escenario.cotizacion().getId(),
+                escenario.usuario().getId(),
+                new BigDecimal("300000.00")
+        ));
+
+        assertEquals(new BigDecimal("700000.00"), view.totalPagado());
+        assertEquals(new BigDecimal("1300000.00"), view.saldoPendiente());
+    }
+
+
     private static EscenarioPago escenario(Cotizacion cotizacion) {
         Usuario usuario = Usuario.reconstruir(cotizacion.getUsuarioId(), "Admin", "$2a$hash", RolUsuario.ADMINISTRADOR, true);
         ReservaSalon reserva = reserva(cotizacion.getReservaId(), usuario.getId());
         EventoRepositoryStub eventoRepository = new EventoRepositoryStub(evento(reserva, EstadoEvento.COTIZACION_APROBADA));
         HistorialRepositoryStub historialRepository = new HistorialRepositoryStub();
+        AnticipoRepositoryStub anticipoRepository = new AnticipoRepositoryStub();
         PagoApplicationService service = new PagoApplicationService(
-                new AnticipoRepositoryStub(),
+                anticipoRepository,
                 new CotizacionRepositoryStub(cotizacion),
                 new UsuarioRepositoryStub(usuario),
                 new ReservaSalonRepositoryStub(reserva),
                 eventoRepository,
                 historialRepository
         );
-        return new EscenarioPago(usuario, cotizacion, service, eventoRepository, historialRepository);
+        return new EscenarioPago(usuario, cotizacion, service, eventoRepository, historialRepository, anticipoRepository);
     }
 
     private static RegistrarAnticipoCommand command(UUID cotizacionId, UUID usuarioId, BigDecimal valor) {
@@ -198,13 +222,18 @@ class PagoApplicationServiceTest {
             Cotizacion cotizacion,
             PagoApplicationService service,
             EventoRepositoryStub eventoRepository,
-            HistorialRepositoryStub historialRepository
+            HistorialRepositoryStub historialRepository,
+            AnticipoRepositoryStub anticipoRepository
     ) {
     }
 
     private static class AnticipoRepositoryStub implements AnticipoRepository {
 
         private final List<Anticipo> anticipos = new ArrayList<>();
+
+        void agregar(Anticipo anticipo) {
+            anticipos.add(anticipo);
+        }
 
         @Override
         public Anticipo guardar(Anticipo anticipo) {
@@ -222,6 +251,13 @@ class PagoApplicationServiceTest {
         @Override
         public BigDecimal totalPorCotizacionId(UUID cotizacionId) {
             return listarPorCotizacionId(cotizacionId).stream()
+                    .map(Anticipo::getValor)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+        }
+
+        @Override
+        public BigDecimal totalPorEventoId(UUID eventoId) {
+            return anticipos.stream()
                     .map(Anticipo::getValor)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
         }
