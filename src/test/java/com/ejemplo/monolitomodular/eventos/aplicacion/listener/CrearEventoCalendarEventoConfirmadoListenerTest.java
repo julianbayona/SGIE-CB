@@ -98,6 +98,11 @@ class CrearEventoCalendarEventoConfirmadoListenerTest {
         }
 
         @Override
+        public Optional<EventoCalendar> buscarPorId(UUID id) {
+            return Optional.empty();
+        }
+
+        @Override
         public List<EventoCalendar> buscarPendientes(int limite) {
             return List.of();
         }

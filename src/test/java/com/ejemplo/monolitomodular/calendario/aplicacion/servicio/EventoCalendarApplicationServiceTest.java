@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -51,6 +52,22 @@ class EventoCalendarApplicationServiceTest {
         assertEquals("Fallo simulado", repository.ultimo().getMensajeError());
     }
 
+    @Test
+    void deberiaReintentarEventoCalendarConError() {
+        EventoCalendarRepositoryStub repository = new EventoCalendarRepositoryStub();
+        EventoCalendarApplicationService service = new EventoCalendarApplicationService(
+                repository,
+                new GoogleCalendarPortStub(false)
+        );
+        EventoCalendar conError = repository.guardar(eventoPendiente().iniciarIntento().marcarError("Fallo previo"));
+
+        service.reintentar(conError.getId());
+
+        assertEquals(EstadoEventoCalendar.PENDIENTE, repository.ultimo().getEstado());
+        assertEquals(0, repository.ultimo().getIntentos());
+        assertEquals(null, repository.ultimo().getMensajeError());
+    }
+
     private static EventoCalendar eventoPendiente() {
         return EventoCalendar.pendiente(
                 OrigenEventoCalendar.PRUEBA_PLATO,
@@ -70,6 +87,13 @@ class EventoCalendarApplicationServiceTest {
             eventos.removeIf(actual -> actual.getId().equals(eventoCalendar.getId()));
             eventos.add(eventoCalendar);
             return eventoCalendar;
+        }
+
+        @Override
+        public Optional<EventoCalendar> buscarPorId(UUID id) {
+            return eventos.stream()
+                    .filter(evento -> evento.getId().equals(id))
+                    .findFirst();
         }
 
         @Override

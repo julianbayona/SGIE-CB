@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -62,6 +63,11 @@ class CrearEventoCalendarPruebaPlatoListenerTest {
         public EventoCalendar guardar(EventoCalendar eventoCalendar) {
             this.guardado = eventoCalendar;
             return eventoCalendar;
+        }
+
+        @Override
+        public Optional<EventoCalendar> buscarPorId(UUID id) {
+            return Optional.empty();
         }
 
         @Override

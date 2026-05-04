@@ -7,6 +7,8 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public class EventoCalendarJpaRepositoryAdapter implements EventoCalendarRepository {
@@ -36,6 +38,12 @@ public class EventoCalendarJpaRepositoryAdapter implements EventoCalendarReposit
                 now
         ));
         return toDomain(entity);
+    }
+
+    @Override
+    public Optional<EventoCalendar> buscarPorId(UUID id) {
+        return repository.findById(id)
+                .map(this::toDomain);
     }
 
     @Override

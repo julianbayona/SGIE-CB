@@ -156,6 +156,25 @@ public class EventoCalendar {
         );
     }
 
+    public EventoCalendar reintentar() {
+        if (estado != EstadoEventoCalendar.ERROR) {
+            throw new DomainException("Solo se pueden reintentar eventos de calendario en estado ERROR");
+        }
+        return new EventoCalendar(
+                id,
+                origenTipo,
+                origenId,
+                eventoId,
+                tipo,
+                googleEventId,
+                fechaSync,
+                EstadoEventoCalendar.PENDIENTE,
+                payloadJson,
+                0,
+                null
+        );
+    }
+
     public UUID getId() {
         return id;
     }
