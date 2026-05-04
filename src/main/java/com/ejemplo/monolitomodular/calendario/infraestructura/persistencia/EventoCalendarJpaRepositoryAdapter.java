@@ -2,9 +2,11 @@ package com.ejemplo.monolitomodular.calendario.infraestructura.persistencia;
 
 import com.ejemplo.monolitomodular.calendario.dominio.modelo.EventoCalendar;
 import com.ejemplo.monolitomodular.calendario.dominio.puerto.salida.EventoCalendarRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Repository
 public class EventoCalendarJpaRepositoryAdapter implements EventoCalendarRepository {
@@ -33,6 +35,13 @@ public class EventoCalendarJpaRepositoryAdapter implements EventoCalendarReposit
                 now
         ));
         return toDomain(entity);
+    }
+
+    @Override
+    public List<EventoCalendar> buscarPendientes(int limite) {
+        return repository.buscarPendientes(PageRequest.of(0, limite)).stream()
+                .map(this::toDomain)
+                .toList();
     }
 
     private EventoCalendar toDomain(EventoCalendarJpaEntity entity) {
