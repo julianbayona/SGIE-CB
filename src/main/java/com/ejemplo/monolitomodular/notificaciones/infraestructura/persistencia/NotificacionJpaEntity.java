@@ -1,6 +1,7 @@
 package com.ejemplo.monolitomodular.notificaciones.infraestructura.persistencia;
 
 import com.ejemplo.monolitomodular.notificaciones.dominio.modelo.EstadoNotificacion;
+import com.ejemplo.monolitomodular.notificaciones.dominio.modelo.TipoNotificacion;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -23,8 +24,9 @@ public class NotificacionJpaEntity {
     @Column(name = "id_evento")
     private UUID eventoId;
 
-    @Column(name = "id_tipo_notificacion", nullable = false)
-    private UUID tipoNotificacionId;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo", nullable = false, length = 80)
+    private TipoNotificacion tipo;
 
     @Column(name = "fecha_programada", nullable = false)
     private LocalDateTime fechaProgramada;
@@ -55,7 +57,7 @@ public class NotificacionJpaEntity {
     public NotificacionJpaEntity(
             UUID id,
             UUID eventoId,
-            UUID tipoNotificacionId,
+            TipoNotificacion tipo,
             LocalDateTime fechaProgramada,
             LocalDateTime fechaEnvio,
             EstadoNotificacion estado,
@@ -66,7 +68,7 @@ public class NotificacionJpaEntity {
     ) {
         this.id = id;
         this.eventoId = eventoId;
-        this.tipoNotificacionId = tipoNotificacionId;
+        this.tipo = tipo;
         this.fechaProgramada = fechaProgramada;
         this.fechaEnvio = fechaEnvio;
         this.estado = estado;
@@ -84,8 +86,8 @@ public class NotificacionJpaEntity {
         return eventoId;
     }
 
-    public UUID getTipoNotificacionId() {
-        return tipoNotificacionId;
+    public TipoNotificacion getTipo() {
+        return tipo;
     }
 
     public LocalDateTime getFechaProgramada() {

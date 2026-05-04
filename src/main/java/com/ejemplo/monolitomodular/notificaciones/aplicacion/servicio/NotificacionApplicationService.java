@@ -36,7 +36,7 @@ public class NotificacionApplicationService implements CrearNotificacionUseCase,
     public NotificacionView ejecutar(CrearNotificacionCommand command) {
         Notificacion notificacion = Notificacion.programar(
                 command.eventoId(),
-                command.tipoNotificacionId(),
+                command.tipo(),
                 command.fechaProgramada(),
                 command.payloadJson(),
                 command.destinatarios().stream()
@@ -84,7 +84,7 @@ public class NotificacionApplicationService implements CrearNotificacionUseCase,
         return new NotificacionView(
                 notificacion.getId(),
                 notificacion.getEventoId(),
-                notificacion.getTipoNotificacionId(),
+                notificacion.getTipo(),
                 notificacion.getFechaProgramada(),
                 notificacion.getFechaEnvio(),
                 notificacion.getEstado(),

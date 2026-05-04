@@ -1,12 +1,14 @@
 package com.ejemplo.monolitomodular.notificaciones.aplicacion.dto;
 
+import com.ejemplo.monolitomodular.notificaciones.dominio.modelo.TipoNotificacion;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
 public record CrearNotificacionCommand(
         UUID eventoId,
-        UUID tipoNotificacionId,
+        TipoNotificacion tipo,
         LocalDateTime fechaProgramada,
         String payloadJson,
         List<Destinatario> destinatarios

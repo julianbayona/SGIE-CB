@@ -29,7 +29,7 @@ public class NotificacionJpaRepositoryAdapter implements NotificacionRepository 
         notificacionRepository.save(new NotificacionJpaEntity(
                 notificacion.getId(),
                 notificacion.getEventoId(),
-                notificacion.getTipoNotificacionId(),
+                notificacion.getTipo(),
                 notificacion.getFechaProgramada(),
                 notificacion.getFechaEnvio(),
                 notificacion.getEstado(),
@@ -56,7 +56,7 @@ public class NotificacionJpaRepositoryAdapter implements NotificacionRepository 
         return Notificacion.reconstruir(
                 entity.getId(),
                 entity.getEventoId(),
-                entity.getTipoNotificacionId(),
+                entity.getTipo(),
                 entity.getFechaProgramada(),
                 entity.getFechaEnvio(),
                 entity.getEstado(),

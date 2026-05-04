@@ -13,7 +13,7 @@ public class Notificacion {
 
     private final UUID id;
     private final UUID eventoId;
-    private final UUID tipoNotificacionId;
+    private final TipoNotificacion tipo;
     private final LocalDateTime fechaProgramada;
     private final LocalDateTime fechaEnvio;
     private final EstadoNotificacion estado;
@@ -24,7 +24,7 @@ public class Notificacion {
     private Notificacion(
             UUID id,
             UUID eventoId,
-            UUID tipoNotificacionId,
+            TipoNotificacion tipo,
             LocalDateTime fechaProgramada,
             LocalDateTime fechaEnvio,
             EstadoNotificacion estado,
@@ -34,7 +34,7 @@ public class Notificacion {
     ) {
         this.id = Objects.requireNonNull(id, "El id de la notificacion es obligatorio");
         this.eventoId = eventoId;
-        this.tipoNotificacionId = Objects.requireNonNull(tipoNotificacionId, "El tipo de notificacion es obligatorio");
+        this.tipo = Objects.requireNonNull(tipo, "El tipo de notificacion es obligatorio");
         this.fechaProgramada = Objects.requireNonNull(fechaProgramada, "La fecha programada es obligatoria");
         this.fechaEnvio = fechaEnvio;
         this.estado = Objects.requireNonNull(estado, "El estado de la notificacion es obligatorio");
@@ -51,7 +51,7 @@ public class Notificacion {
 
     public static Notificacion programar(
             UUID eventoId,
-            UUID tipoNotificacionId,
+            TipoNotificacion tipo,
             LocalDateTime fechaProgramada,
             String payloadJson,
             List<DestinatarioNuevo> destinatarios
@@ -67,7 +67,7 @@ public class Notificacion {
         return new Notificacion(
                 notificacionId,
                 eventoId,
-                tipoNotificacionId,
+                tipo,
                 fechaProgramada,
                 null,
                 EstadoNotificacion.PENDIENTE,
@@ -80,7 +80,7 @@ public class Notificacion {
     public static Notificacion reconstruir(
             UUID id,
             UUID eventoId,
-            UUID tipoNotificacionId,
+            TipoNotificacion tipo,
             LocalDateTime fechaProgramada,
             LocalDateTime fechaEnvio,
             EstadoNotificacion estado,
@@ -88,7 +88,7 @@ public class Notificacion {
             String payloadJson,
             List<NotificacionDestinatario> destinatarios
     ) {
-        return new Notificacion(id, eventoId, tipoNotificacionId, fechaProgramada, fechaEnvio, estado, intentos, payloadJson, destinatarios);
+        return new Notificacion(id, eventoId, tipo, fechaProgramada, fechaEnvio, estado, intentos, payloadJson, destinatarios);
     }
 
     public Notificacion iniciarEnvio() {
@@ -101,7 +101,7 @@ public class Notificacion {
         return new Notificacion(
                 id,
                 eventoId,
-                tipoNotificacionId,
+                tipo,
                 fechaProgramada,
                 fechaEnvio,
                 EstadoNotificacion.ENVIANDO,
@@ -115,7 +115,7 @@ public class Notificacion {
         return new Notificacion(
                 id,
                 eventoId,
-                tipoNotificacionId,
+                tipo,
                 fechaProgramada,
                 LocalDateTime.now(),
                 EstadoNotificacion.ENVIADA,
@@ -129,7 +129,7 @@ public class Notificacion {
         return new Notificacion(
                 id,
                 eventoId,
-                tipoNotificacionId,
+                tipo,
                 fechaProgramada,
                 fechaEnvio,
                 EstadoNotificacion.ERROR,
@@ -145,7 +145,7 @@ public class Notificacion {
         return new Notificacion(
                 id,
                 eventoId,
-                tipoNotificacionId,
+                tipo,
                 fechaProgramada,
                 todosEnviados ? LocalDateTime.now() : fechaEnvio,
                 todosEnviados ? EstadoNotificacion.ENVIADA : EstadoNotificacion.ERROR,
@@ -163,8 +163,8 @@ public class Notificacion {
         return eventoId;
     }
 
-    public UUID getTipoNotificacionId() {
-        return tipoNotificacionId;
+    public TipoNotificacion getTipo() {
+        return tipo;
     }
 
     public LocalDateTime getFechaProgramada() {

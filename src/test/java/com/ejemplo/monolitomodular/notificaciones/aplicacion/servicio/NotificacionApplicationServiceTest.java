@@ -6,6 +6,7 @@ import com.ejemplo.monolitomodular.notificaciones.aplicacion.dto.EnviarWhatsAppR
 import com.ejemplo.monolitomodular.notificaciones.aplicacion.dto.NotificacionView;
 import com.ejemplo.monolitomodular.notificaciones.dominio.modelo.EstadoNotificacion;
 import com.ejemplo.monolitomodular.notificaciones.dominio.modelo.Notificacion;
+import com.ejemplo.monolitomodular.notificaciones.dominio.modelo.TipoNotificacion;
 import com.ejemplo.monolitomodular.notificaciones.dominio.puerto.salida.NotificacionRepository;
 import com.ejemplo.monolitomodular.notificaciones.dominio.puerto.salida.WhatsAppPort;
 import org.junit.jupiter.api.Test;
@@ -60,7 +61,7 @@ class NotificacionApplicationServiceTest {
         NotificacionApplicationService service = new NotificacionApplicationService(repository, whatsAppPort);
         service.ejecutar(new CrearNotificacionCommand(
                 UUID.randomUUID(),
-                UUID.randomUUID(),
+                TipoNotificacion.PRUEBA_PLATO_CLIENTE,
                 LocalDateTime.now().minusMinutes(1),
                 "{\"mensaje\":\"Prueba\"}",
                 List.of(
@@ -98,7 +99,7 @@ class NotificacionApplicationServiceTest {
     private static CrearNotificacionCommand command(LocalDateTime fechaProgramada) {
         return new CrearNotificacionCommand(
                 UUID.randomUUID(),
-                UUID.randomUUID(),
+                TipoNotificacion.PRUEBA_PLATO_CLIENTE,
                 fechaProgramada,
                 "{\"mensaje\":\"Prueba\"}",
                 List.of(new CrearNotificacionCommand.Destinatario(null, "573001112233"))
