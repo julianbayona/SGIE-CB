@@ -1,5 +1,6 @@
 package com.ejemplo.monolitomodular.eventos.aplicacion.listener;
 
+import com.ejemplo.monolitomodular.calendario.aplicacion.dto.GoogleCalendarPayload;
 import com.ejemplo.monolitomodular.calendario.dominio.modelo.EventoCalendar;
 import com.ejemplo.monolitomodular.calendario.dominio.modelo.OrigenEventoCalendar;
 import com.ejemplo.monolitomodular.calendario.dominio.modelo.TipoOperacionCalendar;
@@ -8,6 +9,8 @@ import com.ejemplo.monolitomodular.clientes.dominio.modelo.Cliente;
 import com.ejemplo.monolitomodular.clientes.dominio.puerto.salida.ClienteRepository;
 import com.ejemplo.monolitomodular.eventos.aplicacion.evento.EventoConfirmadoEvent;
 import com.ejemplo.monolitomodular.shared.dominio.excepcion.DomainException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -21,14 +24,17 @@ public class CrearEventoCalendarEventoConfirmadoListener {
     private final EventoCalendarRepository eventoCalendarRepository;
     private final ClienteRepository clienteRepository;
     private final String correosAsistentes;
+    private final ObjectMapper objectMapper;
 
     public CrearEventoCalendarEventoConfirmadoListener(
             EventoCalendarRepository eventoCalendarRepository,
             ClienteRepository clienteRepository,
+            ObjectMapper objectMapper,
             @Value("${sgie.calendario.evento-confirmado.asistentes-correos:}") String correosAsistentes
     ) {
         this.eventoCalendarRepository = eventoCalendarRepository;
         this.clienteRepository = clienteRepository;
+        this.objectMapper = objectMapper;
         this.correosAsistentes = correosAsistentes;
     }
 
@@ -46,20 +52,27 @@ public class CrearEventoCalendarEventoConfirmadoListener {
     }
 
     private String payload(EventoConfirmadoEvent event, Cliente cliente) {
-        return """
-                {"resumen":"Evento confirmado Club Boyaca","fechaInicio":"%s","fechaFin":"%s","origen":"EVENTO_CONFIRMADO","attendees":%s}
-                """.formatted(event.fechaHoraInicio(), event.fechaHoraFin(), attendeesJson(cliente)).trim();
+        try {
+            return objectMapper.writeValueAsString(new GoogleCalendarPayload(
+                    "Evento confirmado Club Boyaca",
+                    event.fechaHoraInicio(),
+                    event.fechaHoraFin(),
+                    "EVENTO_CONFIRMADO",
+                    attendees(cliente)
+            ));
+        } catch (JsonProcessingException ex) {
+            throw new IllegalStateException("No fue posible construir el payload de Google Calendar", ex);
+        }
     }
 
-    private String attendeesJson(Cliente cliente) {
+    private List<GoogleCalendarPayload.Attendee> attendees(Cliente cliente) {
         List<String> correosConfigurados = Arrays.stream(correosAsistentes.split(","))
                 .map(String::trim)
                 .filter(correo -> !correo.isBlank())
                 .toList();
         return StreamConcat.concat(List.of(cliente.getCorreo()), correosConfigurados).stream()
-                .map(correo -> "{\"email\":\"%s\"}".formatted(correo))
-                .toList()
-                .toString();
+                .map(GoogleCalendarPayload.Attendee::new)
+                .toList();
     }
 
     private static class StreamConcat {

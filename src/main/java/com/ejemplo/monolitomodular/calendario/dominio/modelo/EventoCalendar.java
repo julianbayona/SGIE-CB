@@ -18,6 +18,7 @@ public class EventoCalendar {
     private final EstadoEventoCalendar estado;
     private final String payloadJson;
     private final int intentos;
+    private final String mensajeError;
 
     private EventoCalendar(
             UUID id,
@@ -29,7 +30,8 @@ public class EventoCalendar {
             LocalDateTime fechaSync,
             EstadoEventoCalendar estado,
             String payloadJson,
-            int intentos
+            int intentos,
+            String mensajeError
     ) {
         this.id = Objects.requireNonNull(id, "El id del evento de calendario es obligatorio");
         this.origenTipo = Objects.requireNonNull(origenTipo, "El origen del evento de calendario es obligatorio");
@@ -44,6 +46,7 @@ public class EventoCalendar {
             throw new DomainException("Los intentos de sincronizacion no pueden ser negativos");
         }
         this.intentos = intentos;
+        this.mensajeError = normalizarMensajeError(mensajeError);
     }
 
     public static EventoCalendar pendiente(
@@ -63,7 +66,8 @@ public class EventoCalendar {
                 null,
                 EstadoEventoCalendar.PENDIENTE,
                 payloadJson,
-                0
+                0,
+                null
         );
     }
 
@@ -77,9 +81,22 @@ public class EventoCalendar {
             LocalDateTime fechaSync,
             EstadoEventoCalendar estado,
             String payloadJson,
-            int intentos
+            int intentos,
+            String mensajeError
     ) {
-        return new EventoCalendar(id, origenTipo, origenId, eventoId, tipo, googleEventId, fechaSync, estado, payloadJson, intentos);
+        return new EventoCalendar(
+                id,
+                origenTipo,
+                origenId,
+                eventoId,
+                tipo,
+                googleEventId,
+                fechaSync,
+                estado,
+                payloadJson,
+                intentos,
+                mensajeError
+        );
     }
 
     public EventoCalendar marcarSincronizado(String googleEventId) {
@@ -96,7 +113,8 @@ public class EventoCalendar {
                 LocalDateTime.now(),
                 EstadoEventoCalendar.SINCRONIZADO,
                 payloadJson,
-                intentos
+                intentos,
+                null
         );
     }
 
@@ -114,11 +132,12 @@ public class EventoCalendar {
                 fechaSync,
                 estado,
                 payloadJson,
-                intentos + 1
+                intentos + 1,
+                mensajeError
         );
     }
 
-    public EventoCalendar marcarError() {
+    public EventoCalendar marcarError(String mensajeError) {
         if (estado == EstadoEventoCalendar.CANCELADO) {
             return this;
         }
@@ -132,7 +151,8 @@ public class EventoCalendar {
                 fechaSync,
                 EstadoEventoCalendar.ERROR,
                 payloadJson,
-                intentos
+                intentos,
+                mensajeError
         );
     }
 
@@ -176,6 +196,10 @@ public class EventoCalendar {
         return intentos;
     }
 
+    public String getMensajeError() {
+        return mensajeError;
+    }
+
     private static String normalizarGoogleEventId(String googleEventId) {
         if (googleEventId == null || googleEventId.isBlank()) {
             return null;
@@ -185,5 +209,13 @@ public class EventoCalendar {
             throw new DomainException("El identificador de Google Calendar no es valido");
         }
         return valor;
+    }
+
+    private static String normalizarMensajeError(String mensajeError) {
+        if (mensajeError == null || mensajeError.isBlank()) {
+            return null;
+        }
+        String valor = mensajeError.trim();
+        return valor.length() <= 1000 ? valor : valor.substring(0, 1000);
     }
 }

@@ -51,6 +51,9 @@ public class EventoCalendarJpaEntity {
     @Column(name = "intentos", nullable = false)
     private int intentos;
 
+    @Column(name = "mensaje_error", columnDefinition = "text")
+    private String mensajeError;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -71,6 +74,7 @@ public class EventoCalendarJpaEntity {
             EstadoEventoCalendar estado,
             String payloadJson,
             int intentos,
+            String mensajeError,
             LocalDateTime createdAt,
             LocalDateTime updatedAt
     ) {
@@ -84,6 +88,7 @@ public class EventoCalendarJpaEntity {
         this.estado = estado;
         this.payloadJson = payloadJson;
         this.intentos = intentos;
+        this.mensajeError = mensajeError;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -126,5 +131,9 @@ public class EventoCalendarJpaEntity {
 
     public int getIntentos() {
         return intentos;
+    }
+
+    public String getMensajeError() {
+        return mensajeError;
     }
 }

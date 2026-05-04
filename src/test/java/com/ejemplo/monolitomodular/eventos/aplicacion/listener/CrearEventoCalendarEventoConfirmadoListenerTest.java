@@ -9,6 +9,7 @@ import com.ejemplo.monolitomodular.clientes.dominio.modelo.Cliente;
 import com.ejemplo.monolitomodular.clientes.dominio.modelo.TipoCliente;
 import com.ejemplo.monolitomodular.clientes.dominio.puerto.salida.ClienteRepository;
 import com.ejemplo.monolitomodular.eventos.aplicacion.evento.EventoConfirmadoEvent;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
@@ -27,6 +28,7 @@ class CrearEventoCalendarEventoConfirmadoListenerTest {
         CrearEventoCalendarEventoConfirmadoListener listener = new CrearEventoCalendarEventoConfirmadoListener(
                 repository,
                 new ClienteRepositoryStub(cliente),
+                objectMapper(),
                 "gerente@club.com,tesorero@club.com"
         );
         UUID eventoId = UUID.randomUUID();
@@ -45,6 +47,10 @@ class CrearEventoCalendarEventoConfirmadoListenerTest {
         assertEquals(EstadoEventoCalendar.PENDIENTE, repository.guardado().getEstado());
         assertEquals(true, repository.guardado().getPayloadJson().contains("cliente@test.com"));
         assertEquals(true, repository.guardado().getPayloadJson().contains("gerente@club.com"));
+    }
+
+    private static ObjectMapper objectMapper() {
+        return new ObjectMapper().findAndRegisterModules();
     }
 
     private static class ClienteRepositoryStub implements ClienteRepository {

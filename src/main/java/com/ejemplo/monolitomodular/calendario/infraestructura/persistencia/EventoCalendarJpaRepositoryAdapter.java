@@ -31,6 +31,7 @@ public class EventoCalendarJpaRepositoryAdapter implements EventoCalendarReposit
                 eventoCalendar.getEstado(),
                 eventoCalendar.getPayloadJson(),
                 eventoCalendar.getIntentos(),
+                eventoCalendar.getMensajeError(),
                 now,
                 now
         ));
@@ -55,7 +56,8 @@ public class EventoCalendarJpaRepositoryAdapter implements EventoCalendarReposit
                 entity.getFechaSync(),
                 entity.getEstado(),
                 entity.getPayloadJson(),
-                entity.getIntentos()
+                entity.getIntentos(),
+                entity.getMensajeError()
         );
     }
 }

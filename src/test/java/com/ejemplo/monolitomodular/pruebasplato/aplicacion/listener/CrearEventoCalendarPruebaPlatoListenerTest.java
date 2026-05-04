@@ -6,6 +6,7 @@ import com.ejemplo.monolitomodular.calendario.dominio.modelo.OrigenEventoCalenda
 import com.ejemplo.monolitomodular.calendario.dominio.modelo.TipoOperacionCalendar;
 import com.ejemplo.monolitomodular.calendario.dominio.puerto.salida.EventoCalendarRepository;
 import com.ejemplo.monolitomodular.pruebasplato.aplicacion.evento.PruebaPlatoProgramadaEvent;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
@@ -21,6 +22,7 @@ class CrearEventoCalendarPruebaPlatoListenerTest {
         EventoCalendarRepositoryStub repository = new EventoCalendarRepositoryStub();
         CrearEventoCalendarPruebaPlatoListener listener = new CrearEventoCalendarPruebaPlatoListener(
                 repository,
+                objectMapper(),
                 "chef@club.com",
                 "gerente@club.com",
                 "tesorero@club.com"
@@ -46,6 +48,10 @@ class CrearEventoCalendarPruebaPlatoListenerTest {
         assertEquals(0, repository.guardado().getIntentos());
         assertEquals(true, repository.guardado().getPayloadJson().contains("cliente@test.com"));
         assertEquals(true, repository.guardado().getPayloadJson().contains("chef@club.com"));
+    }
+
+    private static ObjectMapper objectMapper() {
+        return new ObjectMapper().findAndRegisterModules();
     }
 
     private static class EventoCalendarRepositoryStub implements EventoCalendarRepository {

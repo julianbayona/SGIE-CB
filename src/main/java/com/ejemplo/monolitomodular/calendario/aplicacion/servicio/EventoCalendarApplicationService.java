@@ -41,7 +41,7 @@ public class EventoCalendarApplicationService implements ProcesarEventosCalendar
         ));
         eventoCalendarRepository.guardar(resultado.exitoso()
                 ? enIntento.marcarSincronizado(resultado.googleEventId())
-                : enIntento.marcarError());
+                : enIntento.marcarError(resultado.mensaje()));
         return resultado.exitoso() ? 1 : 0;
     }
 }

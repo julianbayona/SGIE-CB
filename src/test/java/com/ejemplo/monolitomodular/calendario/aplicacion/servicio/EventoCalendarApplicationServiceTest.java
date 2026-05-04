@@ -48,6 +48,7 @@ class EventoCalendarApplicationServiceTest {
         assertEquals(1, googleCalendarPort.envios());
         assertEquals(EstadoEventoCalendar.ERROR, repository.ultimo().getEstado());
         assertEquals(1, repository.ultimo().getIntentos());
+        assertEquals("Fallo simulado", repository.ultimo().getMensajeError());
     }
 
     private static EventoCalendar eventoPendiente() {
