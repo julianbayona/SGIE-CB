@@ -41,3 +41,10 @@ sgie:
       tesorero-correo: ${SGIE_CALENDARIO_PRUEBA_PLATO_TESORERO_CORREO:}
     evento-confirmado:
       asistentes-correos: ${SGIE_CALENDARIO_EVENTO_CONFIRMADO_ASISTENTES_CORREOS:}
+    google:
+      enabled: ${SGIE_CALENDARIO_GOOGLE_ENABLED:false}
+      calendar-id: ${SGIE_CALENDARIO_GOOGLE_CALENDAR_ID:primary}
+      service-account-key-path: ${SGIE_CALENDARIO_GOOGLE_SERVICE_ACCOUNT_KEY_PATH:}
+      application-name: ${SGIE_CALENDARIO_GOOGLE_APPLICATION_NAME:SGIE Club Boyaca}
+      time-zone: ${SGIE_CALENDARIO_GOOGLE_TIME_ZONE:America/Bogota}
+      send-updates: ${SGIE_CALENDARIO_GOOGLE_SEND_UPDATES:all}

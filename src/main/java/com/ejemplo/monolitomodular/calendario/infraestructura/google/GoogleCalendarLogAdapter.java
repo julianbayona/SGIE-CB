@@ -4,11 +4,13 @@ import com.ejemplo.monolitomodular.calendario.aplicacion.dto.SincronizarGoogleCa
 import com.ejemplo.monolitomodular.calendario.aplicacion.dto.SincronizarGoogleCalendarResult;
 import com.ejemplo.monolitomodular.calendario.dominio.modelo.TipoOperacionCalendar;
 import com.ejemplo.monolitomodular.calendario.dominio.puerto.salida.GoogleCalendarPort;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
+@ConditionalOnProperty(name = "sgie.calendario.google.enabled", havingValue = "false", matchIfMissing = true)
 public class GoogleCalendarLogAdapter implements GoogleCalendarPort {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GoogleCalendarLogAdapter.class);

@@ -73,9 +73,25 @@ SGIE_CALENDARIO_PRUEBA_PLATO_CHEF_CORREO=chef@club.com
 SGIE_CALENDARIO_PRUEBA_PLATO_GERENTE_CORREO=gerente@club.com
 SGIE_CALENDARIO_PRUEBA_PLATO_TESORERO_CORREO=tesorero@club.com
 SGIE_CALENDARIO_EVENTO_CONFIRMADO_ASISTENTES_CORREOS=gerente@club.com,tesorero@club.com
+
+SGIE_CALENDARIO_GOOGLE_ENABLED=false
+SGIE_CALENDARIO_GOOGLE_CALENDAR_ID=primary
+SGIE_CALENDARIO_GOOGLE_SERVICE_ACCOUNT_KEY_PATH=/opt/sgie/google-service-account.json
+SGIE_CALENDARIO_GOOGLE_APPLICATION_NAME=SGIE Club Boyaca
+SGIE_CALENDARIO_GOOGLE_TIME_ZONE=America/Bogota
+SGIE_CALENDARIO_GOOGLE_SEND_UPDATES=all
 ```
 
 En desarrollo pueden usarse valores locales. En produccion deben configurarse directamente en el servidor o plataforma de despliegue, sin guardar credenciales reales en Git.
+
+Para usar Google Calendar con Service Account:
+
+1. Crear una Service Account en Google Cloud y habilitar Google Calendar API.
+2. Descargar el JSON de credenciales en el servidor.
+3. Compartir el calendario institucional del Club con el correo de la Service Account.
+4. Definir `SGIE_CALENDARIO_GOOGLE_ENABLED=true`.
+5. Definir `SGIE_CALENDARIO_GOOGLE_SERVICE_ACCOUNT_KEY_PATH` con la ruta absoluta del JSON.
+6. Definir `SGIE_CALENDARIO_GOOGLE_CALENDAR_ID` con el id del calendario institucional.
 
 ## Endpoints de ejemplo
 
