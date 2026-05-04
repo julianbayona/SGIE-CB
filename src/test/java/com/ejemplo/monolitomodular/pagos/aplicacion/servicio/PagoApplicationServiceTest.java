@@ -5,6 +5,7 @@ import com.ejemplo.monolitomodular.cotizaciones.dominio.modelo.CotizacionItem;
 import com.ejemplo.monolitomodular.cotizaciones.dominio.modelo.EstadoCotizacion;
 import com.ejemplo.monolitomodular.cotizaciones.dominio.puerto.salida.CotizacionRepository;
 import com.ejemplo.monolitomodular.eventos.dominio.modelo.EstadoEvento;
+import com.ejemplo.monolitomodular.eventos.aplicacion.evento.EventoConfirmadoEvent;
 import com.ejemplo.monolitomodular.eventos.dominio.modelo.Evento;
 import com.ejemplo.monolitomodular.eventos.dominio.modelo.HistorialEstadoEvento;
 import com.ejemplo.monolitomodular.eventos.dominio.modelo.ReservaSalon;
@@ -20,6 +21,7 @@ import com.ejemplo.monolitomodular.usuarios.dominio.modelo.RolUsuario;
 import com.ejemplo.monolitomodular.usuarios.dominio.modelo.Usuario;
 import com.ejemplo.monolitomodular.usuarios.dominio.puerto.salida.UsuarioRepository;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -49,6 +51,9 @@ class PagoApplicationServiceTest {
         assertEquals(new BigDecimal("1500000.00"), view.saldoPendiente());
         assertEquals(EstadoEvento.CONFIRMADO, escenario.eventoRepository().estado());
         assertEquals(1, escenario.historialRepository().total());
+        assertEquals(1, escenario.eventPublisher().total());
+        EventoConfirmadoEvent event = (EventoConfirmadoEvent) escenario.eventPublisher().ultimo();
+        assertEquals(escenario.eventoRepository().evento().getId(), event.eventoId());
     }
 
     @Test
@@ -109,6 +114,7 @@ class PagoApplicationServiceTest {
         assertEquals(new BigDecimal("800000.00"), segundo.saldoPendiente());
         assertEquals(EstadoEvento.CONFIRMADO, escenario.eventoRepository().estado());
         assertEquals(1, escenario.historialRepository().total());
+        assertEquals(1, escenario.eventPublisher().total());
     }
 
     @Test
@@ -140,15 +146,17 @@ class PagoApplicationServiceTest {
         EventoRepositoryStub eventoRepository = new EventoRepositoryStub(evento(reserva, EstadoEvento.COTIZACION_APROBADA));
         HistorialRepositoryStub historialRepository = new HistorialRepositoryStub();
         AnticipoRepositoryStub anticipoRepository = new AnticipoRepositoryStub();
+        ApplicationEventPublisherStub eventPublisher = new ApplicationEventPublisherStub();
         PagoApplicationService service = new PagoApplicationService(
                 anticipoRepository,
                 new CotizacionRepositoryStub(cotizacion),
                 new UsuarioRepositoryStub(usuario),
                 new ReservaSalonRepositoryStub(reserva),
                 eventoRepository,
-                historialRepository
+                historialRepository,
+                eventPublisher
         );
-        return new EscenarioPago(usuario, cotizacion, service, eventoRepository, historialRepository, anticipoRepository);
+        return new EscenarioPago(usuario, cotizacion, service, eventoRepository, historialRepository, anticipoRepository, eventPublisher);
     }
 
     private static RegistrarAnticipoCommand command(UUID cotizacionId, UUID usuarioId, BigDecimal valor) {
@@ -223,7 +231,8 @@ class PagoApplicationServiceTest {
             PagoApplicationService service,
             EventoRepositoryStub eventoRepository,
             HistorialRepositoryStub historialRepository,
-            AnticipoRepositoryStub anticipoRepository
+            AnticipoRepositoryStub anticipoRepository,
+            ApplicationEventPublisherStub eventPublisher
     ) {
     }
 
@@ -401,6 +410,10 @@ class PagoApplicationServiceTest {
         EstadoEvento estado() {
             return evento.getEstado();
         }
+
+        Evento evento() {
+            return evento;
+        }
     }
 
     private static class HistorialRepositoryStub implements HistorialEstadoEventoRepository {
@@ -415,6 +428,24 @@ class PagoApplicationServiceTest {
 
         int total() {
             return historiales.size();
+        }
+    }
+
+    private static class ApplicationEventPublisherStub implements ApplicationEventPublisher {
+
+        private final List<Object> eventos = new ArrayList<>();
+
+        @Override
+        public void publishEvent(Object event) {
+            eventos.add(event);
+        }
+
+        int total() {
+            return eventos.size();
+        }
+
+        Object ultimo() {
+            return eventos.get(eventos.size() - 1);
         }
     }
 }
