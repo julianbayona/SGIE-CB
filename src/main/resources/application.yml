@@ -19,3 +19,25 @@ spring:
 
 server:
   port: 8080
+
+sgie:
+  notificaciones:
+    scheduler:
+      fixed-delay-ms: ${SGIE_NOTIFICACIONES_SCHEDULER_FIXED_DELAY_MS:60000}
+      limite: ${SGIE_NOTIFICACIONES_SCHEDULER_LIMITE:20}
+    personal:
+      grupo-whatsapp-id: ${SGIE_NOTIFICACIONES_PERSONAL_GRUPO_WHATSAPP_ID:}
+    prueba-plato:
+      chef-telefono: ${SGIE_NOTIFICACIONES_PRUEBA_PLATO_CHEF_TELEFONO:}
+      gerente-telefono: ${SGIE_NOTIFICACIONES_PRUEBA_PLATO_GERENTE_TELEFONO:}
+      tesorero-telefono: ${SGIE_NOTIFICACIONES_PRUEBA_PLATO_TESORERO_TELEFONO:}
+  calendario:
+    scheduler:
+      fixed-delay-ms: ${SGIE_CALENDARIO_SCHEDULER_FIXED_DELAY_MS:60000}
+      limite: ${SGIE_CALENDARIO_SCHEDULER_LIMITE:20}
+    prueba-plato:
+      chef-correo: ${SGIE_CALENDARIO_PRUEBA_PLATO_CHEF_CORREO:}
+      gerente-correo: ${SGIE_CALENDARIO_PRUEBA_PLATO_GERENTE_CORREO:}
+      tesorero-correo: ${SGIE_CALENDARIO_PRUEBA_PLATO_TESORERO_CORREO:}
+    evento-confirmado:
+      asistentes-correos: ${SGIE_CALENDARIO_EVENTO_CONFIRMADO_ASISTENTES_CORREOS:}

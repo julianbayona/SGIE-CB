@@ -9,6 +9,7 @@ public record PruebaPlatoProgramadaEvent(
         UUID clienteId,
         String nombreCliente,
         String telefonoCliente,
+        String correoCliente,
         LocalDateTime fechaRealizacion
 ) {
 }

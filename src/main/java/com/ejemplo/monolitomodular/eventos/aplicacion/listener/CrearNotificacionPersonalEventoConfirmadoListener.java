@@ -9,31 +9,25 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.List;
 
 @Component
 public class CrearNotificacionPersonalEventoConfirmadoListener {
 
     private final CrearNotificacionUseCase crearNotificacionUseCase;
-    private final String telefonosPersonal;
+    private final String grupoWhatsAppPersonalId;
 
     public CrearNotificacionPersonalEventoConfirmadoListener(
             CrearNotificacionUseCase crearNotificacionUseCase,
-            @Value("${sgie.notificaciones.personal.telefonos:}") String telefonosPersonal
+            @Value("${sgie.notificaciones.personal.grupo-whatsapp-id:}") String grupoWhatsAppPersonalId
     ) {
         this.crearNotificacionUseCase = crearNotificacionUseCase;
-        this.telefonosPersonal = telefonosPersonal;
+        this.grupoWhatsAppPersonalId = grupoWhatsAppPersonalId;
     }
 
     @EventListener
     public void manejar(EventoConfirmadoEvent event) {
-        List<CrearNotificacionCommand.Destinatario> destinatarios = Arrays.stream(telefonosPersonal.split(","))
-                .map(String::trim)
-                .filter(telefono -> !telefono.isBlank())
-                .map(telefono -> new CrearNotificacionCommand.Destinatario(null, telefono))
-                .toList();
-        if (destinatarios.isEmpty()) {
+        if (grupoWhatsAppPersonalId == null || grupoWhatsAppPersonalId.isBlank()) {
             return;
         }
         crearNotificacionUseCase.ejecutar(new CrearNotificacionCommand(
@@ -41,7 +35,7 @@ public class CrearNotificacionPersonalEventoConfirmadoListener {
                 TipoNotificacion.EVENTO_CONFIRMADO_PERSONAL,
                 LocalDateTime.now(),
                 payload(event),
-                destinatarios
+                List.of(new CrearNotificacionCommand.Destinatario(null, grupoWhatsAppPersonalId.trim()))
         ));
     }
 

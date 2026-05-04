@@ -16,11 +16,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class CrearNotificacionPersonalEventoConfirmadoListenerTest {
 
     @Test
-    void deberiaCrearNotificacionParaPersonalConfiguradoCuandoEventoSeConfirma() {
+    void deberiaCrearNotificacionAlGrupoDeWhatsappCuandoEventoSeConfirma() {
         CrearNotificacionUseCaseStub useCase = new CrearNotificacionUseCaseStub();
         CrearNotificacionPersonalEventoConfirmadoListener listener = new CrearNotificacionPersonalEventoConfirmadoListener(
                 useCase,
-                "573001112233,573004445566"
+                "grupo-personal@g.us"
         );
         UUID eventoId = UUID.randomUUID();
 
@@ -33,7 +33,8 @@ class CrearNotificacionPersonalEventoConfirmadoListenerTest {
 
         assertEquals(eventoId, useCase.command().eventoId());
         assertEquals(TipoNotificacion.EVENTO_CONFIRMADO_PERSONAL, useCase.command().tipo());
-        assertEquals(2, useCase.command().destinatarios().size());
+        assertEquals(1, useCase.command().destinatarios().size());
+        assertEquals("grupo-personal@g.us", useCase.command().destinatarios().get(0).telefono());
     }
 
     @Test

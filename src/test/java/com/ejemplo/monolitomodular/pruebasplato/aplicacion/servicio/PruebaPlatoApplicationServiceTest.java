@@ -59,6 +59,7 @@ class PruebaPlatoApplicationServiceTest {
         assertEquals(cliente.getId(), event.clienteId());
         assertEquals(cliente.getNombreCompleto(), event.nombreCliente());
         assertEquals(cliente.getTelefono(), event.telefonoCliente());
+        assertEquals(cliente.getCorreo(), event.correoCliente());
     }
 
     @Test

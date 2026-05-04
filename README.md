@@ -51,6 +51,32 @@ Ambos están creados como ejemplo y pueden servir de plantilla para nuevos módu
 mvn spring-boot:run
 ```
 
+## Configuracion para despliegue
+
+La aplicacion toma configuracion desde variables de entorno. El archivo `.env.example` contiene los nombres esperados para base de datos, notificaciones y calendario.
+
+Variables principales:
+
+```env
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=sgie
+DB_USERNAME=postgres
+DB_PASSWORD=postgres
+
+SGIE_NOTIFICACIONES_PERSONAL_GRUPO_WHATSAPP_ID=grupo-personal@g.us
+SGIE_NOTIFICACIONES_PRUEBA_PLATO_CHEF_TELEFONO=573001111111
+SGIE_NOTIFICACIONES_PRUEBA_PLATO_GERENTE_TELEFONO=573002222222
+SGIE_NOTIFICACIONES_PRUEBA_PLATO_TESORERO_TELEFONO=573003333333
+
+SGIE_CALENDARIO_PRUEBA_PLATO_CHEF_CORREO=chef@club.com
+SGIE_CALENDARIO_PRUEBA_PLATO_GERENTE_CORREO=gerente@club.com
+SGIE_CALENDARIO_PRUEBA_PLATO_TESORERO_CORREO=tesorero@club.com
+SGIE_CALENDARIO_EVENTO_CONFIRMADO_ASISTENTES_CORREOS=gerente@club.com,tesorero@club.com
+```
+
+En desarrollo pueden usarse valores locales. En produccion deben configurarse directamente en el servidor o plataforma de despliegue, sin guardar credenciales reales en Git.
+
 ## Endpoints de ejemplo
 
 - `POST /api/clientes`

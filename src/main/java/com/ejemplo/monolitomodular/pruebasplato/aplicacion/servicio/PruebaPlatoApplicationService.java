@@ -59,6 +59,7 @@ public class PruebaPlatoApplicationService implements ProgramarPruebaPlatoUseCas
                 cliente.getId(),
                 cliente.getNombreCompleto(),
                 cliente.getTelefono(),
+                cliente.getCorreo(),
                 guardada.getFechaRealizacion()
         ));
         return toView(guardada);

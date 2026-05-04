@@ -19,7 +19,12 @@ class CrearEventoCalendarPruebaPlatoListenerTest {
     @Test
     void deberiaCrearEventoCalendarPendienteCuandoSeProgramaPruebaPlato() {
         EventoCalendarRepositoryStub repository = new EventoCalendarRepositoryStub();
-        CrearEventoCalendarPruebaPlatoListener listener = new CrearEventoCalendarPruebaPlatoListener(repository);
+        CrearEventoCalendarPruebaPlatoListener listener = new CrearEventoCalendarPruebaPlatoListener(
+                repository,
+                "chef@club.com",
+                "gerente@club.com",
+                "tesorero@club.com"
+        );
         UUID pruebaPlatoId = UUID.randomUUID();
         UUID eventoId = UUID.randomUUID();
 
@@ -29,6 +34,7 @@ class CrearEventoCalendarPruebaPlatoListenerTest {
                 UUID.randomUUID(),
                 "Cliente Uno",
                 "573001112233",
+                "cliente@test.com",
                 LocalDateTime.now().plusDays(2)
         ));
 
@@ -38,6 +44,8 @@ class CrearEventoCalendarPruebaPlatoListenerTest {
         assertEquals(TipoOperacionCalendar.CREAR, repository.guardado().getTipo());
         assertEquals(EstadoEventoCalendar.PENDIENTE, repository.guardado().getEstado());
         assertEquals(0, repository.guardado().getIntentos());
+        assertEquals(true, repository.guardado().getPayloadJson().contains("cliente@test.com"));
+        assertEquals(true, repository.guardado().getPayloadJson().contains("chef@club.com"));
     }
 
     private static class EventoCalendarRepositoryStub implements EventoCalendarRepository {

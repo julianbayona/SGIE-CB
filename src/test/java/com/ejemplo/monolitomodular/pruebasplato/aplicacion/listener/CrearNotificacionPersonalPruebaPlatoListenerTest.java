@@ -12,42 +12,67 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class CrearNotificacionPruebaPlatoListenerTest {
+class CrearNotificacionPersonalPruebaPlatoListenerTest {
 
     @Test
-    void deberiaCrearNotificacionParaClienteCuandoSeProgramaPruebaPlato() {
+    void deberiaCrearNotificacionParaChefGerenteYTesorero() {
         CrearNotificacionUseCaseStub useCase = new CrearNotificacionUseCaseStub();
-        CrearNotificacionPruebaPlatoListener listener = new CrearNotificacionPruebaPlatoListener(useCase);
+        CrearNotificacionPersonalPruebaPlatoListener listener = new CrearNotificacionPersonalPruebaPlatoListener(
+                useCase,
+                "573001111111",
+                "573002222222",
+                "573003333333"
+        );
         UUID eventoId = UUID.randomUUID();
-        UUID clienteId = UUID.randomUUID();
-        LocalDateTime fechaRealizacion = LocalDateTime.now().plusDays(3);
 
         listener.manejar(new PruebaPlatoProgramadaEvent(
                 UUID.randomUUID(),
                 eventoId,
-                clienteId,
+                UUID.randomUUID(),
                 "Cliente Uno",
-                "573001112233",
+                "573009999999",
                 "cliente@test.com",
-                fechaRealizacion
+                LocalDateTime.of(2026, 9, 10, 10, 0)
         ));
 
         assertEquals(eventoId, useCase.command().eventoId());
-        assertEquals(TipoNotificacion.PRUEBA_PLATO_CLIENTE, useCase.command().tipo());
-        assertEquals("573001112233", useCase.command().destinatarios().get(0).telefono());
-        assertTrue(useCase.command().payloadJson().contains("Cliente Uno"));
-        assertTrue(useCase.command().payloadJson().contains(fechaRealizacion.toString()));
+        assertEquals(TipoNotificacion.PRUEBA_PLATO_PERSONAL, useCase.command().tipo());
+        assertEquals(3, useCase.command().destinatarios().size());
+    }
+
+    @Test
+    void noDeberiaCrearNotificacionSiFaltaUnDestinatarioFijo() {
+        CrearNotificacionUseCaseStub useCase = new CrearNotificacionUseCaseStub();
+        CrearNotificacionPersonalPruebaPlatoListener listener = new CrearNotificacionPersonalPruebaPlatoListener(
+                useCase,
+                "573001111111",
+                "",
+                "573003333333"
+        );
+
+        listener.manejar(new PruebaPlatoProgramadaEvent(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                "Cliente Uno",
+                "573009999999",
+                "cliente@test.com",
+                LocalDateTime.of(2026, 9, 10, 10, 0)
+        ));
+
+        assertEquals(0, useCase.total());
     }
 
     private static class CrearNotificacionUseCaseStub implements CrearNotificacionUseCase {
 
         private CrearNotificacionCommand command;
+        private int total;
 
         @Override
         public NotificacionView ejecutar(CrearNotificacionCommand command) {
             this.command = command;
+            this.total++;
             return new NotificacionView(
                     UUID.randomUUID(),
                     command.eventoId(),
@@ -62,6 +87,10 @@ class CrearNotificacionPruebaPlatoListenerTest {
 
         CrearNotificacionCommand command() {
             return command;
+        }
+
+        int total() {
+            return total;
         }
     }
 }
