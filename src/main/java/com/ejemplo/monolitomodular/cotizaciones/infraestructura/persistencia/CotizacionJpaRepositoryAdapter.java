@@ -66,6 +66,14 @@ public class CotizacionJpaRepositoryAdapter implements CotizacionRepository {
     }
 
     @Override
+    public Optional<Cotizacion> buscarAceptadaVigentePorEventoId(UUID eventoId) {
+        return cotizacionRepository.findAceptadaVigenteByEventoIdOrderByCreatedAtDesc(eventoId)
+                .stream()
+                .findFirst()
+                .map(this::toDomain);
+    }
+
+    @Override
     public void desactualizarActivasPorReservaId(UUID reservaId) {
         cotizacionRepository.desactualizarActivasPorReservaId(reservaId, LocalDateTime.now());
     }

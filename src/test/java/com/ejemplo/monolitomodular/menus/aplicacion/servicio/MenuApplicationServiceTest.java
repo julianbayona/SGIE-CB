@@ -181,6 +181,11 @@ class MenuApplicationServiceTest {
         }
 
         @Override
+        public boolean existeConflictoParaEvento(UUID eventoId) {
+            return false;
+        }
+
+        @Override
         public List<ReservaSalon> listarPorEvento(UUID eventoId) {
             return List.of();
         }
@@ -338,6 +343,11 @@ class MenuApplicationServiceTest {
 
         @Override
         public Optional<Cotizacion> buscarUltimaPorReservaRaizId(UUID reservaRaizId) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<Cotizacion> buscarAceptadaVigentePorEventoId(UUID eventoId) {
             return Optional.empty();
         }
 

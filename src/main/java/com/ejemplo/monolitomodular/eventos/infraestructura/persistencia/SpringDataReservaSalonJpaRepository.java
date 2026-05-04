@@ -45,6 +45,29 @@ public interface SpringDataReservaSalonJpaRepository extends JpaRepository<Reser
             """)
     boolean existeConflicto(UUID salonId, LocalDateTime fechaHoraInicio, LocalDateTime fechaHoraFin, UUID reservaRaizIdExcluida);
 
+    @Query("""
+            select case when count(r) > 0 then true else false end
+            from ReservaSalonJpaEntity r
+            where r.eventoId = :eventoId
+              and r.vigente = true
+              and exists (
+                  select 1
+                  from ReservaSalonJpaEntity otra
+                  where otra.salonId = r.salonId
+                    and otra.vigente = true
+                    and otra.eventoId <> r.eventoId
+                    and exists (
+                        select 1
+                        from EventoJpaEntity e
+                        where e.id = otra.eventoId
+                          and e.estado = com.ejemplo.monolitomodular.eventos.dominio.modelo.EstadoEvento.CONFIRMADO
+                    )
+                    and otra.fechaHoraInicio < r.fechaHoraFin
+                    and otra.fechaHoraFin > r.fechaHoraInicio
+              )
+            """)
+    boolean existeConflictoParaEvento(UUID eventoId);
+
     List<ReservaSalonJpaEntity> findByEventoIdAndVigenteTrue(UUID eventoId);
 
     Optional<ReservaSalonJpaEntity> findByEventoIdAndSalonIdAndVigenteTrue(UUID eventoId, UUID salonId);

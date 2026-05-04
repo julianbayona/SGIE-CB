@@ -74,6 +74,11 @@ public class ReservaSalonJpaRepositoryAdapter implements ReservaSalonRepository 
     }
 
     @Override
+    public boolean existeConflictoParaEvento(UUID eventoId) {
+        return repository.existeConflictoParaEvento(eventoId);
+    }
+
+    @Override
     public List<ReservaSalon> listarPorEvento(UUID eventoId) {
         return repository.findByEventoIdAndVigenteTrue(eventoId).stream()
                 .map(this::toDomain)

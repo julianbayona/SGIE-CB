@@ -3,12 +3,9 @@ package com.ejemplo.monolitomodular.pagos.aplicacion.servicio;
 import com.ejemplo.monolitomodular.cotizaciones.dominio.modelo.Cotizacion;
 import com.ejemplo.monolitomodular.cotizaciones.dominio.modelo.EstadoCotizacion;
 import com.ejemplo.monolitomodular.cotizaciones.dominio.puerto.salida.CotizacionRepository;
-import com.ejemplo.monolitomodular.eventos.aplicacion.evento.EventoConfirmadoEvent;
 import com.ejemplo.monolitomodular.eventos.dominio.modelo.Evento;
-import com.ejemplo.monolitomodular.eventos.dominio.modelo.HistorialEstadoEvento;
 import com.ejemplo.monolitomodular.eventos.dominio.modelo.ReservaSalon;
 import com.ejemplo.monolitomodular.eventos.dominio.puerto.salida.EventoRepository;
-import com.ejemplo.monolitomodular.eventos.dominio.puerto.salida.HistorialEstadoEventoRepository;
 import com.ejemplo.monolitomodular.eventos.dominio.puerto.salida.ReservaSalonRepository;
 import com.ejemplo.monolitomodular.pagos.aplicacion.dto.AnticipoView;
 import com.ejemplo.monolitomodular.pagos.aplicacion.dto.RegistrarAnticipoCommand;
@@ -17,7 +14,6 @@ import com.ejemplo.monolitomodular.pagos.dominio.modelo.Anticipo;
 import com.ejemplo.monolitomodular.pagos.dominio.puerto.salida.AnticipoRepository;
 import com.ejemplo.monolitomodular.shared.dominio.excepcion.DomainException;
 import com.ejemplo.monolitomodular.usuarios.dominio.puerto.salida.UsuarioRepository;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,25 +27,19 @@ public class PagoApplicationService implements RegistrarAnticipoUseCase {
     private final UsuarioRepository usuarioRepository;
     private final ReservaSalonRepository reservaSalonRepository;
     private final EventoRepository eventoRepository;
-    private final HistorialEstadoEventoRepository historialEstadoEventoRepository;
-    private final ApplicationEventPublisher eventPublisher;
 
     public PagoApplicationService(
             AnticipoRepository anticipoRepository,
             CotizacionRepository cotizacionRepository,
             UsuarioRepository usuarioRepository,
             ReservaSalonRepository reservaSalonRepository,
-            EventoRepository eventoRepository,
-            HistorialEstadoEventoRepository historialEstadoEventoRepository,
-            ApplicationEventPublisher eventPublisher
+            EventoRepository eventoRepository
     ) {
         this.anticipoRepository = anticipoRepository;
         this.cotizacionRepository = cotizacionRepository;
         this.usuarioRepository = usuarioRepository;
         this.reservaSalonRepository = reservaSalonRepository;
         this.eventoRepository = eventoRepository;
-        this.historialEstadoEventoRepository = historialEstadoEventoRepository;
-        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -82,27 +72,7 @@ public class PagoApplicationService implements RegistrarAnticipoUseCase {
         }
 
         Anticipo guardado = anticipoRepository.guardar(anticipo);
-        confirmarEventoSiAplica(evento, command.usuarioId());
         return toView(guardado, nuevoTotal, cotizacion.getValorTotal());
-    }
-
-    private void confirmarEventoSiAplica(Evento evento, java.util.UUID usuarioId) {
-        Evento confirmado = evento.confirmarConAnticipo();
-        if (confirmado.getEstado() != evento.getEstado()) {
-            eventoRepository.guardar(confirmado);
-            historialEstadoEventoRepository.guardar(HistorialEstadoEvento.registrarCambio(
-                    evento.getId(),
-                    usuarioId,
-                    evento.getEstado(),
-                    confirmado.getEstado()
-            ));
-            eventPublisher.publishEvent(new EventoConfirmadoEvent(
-                    confirmado.getId(),
-                    confirmado.getClienteId(),
-                    confirmado.getFechaHoraInicio(),
-                    confirmado.getFechaHoraFin()
-            ));
-        }
     }
 
     private AnticipoView toView(Anticipo anticipo, BigDecimal totalPagado, BigDecimal valorTotalCotizacion) {

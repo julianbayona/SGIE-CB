@@ -92,13 +92,13 @@ public class Evento {
         if (estado == EstadoEvento.CONFIRMADO) {
             return this;
         }
-        if (estado != EstadoEvento.COTIZACION_ENVIADA) {
-            throw new DomainException("Solo un evento con cotizacion enviada puede pasar a cotizacion aprobada");
+        if (estado != EstadoEvento.PENDIENTE && estado != EstadoEvento.COTIZACION_ENVIADA) {
+            throw new DomainException("Solo un evento pendiente o con cotizacion enviada puede pasar a cotizacion aprobada");
         }
         return cambiarEstado(EstadoEvento.COTIZACION_APROBADA);
     }
 
-    public Evento confirmarConAnticipo() {
+    public Evento confirmar() {
         if (estado == EstadoEvento.CONFIRMADO) {
             return this;
         }

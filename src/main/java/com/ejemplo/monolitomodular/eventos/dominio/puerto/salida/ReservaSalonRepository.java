@@ -18,6 +18,8 @@ public interface ReservaSalonRepository {
 
     boolean existeConflicto(UUID salonId, LocalDateTime fechaHoraInicio, LocalDateTime fechaHoraFin, UUID reservaRaizIdExcluida);
 
+    boolean existeConflictoParaEvento(UUID eventoId);
+
     List<ReservaSalon> listarPorEvento(UUID eventoId);
 
     Set<UUID> buscarSalonesOcupados(LocalDateTime fechaHoraInicio, LocalDateTime fechaHoraFin);

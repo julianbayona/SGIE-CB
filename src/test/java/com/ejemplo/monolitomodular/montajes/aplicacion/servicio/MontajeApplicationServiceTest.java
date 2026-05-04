@@ -219,6 +219,11 @@ class MontajeApplicationServiceTest {
         }
 
         @Override
+        public boolean existeConflictoParaEvento(UUID eventoId) {
+            return false;
+        }
+
+        @Override
         public List<ReservaSalon> listarPorEvento(UUID eventoId) {
             return List.of();
         }
@@ -513,6 +518,11 @@ class MontajeApplicationServiceTest {
 
         @Override
         public Optional<Cotizacion> buscarUltimaPorReservaRaizId(UUID reservaRaizId) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<Cotizacion> buscarAceptadaVigentePorEventoId(UUID eventoId) {
             return Optional.empty();
         }
 

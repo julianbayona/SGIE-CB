@@ -7,6 +7,10 @@ import com.ejemplo.monolitomodular.catalogos.dominio.modelo.TipoComida;
 import com.ejemplo.monolitomodular.catalogos.dominio.modelo.TipoEvento;
 import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.TipoComidaRepository;
 import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.TipoEventoRepository;
+import com.ejemplo.monolitomodular.cotizaciones.dominio.modelo.Cotizacion;
+import com.ejemplo.monolitomodular.cotizaciones.dominio.modelo.CotizacionItem;
+import com.ejemplo.monolitomodular.cotizaciones.dominio.puerto.salida.CotizacionRepository;
+import com.ejemplo.monolitomodular.eventos.aplicacion.evento.EventoConfirmadoEvent;
 import com.ejemplo.monolitomodular.eventos.aplicacion.dto.CrearEventoCommand;
 import com.ejemplo.monolitomodular.eventos.aplicacion.dto.CrearReservaSalonCommand;
 import com.ejemplo.monolitomodular.eventos.aplicacion.dto.EventoView;
@@ -25,7 +29,9 @@ import com.ejemplo.monolitomodular.usuarios.dominio.modelo.RolUsuario;
 import com.ejemplo.monolitomodular.usuarios.dominio.modelo.Usuario;
 import com.ejemplo.monolitomodular.usuarios.dominio.puerto.salida.UsuarioRepository;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.ApplicationEventPublisher;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -54,7 +60,9 @@ class EventoApplicationServiceTest {
                 new SalonRepositoryStub(List.of()),
                 new EventoRepositoryStub(),
                 new ReservaSalonRepositoryStub(),
-                new HistorialRepositoryStub()
+                new HistorialRepositoryStub(),
+                new CotizacionRepositoryStub(),
+                new ApplicationEventPublisherStub()
         );
 
         EventoView evento = service.ejecutar(new CrearEventoCommand(
@@ -91,7 +99,9 @@ class EventoApplicationServiceTest {
                 new SalonRepositoryStub(List.of(salonManana, salonTarde)),
                 eventoRepository,
                 reservaRepository,
-                new HistorialRepositoryStub()
+                new HistorialRepositoryStub(),
+                new CotizacionRepositoryStub(),
+                new ApplicationEventPublisherStub()
         );
 
         EventoView evento = service.ejecutar(new CrearEventoCommand(
@@ -159,7 +169,9 @@ class EventoApplicationServiceTest {
                 new SalonRepositoryStub(List.of(salon)),
                 eventoRepository,
                 reservaRepository,
-                new HistorialRepositoryStub()
+                new HistorialRepositoryStub(),
+                new CotizacionRepositoryStub(),
+                new ApplicationEventPublisherStub()
         );
 
         EventoView evento = service.ejecutar(new CrearEventoCommand(
@@ -203,7 +215,9 @@ class EventoApplicationServiceTest {
                 new SalonRepositoryStub(List.of(salonActual, salonNuevo)),
                 eventoRepository,
                 reservaRepository,
-                new HistorialRepositoryStub()
+                new HistorialRepositoryStub(),
+                new CotizacionRepositoryStub(),
+                new ApplicationEventPublisherStub()
         );
 
         EventoView evento = service.ejecutar(new CrearEventoCommand(
@@ -258,7 +272,9 @@ class EventoApplicationServiceTest {
                 new SalonRepositoryStub(List.of()),
                 new EventoRepositoryStub(),
                 new ReservaSalonRepositoryStub(),
-                new HistorialRepositoryStub()
+                new HistorialRepositoryStub(),
+                new CotizacionRepositoryStub(),
+                new ApplicationEventPublisherStub()
         );
 
         assertThrows(DomainException.class, () ->
@@ -286,7 +302,9 @@ class EventoApplicationServiceTest {
                 new SalonRepositoryStub(List.of()),
                 new EventoRepositoryStub(),
                 new ReservaSalonRepositoryStub(),
-                new HistorialRepositoryStub()
+                new HistorialRepositoryStub(),
+                new CotizacionRepositoryStub(),
+                new ApplicationEventPublisherStub()
         );
 
         assertThrows(DomainException.class, () ->
@@ -315,7 +333,9 @@ class EventoApplicationServiceTest {
                 new SalonRepositoryStub(List.of()),
                 new EventoRepositoryStub(),
                 new ReservaSalonRepositoryStub(),
-                new HistorialRepositoryStub()
+                new HistorialRepositoryStub(),
+                new CotizacionRepositoryStub(),
+                new ApplicationEventPublisherStub()
         );
 
         assertThrows(DomainException.class, () ->
@@ -344,7 +364,9 @@ class EventoApplicationServiceTest {
                 new SalonRepositoryStub(List.of()),
                 new EventoRepositoryStub(),
                 new ReservaSalonRepositoryStub(),
-                new HistorialRepositoryStub()
+                new HistorialRepositoryStub(),
+                new CotizacionRepositoryStub(),
+                new ApplicationEventPublisherStub()
         );
 
         assertThrows(DomainException.class, () ->
@@ -374,7 +396,9 @@ class EventoApplicationServiceTest {
                 new SalonRepositoryStub(List.of()),
                 new EventoRepositoryStub(),
                 new ReservaSalonRepositoryStub(),
-                new HistorialRepositoryStub()
+                new HistorialRepositoryStub(),
+                new CotizacionRepositoryStub(),
+                new ApplicationEventPublisherStub()
         );
 
         assertThrows(DomainException.class, () ->
@@ -404,7 +428,9 @@ class EventoApplicationServiceTest {
                 new SalonRepositoryStub(List.of()),
                 new EventoRepositoryStub(),
                 new ReservaSalonRepositoryStub(),
-                new HistorialRepositoryStub()
+                new HistorialRepositoryStub(),
+                new CotizacionRepositoryStub(),
+                new ApplicationEventPublisherStub()
         );
 
         assertThrows(DomainException.class, () ->
@@ -434,7 +460,9 @@ class EventoApplicationServiceTest {
                 new SalonRepositoryStub(List.of()),
                 new EventoRepositoryStub(),
                 new ReservaSalonRepositoryStub(),
-                new HistorialRepositoryStub()
+                new HistorialRepositoryStub(),
+                new CotizacionRepositoryStub(),
+                new ApplicationEventPublisherStub()
         );
 
         LocalDateTime fecha = LocalDateTime.of(2026, 5, 10, 18, 0);
@@ -466,7 +494,9 @@ class EventoApplicationServiceTest {
                 new SalonRepositoryStub(List.of(salon)),
                 new EventoRepositoryStub(),
                 new ReservaSalonRepositoryStub(),
-                new HistorialRepositoryStub()
+                new HistorialRepositoryStub(),
+                new CotizacionRepositoryStub(),
+                new ApplicationEventPublisherStub()
         );
 
         assertThrows(DomainException.class, () ->
@@ -497,7 +527,9 @@ class EventoApplicationServiceTest {
                 new SalonRepositoryStub(List.of(salon)),
                 eventoRepository,
                 new ReservaSalonRepositoryStub(),
-                new HistorialRepositoryStub()
+                new HistorialRepositoryStub(),
+                new CotizacionRepositoryStub(),
+                new ApplicationEventPublisherStub()
         );
 
         EventoView evento = service.ejecutar(new CrearEventoCommand(
@@ -536,7 +568,9 @@ class EventoApplicationServiceTest {
                 new SalonRepositoryStub(List.of()),
                 eventoRepository,
                 new ReservaSalonRepositoryStub(),
-                new HistorialRepositoryStub()
+                new HistorialRepositoryStub(),
+                new CotizacionRepositoryStub(),
+                new ApplicationEventPublisherStub()
         );
 
         EventoView evento = service.ejecutar(new CrearEventoCommand(
@@ -576,7 +610,9 @@ class EventoApplicationServiceTest {
                 new SalonRepositoryStub(List.of(salon)),
                 eventoRepository,
                 new ReservaSalonRepositoryStub(),
-                new HistorialRepositoryStub()
+                new HistorialRepositoryStub(),
+                new CotizacionRepositoryStub(),
+                new ApplicationEventPublisherStub()
         );
 
         EventoView evento = service.ejecutar(new CrearEventoCommand(
@@ -617,7 +653,9 @@ class EventoApplicationServiceTest {
                 new SalonRepositoryStub(List.of()),
                 eventoRepository,
                 new ReservaSalonRepositoryStub(),
-                new HistorialRepositoryStub()
+                new HistorialRepositoryStub(),
+                new CotizacionRepositoryStub(),
+                new ApplicationEventPublisherStub()
         );
 
         EventoView creado = service.ejecutar(new CrearEventoCommand(
@@ -645,7 +683,9 @@ class EventoApplicationServiceTest {
                 new SalonRepositoryStub(List.of()),
                 new EventoRepositoryStub(),
                 new ReservaSalonRepositoryStub(),
-                new HistorialRepositoryStub()
+                new HistorialRepositoryStub(),
+                new CotizacionRepositoryStub(),
+                new ApplicationEventPublisherStub()
         );
 
         assertThrows(DomainException.class, () -> service.obtenerPorId(UUID.randomUUID()));
@@ -661,7 +701,9 @@ class EventoApplicationServiceTest {
                 new SalonRepositoryStub(List.of()),
                 new EventoRepositoryStub(),
                 new ReservaSalonRepositoryStub(),
-                new HistorialRepositoryStub()
+                new HistorialRepositoryStub(),
+                new CotizacionRepositoryStub(),
+                new ApplicationEventPublisherStub()
         );
 
         assertEquals(0, service.listar().size());
@@ -684,7 +726,9 @@ class EventoApplicationServiceTest {
                 new SalonRepositoryStub(List.of()),
                 eventoRepository,
                 new ReservaSalonRepositoryStub(),
-                new HistorialRepositoryStub()
+                new HistorialRepositoryStub(),
+                new CotizacionRepositoryStub(),
+                new ApplicationEventPublisherStub()
         );
 
         service.ejecutar(new CrearEventoCommand(
@@ -697,6 +741,49 @@ class EventoApplicationServiceTest {
         ));
 
         assertEquals(2, service.listar().size());
+    }
+
+    @Test
+    void deberiaConfirmarEventoExplicitamenteConCotizacionAceptadaVigente() {
+        Cliente cliente = Cliente.nuevo("123", "Test", "3001111111", "test@correo.com", TipoCliente.SOCIO, null);
+        Usuario usuario = Usuario.nuevo("Admin", "$2a$hash", RolUsuario.ADMINISTRADOR);
+        Salon salon = Salon.nuevo("Salon A", 100, "Test");
+        UUID tipoEventoId = UUID.randomUUID();
+        UUID tipoComidaId = UUID.randomUUID();
+        EventoRepositoryStub eventoRepository = new EventoRepositoryStub();
+        ReservaSalonRepositoryStub reservaRepository = new ReservaSalonRepositoryStub();
+        HistorialRepositoryStub historialRepository = new HistorialRepositoryStub();
+        ApplicationEventPublisherStub eventPublisher = new ApplicationEventPublisherStub();
+        EventoApplicationService service = new EventoApplicationService(
+                new ClienteRepositoryStub(List.of(cliente)),
+                new TipoEventoRepositoryStub(Set.of(tipoEventoId)),
+                new TipoComidaRepositoryStub(Set.of(tipoComidaId)),
+                new UsuarioRepositoryStub(List.of(usuario)),
+                new SalonRepositoryStub(List.of(salon)),
+                eventoRepository,
+                reservaRepository,
+                historialRepository,
+                new CotizacionRepositoryStub(cotizacionAceptada()),
+                eventPublisher
+        );
+        EventoView evento = service.ejecutar(new CrearEventoCommand(
+                cliente.getId(), tipoEventoId, tipoComidaId, usuario.getId(),
+                LocalDateTime.of(2026, 5, 10, 18, 0), LocalDateTime.of(2026, 5, 10, 22, 0)
+        ));
+        service.ejecutar(evento.id(), new CrearReservaSalonCommand(
+                usuario.getId(), salon.getId(), 50,
+                LocalDateTime.of(2026, 5, 10, 18, 0), LocalDateTime.of(2026, 5, 10, 22, 0)
+        ));
+        eventoRepository.guardar(eventoRepository.buscarPorId(evento.id()).orElseThrow().marcarCotizacionAprobada());
+        int historialAntesDeConfirmar = historialRepository.total();
+
+        EventoView confirmado = service.confirmar(evento.id(), usuario.getId());
+
+        assertEquals(EstadoEvento.CONFIRMADO, confirmado.estado());
+        assertEquals(historialAntesDeConfirmar + 1, historialRepository.total());
+        assertEquals(1, eventPublisher.total());
+        EventoConfirmadoEvent publicado = (EventoConfirmadoEvent) eventPublisher.ultimo();
+        assertEquals(evento.id(), publicado.eventoId());
     }
 
     @Test
@@ -717,7 +804,9 @@ class EventoApplicationServiceTest {
                 new SalonRepositoryStub(List.of(salon)),
                 eventoRepository,
                 reservaRepository,
-                new HistorialRepositoryStub()
+                new HistorialRepositoryStub(),
+                new CotizacionRepositoryStub(),
+                new ApplicationEventPublisherStub()
         );
 
         EventoView evento = service.ejecutar(new CrearEventoCommand(
@@ -758,7 +847,9 @@ class EventoApplicationServiceTest {
                 new SalonRepositoryStub(List.of(salon)),
                 eventoRepository,
                 reservaRepository,
-                new HistorialRepositoryStub()
+                new HistorialRepositoryStub(),
+                new CotizacionRepositoryStub(),
+                new ApplicationEventPublisherStub()
         );
 
         EventoView evento = service.ejecutar(new CrearEventoCommand(
@@ -978,6 +1069,17 @@ class EventoApplicationServiceTest {
         }
 
         @Override
+        public boolean existeConflictoParaEvento(UUID eventoId) {
+            return listarPorEvento(eventoId).stream()
+                    .anyMatch(reserva -> existeConflicto(
+                            reserva.getSalonId(),
+                            reserva.getFechaHoraInicio(),
+                            reserva.getFechaHoraFin(),
+                            reserva.getReservaRaizId()
+                    ));
+        }
+
+        @Override
         public List<ReservaSalon> listarPorEvento(UUID eventoId) {
             return reservas.stream()
                     .filter(ReservaSalon::isVigente)
@@ -1035,9 +1137,80 @@ class EventoApplicationServiceTest {
 
     private static class HistorialRepositoryStub implements HistorialEstadoEventoRepository {
 
+        private final List<HistorialEstadoEvento> historial = new ArrayList<>();
+
         @Override
         public HistorialEstadoEvento guardar(HistorialEstadoEvento historialEstadoEvento) {
+            historial.add(historialEstadoEvento);
             return historialEstadoEvento;
+        }
+
+        int total() {
+            return historial.size();
+        }
+    }
+
+    private static class CotizacionRepositoryStub implements CotizacionRepository {
+
+        private final Optional<Cotizacion> cotizacionAceptada;
+
+        private CotizacionRepositoryStub() {
+            this(Optional.empty());
+        }
+
+        private CotizacionRepositoryStub(Cotizacion cotizacionAceptada) {
+            this(Optional.of(cotizacionAceptada));
+        }
+
+        private CotizacionRepositoryStub(Optional<Cotizacion> cotizacionAceptada) {
+            this.cotizacionAceptada = cotizacionAceptada;
+        }
+
+        @Override
+        public Cotizacion guardar(Cotizacion cotizacion) {
+            return cotizacion;
+        }
+
+        @Override
+        public Optional<Cotizacion> buscarPorId(UUID id) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<Cotizacion> buscarActivaPorReservaId(UUID reservaId) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<Cotizacion> buscarUltimaPorReservaRaizId(UUID reservaRaizId) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<Cotizacion> buscarAceptadaVigentePorEventoId(UUID eventoId) {
+            return cotizacionAceptada;
+        }
+
+        @Override
+        public void desactualizarActivasPorReservaId(UUID reservaId) {
+        }
+    }
+
+    private static class ApplicationEventPublisherStub implements ApplicationEventPublisher {
+
+        private final List<Object> eventos = new ArrayList<>();
+
+        @Override
+        public void publishEvent(Object event) {
+            eventos.add(event);
+        }
+
+        int total() {
+            return eventos.size();
+        }
+
+        Object ultimo() {
+            return eventos.get(eventos.size() - 1);
         }
     }
 
@@ -1059,4 +1232,28 @@ class EventoApplicationServiceTest {
             return usuarios.stream().filter(usuario -> usuario.getId().equals(id)).findFirst();
         }
     }
+
+    private static Cotizacion cotizacionAceptada() {
+        UUID cotizacionId = UUID.randomUUID();
+        return Cotizacion.crearBorrador(
+                        cotizacionId,
+                        UUID.randomUUID(),
+                        UUID.randomUUID(),
+                        BigDecimal.ZERO,
+                        null,
+                        List.of(CotizacionItem.nuevo(
+                                cotizacionId,
+                                "MENU",
+                                UUID.randomUUID(),
+                                "Almuerzo",
+                                new BigDecimal("25000.00"),
+                                null,
+                                10
+                        ))
+                )
+                .generarDocumento()
+                .aceptar();
+    }
 }
+
+

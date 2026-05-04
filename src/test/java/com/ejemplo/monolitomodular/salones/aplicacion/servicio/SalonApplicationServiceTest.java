@@ -625,6 +625,11 @@ class SalonApplicationServiceTest {
         }
 
         @Override
+        public boolean existeConflictoParaEvento(UUID eventoId) {
+            return false;
+        }
+
+        @Override
         public List<ReservaSalon> listarPorEvento(UUID eventoId) {
             return List.of();
         }

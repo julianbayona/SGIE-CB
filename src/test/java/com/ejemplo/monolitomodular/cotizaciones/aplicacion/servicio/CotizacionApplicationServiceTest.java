@@ -429,6 +429,20 @@ class CotizacionApplicationServiceTest {
     }
 
     @Test
+    void deberiaAceptarCotizacionGeneradaSinEnviarla() {
+        EscenarioCotizacion escenario = escenario();
+        CotizacionView borrador = escenario.service().ejecutar(command(escenario.reserva().getReservaRaizId(), escenario.usuario().getId()));
+        CotizacionView generada = escenario.service().generar(borrador.id());
+
+        CotizacionView aceptada = escenario.service().aceptar(generada.id());
+
+        assertEquals(EstadoCotizacion.ACEPTADA, aceptada.estado());
+        assertEquals(EstadoEvento.COTIZACION_APROBADA, escenario.eventoRepository().estado());
+        assertEquals(1, escenario.historialRepository().total());
+    }
+
+
+    @Test
     void deberiaRechazarCotizacionEnviada() {
         EscenarioCotizacion escenario = escenario();
         CotizacionView borrador = escenario.service().ejecutar(command(escenario.reserva().getReservaRaizId(), escenario.usuario().getId()));
@@ -654,6 +668,11 @@ class CotizacionApplicationServiceTest {
         }
 
         @Override
+        public boolean existeConflictoParaEvento(UUID eventoId) {
+            return false;
+        }
+
+        @Override
         public List<ReservaSalon> listarPorEvento(UUID eventoId) {
             return List.of();
         }
@@ -736,6 +755,11 @@ class CotizacionApplicationServiceTest {
                 return Optional.empty();
             }
             return Optional.of(cotizaciones.get(cotizaciones.size() - 1));
+        }
+
+        @Override
+        public Optional<Cotizacion> buscarAceptadaVigentePorEventoId(UUID eventoId) {
+            return Optional.empty();
         }
 
         @Override

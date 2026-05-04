@@ -15,5 +15,7 @@ public interface CotizacionRepository {
 
     Optional<Cotizacion> buscarUltimaPorReservaRaizId(UUID reservaRaizId);
 
+    Optional<Cotizacion> buscarAceptadaVigentePorEventoId(UUID eventoId);
+
     void desactualizarActivasPorReservaId(UUID reservaId);
 }

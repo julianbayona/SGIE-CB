@@ -5,6 +5,7 @@ import com.ejemplo.monolitomodular.eventos.aplicacion.dto.CrearReservaSalonComma
 import com.ejemplo.monolitomodular.eventos.aplicacion.dto.EventoView;
 import com.ejemplo.monolitomodular.eventos.aplicacion.dto.ModificarReservaSalonCommand;
 import com.ejemplo.monolitomodular.eventos.aplicacion.dto.ReservaSalonView;
+import com.ejemplo.monolitomodular.eventos.aplicacion.puerto.entrada.ConfirmarEventoUseCase;
 import com.ejemplo.monolitomodular.eventos.aplicacion.puerto.entrada.ConsultarEventoUseCase;
 import com.ejemplo.monolitomodular.eventos.aplicacion.puerto.entrada.CrearEventoUseCase;
 import com.ejemplo.monolitomodular.eventos.aplicacion.puerto.entrada.CrearReservaSalonUseCase;
@@ -12,6 +13,7 @@ import com.ejemplo.monolitomodular.eventos.aplicacion.puerto.entrada.ModificarRe
 import com.ejemplo.monolitomodular.eventos.presentacion.rest.dto.CrearEventoRequest;
 import com.ejemplo.monolitomodular.eventos.presentacion.rest.dto.CrearReservaSalonRequest;
 import com.ejemplo.monolitomodular.eventos.presentacion.rest.dto.EventoResponse;
+import com.ejemplo.monolitomodular.eventos.presentacion.rest.dto.ConfirmarEventoRequest;
 import com.ejemplo.monolitomodular.eventos.presentacion.rest.dto.ModificarReservaSalonRequest;
 import com.ejemplo.monolitomodular.eventos.presentacion.rest.dto.ReservaSalonResponse;
 import jakarta.validation.Valid;
@@ -37,17 +39,20 @@ public class EventoController {
     private final ConsultarEventoUseCase consultarEventoUseCase;
     private final CrearReservaSalonUseCase crearReservaSalonUseCase;
     private final ModificarReservaSalonUseCase modificarReservaSalonUseCase;
+    private final ConfirmarEventoUseCase confirmarEventoUseCase;
 
     public EventoController(
             CrearEventoUseCase crearEventoUseCase,
             ConsultarEventoUseCase consultarEventoUseCase,
             CrearReservaSalonUseCase crearReservaSalonUseCase,
-            ModificarReservaSalonUseCase modificarReservaSalonUseCase
+            ModificarReservaSalonUseCase modificarReservaSalonUseCase,
+            ConfirmarEventoUseCase confirmarEventoUseCase
     ) {
         this.crearEventoUseCase = crearEventoUseCase;
         this.consultarEventoUseCase = consultarEventoUseCase;
         this.crearReservaSalonUseCase = crearReservaSalonUseCase;
         this.modificarReservaSalonUseCase = modificarReservaSalonUseCase;
+        this.confirmarEventoUseCase = confirmarEventoUseCase;
     }
 
     @PostMapping
@@ -115,6 +120,14 @@ public class EventoController {
         return consultarEventoUseCase.listar().stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    @PostMapping("/{eventoId}/confirmar")
+    public EventoResponse confirmar(
+            @PathVariable UUID eventoId,
+            @Valid @RequestBody ConfirmarEventoRequest request
+    ) {
+        return toResponse(confirmarEventoUseCase.confirmar(eventoId, request.usuarioId()));
     }
 
     private EventoResponse toResponse(EventoView evento) {

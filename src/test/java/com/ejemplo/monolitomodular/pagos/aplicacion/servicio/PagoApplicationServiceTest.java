@@ -38,7 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class PagoApplicationServiceTest {
 
     @Test
-    void deberiaRegistrarAnticipoYConfirmarEvento() {
+    void deberiaRegistrarAnticipoSinConfirmarEventoAutomaticamente() {
         EscenarioPago escenario = escenario(cotizacionAceptada(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID()));
 
         AnticipoView view = escenario.service().ejecutar(command(
@@ -49,11 +49,9 @@ class PagoApplicationServiceTest {
 
         assertEquals(new BigDecimal("500000.00"), view.totalPagado());
         assertEquals(new BigDecimal("1500000.00"), view.saldoPendiente());
-        assertEquals(EstadoEvento.CONFIRMADO, escenario.eventoRepository().estado());
-        assertEquals(1, escenario.historialRepository().total());
-        assertEquals(1, escenario.eventPublisher().total());
-        EventoConfirmadoEvent event = (EventoConfirmadoEvent) escenario.eventPublisher().ultimo();
-        assertEquals(escenario.eventoRepository().evento().getId(), event.eventoId());
+        assertEquals(EstadoEvento.COTIZACION_APROBADA, escenario.eventoRepository().estado());
+        assertEquals(0, escenario.historialRepository().total());
+        assertEquals(0, escenario.eventPublisher().total());
     }
 
     @Test
@@ -96,7 +94,7 @@ class PagoApplicationServiceTest {
     }
 
     @Test
-    void deberiaPermitirVariosAnticiposSinDuplicarHistorialDeConfirmacion() {
+    void deberiaPermitirVariosAnticiposSinConfirmarEventoAutomaticamente() {
         EscenarioPago escenario = escenario(cotizacionAceptada(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID()));
 
         escenario.service().ejecutar(command(
@@ -112,9 +110,9 @@ class PagoApplicationServiceTest {
 
         assertEquals(new BigDecimal("1200000.00"), segundo.totalPagado());
         assertEquals(new BigDecimal("800000.00"), segundo.saldoPendiente());
-        assertEquals(EstadoEvento.CONFIRMADO, escenario.eventoRepository().estado());
-        assertEquals(1, escenario.historialRepository().total());
-        assertEquals(1, escenario.eventPublisher().total());
+        assertEquals(EstadoEvento.COTIZACION_APROBADA, escenario.eventoRepository().estado());
+        assertEquals(0, escenario.historialRepository().total());
+        assertEquals(0, escenario.eventPublisher().total());
     }
 
     @Test
@@ -152,9 +150,7 @@ class PagoApplicationServiceTest {
                 new CotizacionRepositoryStub(cotizacion),
                 new UsuarioRepositoryStub(usuario),
                 new ReservaSalonRepositoryStub(reserva),
-                eventoRepository,
-                historialRepository,
-                eventPublisher
+                eventoRepository
         );
         return new EscenarioPago(usuario, cotizacion, service, eventoRepository, historialRepository, anticipoRepository, eventPublisher);
     }
@@ -301,6 +297,11 @@ class PagoApplicationServiceTest {
         }
 
         @Override
+        public Optional<Cotizacion> buscarAceptadaVigentePorEventoId(UUID eventoId) {
+            return Optional.empty();
+        }
+
+        @Override
         public void desactualizarActivasPorReservaId(UUID reservaId) {
         }
     }
@@ -349,6 +350,11 @@ class PagoApplicationServiceTest {
 
         @Override
         public boolean existeConflicto(UUID salonId, LocalDateTime fechaHoraInicio, LocalDateTime fechaHoraFin, UUID reservaRaizIdExcluida) {
+            return false;
+        }
+
+        @Override
+        public boolean existeConflictoParaEvento(UUID eventoId) {
             return false;
         }
 

@@ -3,11 +3,14 @@ package com.ejemplo.monolitomodular.eventos.aplicacion.servicio;
 import com.ejemplo.monolitomodular.clientes.dominio.puerto.salida.ClienteRepository;
 import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.TipoComidaRepository;
 import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.TipoEventoRepository;
+import com.ejemplo.monolitomodular.cotizaciones.dominio.puerto.salida.CotizacionRepository;
+import com.ejemplo.monolitomodular.eventos.aplicacion.evento.EventoConfirmadoEvent;
 import com.ejemplo.monolitomodular.eventos.aplicacion.dto.CrearEventoCommand;
 import com.ejemplo.monolitomodular.eventos.aplicacion.dto.CrearReservaSalonCommand;
 import com.ejemplo.monolitomodular.eventos.aplicacion.dto.EventoView;
 import com.ejemplo.monolitomodular.eventos.aplicacion.dto.ModificarReservaSalonCommand;
 import com.ejemplo.monolitomodular.eventos.aplicacion.dto.ReservaSalonView;
+import com.ejemplo.monolitomodular.eventos.aplicacion.puerto.entrada.ConfirmarEventoUseCase;
 import com.ejemplo.monolitomodular.eventos.aplicacion.puerto.entrada.ConsultarEventoUseCase;
 import com.ejemplo.monolitomodular.eventos.aplicacion.puerto.entrada.CrearEventoUseCase;
 import com.ejemplo.monolitomodular.eventos.aplicacion.puerto.entrada.CrearReservaSalonUseCase;
@@ -21,6 +24,7 @@ import com.ejemplo.monolitomodular.eventos.dominio.puerto.salida.ReservaSalonRep
 import com.ejemplo.monolitomodular.salones.dominio.puerto.salida.SalonRepository;
 import com.ejemplo.monolitomodular.shared.dominio.excepcion.DomainException;
 import com.ejemplo.monolitomodular.usuarios.dominio.puerto.salida.UsuarioRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -29,7 +33,12 @@ import java.util.Set;
 import java.util.UUID;
 
 @Service
-public class EventoApplicationService implements CrearEventoUseCase, ConsultarEventoUseCase, CrearReservaSalonUseCase, ModificarReservaSalonUseCase {
+public class EventoApplicationService implements
+        CrearEventoUseCase,
+        ConsultarEventoUseCase,
+        CrearReservaSalonUseCase,
+        ModificarReservaSalonUseCase,
+        ConfirmarEventoUseCase {
 
     private final ClienteRepository clienteRepository;
     private final TipoEventoRepository tipoEventoRepository;
@@ -39,6 +48,8 @@ public class EventoApplicationService implements CrearEventoUseCase, ConsultarEv
     private final EventoRepository eventoRepository;
     private final ReservaSalonRepository reservaSalonRepository;
     private final HistorialEstadoEventoRepository historialEstadoEventoRepository;
+    private final CotizacionRepository cotizacionRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public EventoApplicationService(
             ClienteRepository clienteRepository,
@@ -48,7 +59,9 @@ public class EventoApplicationService implements CrearEventoUseCase, ConsultarEv
             SalonRepository salonRepository,
             EventoRepository eventoRepository,
             ReservaSalonRepository reservaSalonRepository,
-            HistorialEstadoEventoRepository historialEstadoEventoRepository
+            HistorialEstadoEventoRepository historialEstadoEventoRepository,
+            CotizacionRepository cotizacionRepository,
+            ApplicationEventPublisher eventPublisher
     ) {
         this.clienteRepository = clienteRepository;
         this.tipoEventoRepository = tipoEventoRepository;
@@ -58,6 +71,8 @@ public class EventoApplicationService implements CrearEventoUseCase, ConsultarEv
         this.eventoRepository = eventoRepository;
         this.reservaSalonRepository = reservaSalonRepository;
         this.historialEstadoEventoRepository = historialEstadoEventoRepository;
+        this.cotizacionRepository = cotizacionRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -179,6 +194,46 @@ public class EventoApplicationService implements CrearEventoUseCase, ConsultarEv
         return eventoRepository.listar().stream()
                 .map(evento -> toView(evento, reservaSalonRepository.listarPorEvento(evento.getId())))
                 .toList();
+    }
+
+    @Override
+    @Transactional
+    public EventoView confirmar(UUID eventoId, UUID usuarioId) {
+        usuarioRepository.buscarPorId(usuarioId)
+                .orElseThrow(() -> new DomainException("Usuario no encontrado"));
+        Evento evento = eventoRepository.buscarPorId(eventoId)
+                .orElseThrow(() -> new DomainException("Evento no encontrado"));
+        validarEventoConfirmable(evento);
+
+        Evento confirmado = evento.confirmar();
+        if (confirmado.getEstado() != evento.getEstado()) {
+            eventoRepository.guardar(confirmado);
+            historialEstadoEventoRepository.guardar(HistorialEstadoEvento.registrarCambio(
+                    evento.getId(),
+                    usuarioId,
+                    evento.getEstado(),
+                    confirmado.getEstado()
+            ));
+            eventPublisher.publishEvent(new EventoConfirmadoEvent(
+                    confirmado.getId(),
+                    confirmado.getClienteId(),
+                    confirmado.getFechaHoraInicio(),
+                    confirmado.getFechaHoraFin()
+            ));
+        }
+        return toView(confirmado, reservaSalonRepository.listarPorEvento(eventoId));
+    }
+
+    private void validarEventoConfirmable(Evento evento) {
+        if (cotizacionRepository.buscarAceptadaVigentePorEventoId(evento.getId()).isEmpty()) {
+            throw new DomainException("El evento debe tener una cotizacion aceptada vigente para confirmarse");
+        }
+        if (reservaSalonRepository.listarPorEvento(evento.getId()).isEmpty()) {
+            throw new DomainException("El evento debe tener al menos una reserva de salon vigente para confirmarse");
+        }
+        if (reservaSalonRepository.existeConflictoParaEvento(evento.getId())) {
+            throw new DomainException("No se puede confirmar el evento porque existe conflicto con una reserva confirmada");
+        }
     }
 
     private void validarRango(CrearEventoCommand command) {
