@@ -8,7 +8,7 @@ spring:
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     open-in-view: false
     properties:
       hibernate:
@@ -44,7 +44,10 @@ sgie:
     google:
       enabled: ${SGIE_CALENDARIO_GOOGLE_ENABLED:false}
       calendar-id: ${SGIE_CALENDARIO_GOOGLE_CALENDAR_ID:primary}
-      service-account-key-path: ${SGIE_CALENDARIO_GOOGLE_SERVICE_ACCOUNT_KEY_PATH:}
+      oauth-client-id: ${SGIE_CALENDARIO_GOOGLE_OAUTH_CLIENT_ID:}
+      oauth-client-secret: ${SGIE_CALENDARIO_GOOGLE_OAUTH_CLIENT_SECRET:}
+      oauth-refresh-token: ${SGIE_CALENDARIO_GOOGLE_OAUTH_REFRESH_TOKEN:}
       application-name: ${SGIE_CALENDARIO_GOOGLE_APPLICATION_NAME:SGIE Club Boyaca}
       time-zone: ${SGIE_CALENDARIO_GOOGLE_TIME_ZONE:America/Bogota}
       send-updates: ${SGIE_CALENDARIO_GOOGLE_SEND_UPDATES:all}
+      include-attendees: ${SGIE_CALENDARIO_GOOGLE_INCLUDE_ATTENDEES:true}

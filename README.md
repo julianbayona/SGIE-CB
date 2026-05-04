@@ -76,22 +76,47 @@ SGIE_CALENDARIO_EVENTO_CONFIRMADO_ASISTENTES_CORREOS=gerente@club.com,tesorero@c
 
 SGIE_CALENDARIO_GOOGLE_ENABLED=false
 SGIE_CALENDARIO_GOOGLE_CALENDAR_ID=primary
-SGIE_CALENDARIO_GOOGLE_SERVICE_ACCOUNT_KEY_PATH=/opt/sgie/google-service-account.json
+SGIE_CALENDARIO_GOOGLE_OAUTH_CLIENT_ID=
+SGIE_CALENDARIO_GOOGLE_OAUTH_CLIENT_SECRET=
+SGIE_CALENDARIO_GOOGLE_OAUTH_REFRESH_TOKEN=
 SGIE_CALENDARIO_GOOGLE_APPLICATION_NAME=SGIE Club Boyaca
 SGIE_CALENDARIO_GOOGLE_TIME_ZONE=America/Bogota
 SGIE_CALENDARIO_GOOGLE_SEND_UPDATES=all
+SGIE_CALENDARIO_GOOGLE_INCLUDE_ATTENDEES=true
 ```
 
 En desarrollo pueden usarse valores locales. En produccion deben configurarse directamente en el servidor o plataforma de despliegue, sin guardar credenciales reales en Git.
 
-Para usar Google Calendar con Service Account:
+Para usar Google Calendar se requiere OAuth. Este modo permite crear eventos con asistentes reales y enviar invitaciones por correo desde una cuenta operativa del Club.
 
-1. Crear una Service Account en Google Cloud y habilitar Google Calendar API.
-2. Descargar el JSON de credenciales en el servidor.
-3. Compartir el calendario institucional del Club con el correo de la Service Account.
-4. Definir `SGIE_CALENDARIO_GOOGLE_ENABLED=true`.
-5. Definir `SGIE_CALENDARIO_GOOGLE_SERVICE_ACCOUNT_KEY_PATH` con la ruta absoluta del JSON.
-6. Definir `SGIE_CALENDARIO_GOOGLE_CALENDAR_ID` con el id del calendario institucional.
+1. En Google Cloud, habilitar Google Calendar API.
+2. Crear credenciales OAuth Client ID de tipo Web application.
+3. Agregar como Authorized redirect URI: `http://localhost:8085/oauth2callback` para desarrollo.
+4. Obtener `client_id` y `client_secret`.
+5. Generar la URL de autorizacion:
+
+```powershell
+.\scripts\google-calendar-oauth-url.ps1 -ClientId "TU_CLIENT_ID"
+```
+
+6. Abrir la URL, autorizar con la cuenta operativa del Club y copiar el parametro `code` de la URL final.
+7. Intercambiar el codigo por tokens:
+
+```powershell
+.\scripts\google-calendar-oauth-token.ps1 -ClientId "TU_CLIENT_ID" -ClientSecret "TU_CLIENT_SECRET" -Code "CODIGO_RECIBIDO"
+```
+
+8. Configurar las variables:
+
+```env
+SGIE_CALENDARIO_GOOGLE_ENABLED=true
+SGIE_CALENDARIO_GOOGLE_CALENDAR_ID=primary
+SGIE_CALENDARIO_GOOGLE_OAUTH_CLIENT_ID=TU_CLIENT_ID
+SGIE_CALENDARIO_GOOGLE_OAUTH_CLIENT_SECRET=TU_CLIENT_SECRET
+SGIE_CALENDARIO_GOOGLE_OAUTH_REFRESH_TOKEN=TU_REFRESH_TOKEN
+SGIE_CALENDARIO_GOOGLE_SEND_UPDATES=all
+SGIE_CALENDARIO_GOOGLE_INCLUDE_ATTENDEES=true
+```
 
 ## Endpoints de ejemplo
 

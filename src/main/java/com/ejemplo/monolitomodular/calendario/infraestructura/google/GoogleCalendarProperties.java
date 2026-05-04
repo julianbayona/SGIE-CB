@@ -6,9 +6,12 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public record GoogleCalendarProperties(
         boolean enabled,
         String calendarId,
-        String serviceAccountKeyPath,
+        String oauthClientId,
+        String oauthClientSecret,
+        String oauthRefreshToken,
         String applicationName,
         String timeZone,
-        String sendUpdates
+        String sendUpdates,
+        boolean includeAttendees
 ) {
 }

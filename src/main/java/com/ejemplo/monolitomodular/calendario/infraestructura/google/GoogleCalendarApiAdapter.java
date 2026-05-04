@@ -16,13 +16,13 @@ import com.google.api.services.calendar.model.EventAttendee;
 import com.google.api.services.calendar.model.EventDateTime;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.auth.oauth2.UserCredentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Component;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.time.LocalDateTime;
@@ -91,9 +91,7 @@ public class GoogleCalendarApiAdapter implements GoogleCalendarPort {
     }
 
     private Calendar calendar() throws GeneralSecurityException, IOException {
-        GoogleCredentials credentials = GoogleCredentials
-                .fromStream(new FileInputStream(properties.serviceAccountKeyPath()))
-                .createScoped(List.of(CalendarScopes.CALENDAR));
+        GoogleCredentials credentials = oauthCredentials();
         HttpRequestInitializer requestInitializer = new HttpCredentialsAdapter(credentials);
         return new Calendar.Builder(
                 GoogleNetHttpTransport.newTrustedTransport(),
@@ -104,10 +102,20 @@ public class GoogleCalendarApiAdapter implements GoogleCalendarPort {
                 .build();
     }
 
+    private GoogleCredentials oauthCredentials() {
+        validarConfiguracionOauth();
+        return UserCredentials.newBuilder()
+                .setClientId(properties.oauthClientId())
+                .setClientSecret(properties.oauthClientSecret())
+                .setRefreshToken(properties.oauthRefreshToken())
+                .build()
+                .createScoped(List.of(CalendarScopes.CALENDAR));
+    }
+
     private Event toGoogleEvent(String payloadJson) throws IOException {
         CalendarPayload payload = objectMapper.readValue(payloadJson, CalendarPayload.class);
         ZoneId zoneId = ZoneId.of(properties.timeZone());
-        return new Event()
+        Event event = new Event()
                 .setSummary(payload.resumen())
                 .setDescription(payload.origen())
                 .setStart(new EventDateTime()
@@ -115,10 +123,13 @@ public class GoogleCalendarApiAdapter implements GoogleCalendarPort {
                         .setTimeZone(properties.timeZone()))
                 .setEnd(new EventDateTime()
                         .setDateTime(new DateTime(toEpochMillis(payload.fechaFin(), zoneId)))
-                        .setTimeZone(properties.timeZone()))
-                .setAttendees(payload.attendees().stream()
-                        .map(attendee -> new EventAttendee().setEmail(attendee.email()))
-                        .toList());
+                        .setTimeZone(properties.timeZone()));
+        if (properties.includeAttendees()) {
+            event.setAttendees(payload.attendees().stream()
+                    .map(attendee -> new EventAttendee().setEmail(attendee.email()))
+                    .toList());
+        }
+        return event;
     }
 
     private long toEpochMillis(LocalDateTime dateTime, ZoneId zoneId) {
@@ -128,6 +139,18 @@ public class GoogleCalendarApiAdapter implements GoogleCalendarPort {
     private void validarGoogleEventId(String googleEventId) {
         if (googleEventId == null || googleEventId.isBlank()) {
             throw new IllegalArgumentException("googleEventId es obligatorio para actualizar o cancelar en Google Calendar");
+        }
+    }
+
+    private void validarConfiguracionOauth() {
+        validarNoVacio(properties.oauthClientId(), "oauthClientId");
+        validarNoVacio(properties.oauthClientSecret(), "oauthClientSecret");
+        validarNoVacio(properties.oauthRefreshToken(), "oauthRefreshToken");
+    }
+
+    private void validarNoVacio(String valor, String nombre) {
+        if (valor == null || valor.isBlank()) {
+            throw new IllegalStateException("La propiedad Google Calendar " + nombre + " es obligatoria");
         }
     }
 
