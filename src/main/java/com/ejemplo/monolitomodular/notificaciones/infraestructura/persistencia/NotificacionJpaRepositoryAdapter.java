@@ -38,7 +38,6 @@ public class NotificacionJpaRepositoryAdapter implements NotificacionRepository 
                 now,
                 now
         ));
-        destinatarioRepository.deleteByNotificacionId(notificacion.getId());
         destinatarioRepository.saveAll(notificacion.getDestinatarios().stream().map(this::toEntity).toList());
         return toDomain(notificacionRepository.findById(notificacion.getId()).orElseThrow());
     }

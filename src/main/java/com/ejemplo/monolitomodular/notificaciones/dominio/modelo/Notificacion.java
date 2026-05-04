@@ -121,11 +121,11 @@ public class Notificacion {
                 EstadoNotificacion.ENVIADA,
                 intentos,
                 payloadJson,
-                destinatarios.stream().map(NotificacionDestinatario::marcarEnviado).toList()
+                destinatarios
         );
     }
 
-    public Notificacion marcarError() {
+    public Notificacion marcarError(List<NotificacionDestinatario> destinatariosActualizados) {
         return new Notificacion(
                 id,
                 eventoId,
@@ -135,7 +135,23 @@ public class Notificacion {
                 EstadoNotificacion.ERROR,
                 intentos,
                 payloadJson,
-                destinatarios.stream().map(NotificacionDestinatario::marcarError).toList()
+                destinatariosActualizados
+        );
+    }
+
+    public Notificacion finalizarProcesamiento(List<NotificacionDestinatario> destinatariosActualizados) {
+        boolean todosEnviados = destinatariosActualizados.stream()
+                .allMatch(destinatario -> destinatario.getEstado() == EstadoDestinatarioNotificacion.ENVIADO);
+        return new Notificacion(
+                id,
+                eventoId,
+                tipoNotificacionId,
+                fechaProgramada,
+                todosEnviados ? LocalDateTime.now() : fechaEnvio,
+                todosEnviados ? EstadoNotificacion.ENVIADA : EstadoNotificacion.ERROR,
+                intentos,
+                payloadJson,
+                destinatariosActualizados
         );
     }
 

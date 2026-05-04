@@ -13,7 +13,9 @@ import org.junit.jupiter.api.Test;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -49,6 +51,34 @@ class NotificacionApplicationServiceTest {
         assertEquals(1, whatsAppPort.envios());
         assertEquals(EstadoNotificacion.ERROR, repository.ultima().getEstado());
         assertEquals(1, repository.ultima().getIntentos());
+    }
+
+    @Test
+    void deberiaReintentarSoloDestinatariosNoEnviados() {
+        NotificacionRepositoryStub repository = new NotificacionRepositoryStub();
+        WhatsAppParcialPortStub whatsAppPort = new WhatsAppParcialPortStub();
+        NotificacionApplicationService service = new NotificacionApplicationService(repository, whatsAppPort);
+        service.ejecutar(new CrearNotificacionCommand(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                LocalDateTime.now().minusMinutes(1),
+                "{\"mensaje\":\"Prueba\"}",
+                List.of(
+                        new CrearNotificacionCommand.Destinatario(null, "573001112233"),
+                        new CrearNotificacionCommand.Destinatario(null, "573004445566")
+                )
+        ));
+
+        int primerIntento = service.procesarPendientes(10);
+        whatsAppPort.permitirTelefono("573004445566");
+        int segundoIntento = service.procesarPendientes(10);
+
+        assertEquals(0, primerIntento);
+        assertEquals(1, segundoIntento);
+        assertEquals(1, whatsAppPort.enviosPorTelefono("573001112233"));
+        assertEquals(2, whatsAppPort.enviosPorTelefono("573004445566"));
+        assertEquals(EstadoNotificacion.ENVIADA, repository.ultima().getEstado());
+        assertEquals(2, repository.ultima().getIntentos());
     }
 
     @Test
@@ -120,6 +150,29 @@ class NotificacionApplicationServiceTest {
 
         int envios() {
             return envios;
+        }
+    }
+
+    private static class WhatsAppParcialPortStub implements WhatsAppPort {
+
+        private final Map<String, Integer> enviosPorTelefono = new HashMap<>();
+        private final List<String> telefonosPermitidos = new ArrayList<>(List.of("573001112233"));
+
+        @Override
+        public EnviarWhatsAppResult enviar(EnviarWhatsAppCommand command) {
+            enviosPorTelefono.merge(command.telefono(), 1, Integer::sum);
+            if (telefonosPermitidos.contains(command.telefono())) {
+                return EnviarWhatsAppResult.ok();
+            }
+            return EnviarWhatsAppResult.error("Fallo simulado");
+        }
+
+        void permitirTelefono(String telefono) {
+            telefonosPermitidos.add(telefono);
+        }
+
+        int enviosPorTelefono(String telefono) {
+            return enviosPorTelefono.getOrDefault(telefono, 0);
         }
     }
 }

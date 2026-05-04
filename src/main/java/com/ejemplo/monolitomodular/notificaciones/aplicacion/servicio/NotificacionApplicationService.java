@@ -6,12 +6,16 @@ import com.ejemplo.monolitomodular.notificaciones.aplicacion.dto.NotificacionVie
 import com.ejemplo.monolitomodular.notificaciones.aplicacion.puerto.entrada.CrearNotificacionUseCase;
 import com.ejemplo.monolitomodular.notificaciones.aplicacion.puerto.entrada.ProcesarNotificacionesPendientesUseCase;
 import com.ejemplo.monolitomodular.notificaciones.dominio.modelo.Notificacion;
+import com.ejemplo.monolitomodular.notificaciones.dominio.modelo.EstadoDestinatarioNotificacion;
+import com.ejemplo.monolitomodular.notificaciones.dominio.modelo.NotificacionDestinatario;
 import com.ejemplo.monolitomodular.notificaciones.dominio.puerto.salida.NotificacionRepository;
 import com.ejemplo.monolitomodular.notificaciones.dominio.puerto.salida.WhatsAppPort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class NotificacionApplicationService implements CrearNotificacionUseCase, ProcesarNotificacionesPendientesUseCase {
@@ -55,15 +59,25 @@ public class NotificacionApplicationService implements CrearNotificacionUseCase,
 
     private int procesar(Notificacion notificacion) {
         Notificacion enEnvio = notificacionRepository.guardar(notificacion.iniciarEnvio());
-        boolean exitoso = enEnvio.getDestinatarios().stream()
-                .map(destinatario -> whatsAppPort.enviar(new EnviarWhatsAppCommand(
-                        enEnvio.getId(),
-                        destinatario.getTelefono(),
-                        enEnvio.getPayloadJson()
-                )))
-                .allMatch(resultado -> resultado.exitoso());
-        notificacionRepository.guardar(exitoso ? enEnvio.marcarEnviada() : enEnvio.marcarError());
-        return exitoso ? 1 : 0;
+        List<NotificacionDestinatario> destinatariosActualizados = new ArrayList<>();
+        for (NotificacionDestinatario destinatario : enEnvio.getDestinatarios()) {
+            destinatariosActualizados.add(procesarDestinatario(enEnvio, destinatario));
+        }
+        Notificacion procesada = notificacionRepository.guardar(enEnvio.finalizarProcesamiento(destinatariosActualizados));
+        return procesada.getDestinatarios().stream()
+                .allMatch(destinatario -> destinatario.getEstado() == EstadoDestinatarioNotificacion.ENVIADO) ? 1 : 0;
+    }
+
+    private NotificacionDestinatario procesarDestinatario(Notificacion notificacion, NotificacionDestinatario destinatario) {
+        if (destinatario.getEstado() == EstadoDestinatarioNotificacion.ENVIADO) {
+            return destinatario;
+        }
+        boolean exitoso = whatsAppPort.enviar(new EnviarWhatsAppCommand(
+                notificacion.getId(),
+                destinatario.getTelefono(),
+                notificacion.getPayloadJson()
+        )).exitoso();
+        return exitoso ? destinatario.marcarEnviado() : destinatario.marcarError();
     }
 
     private NotificacionView toView(Notificacion notificacion) {

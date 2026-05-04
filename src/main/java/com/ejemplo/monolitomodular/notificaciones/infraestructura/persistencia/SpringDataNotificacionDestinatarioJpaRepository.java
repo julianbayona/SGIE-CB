@@ -8,6 +8,4 @@ import java.util.UUID;
 public interface SpringDataNotificacionDestinatarioJpaRepository extends JpaRepository<NotificacionDestinatarioJpaEntity, UUID> {
 
     List<NotificacionDestinatarioJpaEntity> findByNotificacionId(UUID notificacionId);
-
-    void deleteByNotificacionId(UUID notificacionId);
 }
