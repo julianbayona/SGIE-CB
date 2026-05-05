@@ -137,3 +137,20 @@ Si alguna credencial fue compartida por chat, capturas o repositorio, rotarla an
 - Gmail app password.
 - Credenciales de PostgreSQL.
 - `SGIE_AUTH_JWT_SECRET`.
+
+## 10. Google OAuth Consent Screen
+
+Cuando Railway entregue la URL publica del backend, usar estas paginas publicas en Google Cloud:
+
+```text
+Pagina principal:
+https://TU-SERVICIO.up.railway.app/
+
+Politica de privacidad:
+https://TU-SERVICIO.up.railway.app/privacy
+
+Terminos del servicio:
+https://TU-SERVICIO.up.railway.app/terms
+```
+
+Si luego se usa dominio propio, reemplazar las URLs de Railway por el dominio final.
