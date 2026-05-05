@@ -19,8 +19,8 @@ public class SalonJpaEntity {
     @Column(nullable = false, unique = true, length = 120)
     private String nombre;
 
-    @Column(nullable = false)
-    private int capacidad;
+    @Column(name = "capacidad_max", nullable = false)
+    private Integer capacidad;
 
     @Column(length = 255)
     private String descripcion;
