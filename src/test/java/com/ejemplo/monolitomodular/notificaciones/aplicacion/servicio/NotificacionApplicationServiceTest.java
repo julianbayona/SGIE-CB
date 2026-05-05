@@ -111,7 +111,7 @@ class NotificacionApplicationServiceTest {
                 UUID.randomUUID(),
                 TipoNotificacion.PRUEBA_PLATO_CLIENTE,
                 LocalDateTime.now().minusMinutes(1),
-                "{\"mensaje\":\"Prueba\"}",
+                "{\"tipo\":\"PRUEBA_PLATO\",\"cliente\":\"Cliente Prueba\",\"fechaRealizacion\":\"2026-07-06T10:00\"}",
                 List.of(new CrearNotificacionCommand.Destinatario(null, "573001112233", "cliente@correo.com"))
         ));
 
@@ -121,6 +121,9 @@ class NotificacionApplicationServiceTest {
         assertEquals(1, whatsAppPort.envios());
         assertEquals(1, emailPort.envios());
         assertEquals("cliente@correo.com", emailPort.ultimoCorreo());
+        assertEquals("Prueba de plato programada - Club Boyaca", emailPort.ultimoAsunto());
+        assertEquals(true, emailPort.ultimoCuerpo().contains("Cliente Prueba"));
+        assertEquals(true, emailPort.ultimoCuerpo().contains("06/07/2026 10:00"));
         assertEquals(EstadoNotificacion.ENVIADA, repository.ultima().getEstado());
     }
 
@@ -210,6 +213,8 @@ class NotificacionApplicationServiceTest {
         private final boolean exitoso;
         private int envios;
         private String ultimoCorreo;
+        private String ultimoAsunto;
+        private String ultimoCuerpo;
 
         private EmailPortStub(boolean exitoso) {
             this.exitoso = exitoso;
@@ -219,6 +224,8 @@ class NotificacionApplicationServiceTest {
         public EnviarEmailResult enviar(EnviarEmailCommand command) {
             envios++;
             ultimoCorreo = command.correo();
+            ultimoAsunto = command.asunto();
+            ultimoCuerpo = command.cuerpo();
             return exitoso ? EnviarEmailResult.ok() : EnviarEmailResult.error("Fallo simulado");
         }
 
@@ -228,6 +235,14 @@ class NotificacionApplicationServiceTest {
 
         String ultimoCorreo() {
             return ultimoCorreo;
+        }
+
+        String ultimoAsunto() {
+            return ultimoAsunto;
+        }
+
+        String ultimoCuerpo() {
+            return ultimoCuerpo;
         }
     }
 }

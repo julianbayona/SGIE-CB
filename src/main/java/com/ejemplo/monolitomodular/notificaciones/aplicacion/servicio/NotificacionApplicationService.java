@@ -25,6 +25,7 @@ public class NotificacionApplicationService implements CrearNotificacionUseCase,
     private final NotificacionRepository notificacionRepository;
     private final WhatsAppPort whatsAppPort;
     private final EmailPort emailPort;
+    private final NotificacionEmailFormatter emailFormatter = new NotificacionEmailFormatter();
 
     public NotificacionApplicationService(
             NotificacionRepository notificacionRepository,
@@ -98,12 +99,16 @@ public class NotificacionApplicationService implements CrearNotificacionUseCase,
         if (!destinatario.tieneCorreo()) {
             return true;
         }
+        NotificacionEmailFormatter.EmailMessage emailMessage = emailFormatter.formatear(
+                notificacion.getTipo(),
+                notificacion.getPayloadJson()
+        );
         return emailPort.enviar(new EnviarEmailCommand(
                 notificacion.getId(),
                 destinatario.getCorreo(),
                 notificacion.getTipo(),
-                "SGIE - " + notificacion.getTipo().name(),
-                notificacion.getPayloadJson()
+                emailMessage.asunto(),
+                emailMessage.cuerpo()
         )).exitoso();
     }
 
