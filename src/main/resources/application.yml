@@ -32,6 +32,8 @@ server:
   port: ${PORT:8080}
 
 sgie:
+  cors:
+    allowed-origins: ${SGIE_CORS_ALLOWED_ORIGINS:http://localhost:5173}
   auth:
     jwt:
       secret: ${SGIE_AUTH_JWT_SECRET:dev-secret-change-this-value-before-deploying-sgie-club-boyaca}
