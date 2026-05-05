@@ -4,6 +4,7 @@ import com.ejemplo.monolitomodular.pagos.aplicacion.dto.AnticipoView;
 import com.ejemplo.monolitomodular.pagos.aplicacion.dto.ProgramarRecordatorioAnticipoCommand;
 import com.ejemplo.monolitomodular.pagos.aplicacion.dto.RegistrarAnticipoCommand;
 import com.ejemplo.monolitomodular.pagos.aplicacion.dto.RecordatorioAnticipoView;
+import com.ejemplo.monolitomodular.pagos.aplicacion.puerto.entrada.ProcesarRecordatoriosAnticipoProgramadosUseCase;
 import com.ejemplo.monolitomodular.pagos.aplicacion.puerto.entrada.ProgramarRecordatorioAnticipoUseCase;
 import com.ejemplo.monolitomodular.pagos.aplicacion.puerto.entrada.RegistrarAnticipoUseCase;
 import com.ejemplo.monolitomodular.pagos.presentacion.rest.dto.AnticipoResponse;
@@ -13,6 +14,7 @@ import com.ejemplo.monolitomodular.pagos.presentacion.rest.dto.RecordatorioAntic
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -25,13 +27,16 @@ public class PagoController {
 
     private final RegistrarAnticipoUseCase registrarAnticipoUseCase;
     private final ProgramarRecordatorioAnticipoUseCase programarRecordatorioAnticipoUseCase;
+    private final ProcesarRecordatoriosAnticipoProgramadosUseCase procesarRecordatoriosAnticipoProgramadosUseCase;
 
     public PagoController(
             RegistrarAnticipoUseCase registrarAnticipoUseCase,
-            ProgramarRecordatorioAnticipoUseCase programarRecordatorioAnticipoUseCase
+            ProgramarRecordatorioAnticipoUseCase programarRecordatorioAnticipoUseCase,
+            ProcesarRecordatoriosAnticipoProgramadosUseCase procesarRecordatoriosAnticipoProgramadosUseCase
     ) {
         this.registrarAnticipoUseCase = registrarAnticipoUseCase;
         this.programarRecordatorioAnticipoUseCase = programarRecordatorioAnticipoUseCase;
+        this.procesarRecordatoriosAnticipoProgramadosUseCase = procesarRecordatoriosAnticipoProgramadosUseCase;
     }
 
     @PostMapping("/cotizaciones/{cotizacionId}/anticipos")
@@ -47,6 +52,13 @@ public class PagoController {
                 request.fechaPago(),
                 request.observaciones()
         )));
+    }
+
+    @PostMapping("/recordatorios-anticipo/procesar-pendientes")
+    public int procesarRecordatoriosPendientes(
+            @RequestParam(defaultValue = "50") int limite
+    ) {
+        return procesarRecordatoriosAnticipoProgramadosUseCase.procesar(limite);
     }
 
     @PostMapping("/eventos/{eventoId}/recordatorios-anticipo")
