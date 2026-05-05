@@ -203,7 +203,48 @@ Usa el mismo cuerpo de crear reserva. Si existe cotizacion activa de la reserva 
 
 `GET /api/reservas/{reservaRaizId}/menu`
 
-Nota tecnica: actualmente no existen endpoints REST para crear `plato`, `tipo_momento_menu` ni `plato_momento`. Para probar el flujo completo se deben cargar esos datos por SQL o implementar luego esos CRUD.
+Catalogos de menu disponibles:
+
+- `POST /api/catalogos/platos`
+- `GET /api/catalogos/platos`
+- `GET /api/catalogos/platos/{id}`
+- `PUT /api/catalogos/platos/{id}`
+- `DELETE /api/catalogos/platos/{id}`
+- `POST /api/catalogos/tipos-momento-menu`
+- `GET /api/catalogos/tipos-momento-menu`
+- `GET /api/catalogos/tipos-momento-menu/{id}`
+- `PUT /api/catalogos/tipos-momento-menu/{id}`
+- `DELETE /api/catalogos/tipos-momento-menu/{id}`
+- `POST /api/catalogos/plato-momentos`
+- `GET /api/catalogos/plato-momentos?platoId={id}&tipoMomentoId={id}`
+- `DELETE /api/catalogos/plato-momentos?platoId={id}&tipoMomentoId={id}`
+
+Ejemplo plato:
+
+```json
+{
+  "nombre": "Pollo en salsa",
+  "descripcion": "Plato fuerte",
+  "precioBase": 28000
+}
+```
+
+Ejemplo tipo momento:
+
+```json
+{
+  "nombre": "Plato fuerte"
+}
+```
+
+Ejemplo asociacion plato-momento:
+
+```json
+{
+  "platoId": "uuid",
+  "tipoMomentoId": "uuid"
+}
+```
 
 ## Montaje
 
@@ -384,6 +425,5 @@ Al confirmar, los observers crean notificaciones y eventos de Calendar asociados
 
 ## Brechas actuales del contrato
 
-- Falta CRUD REST para `plato`, `tipo_momento_menu` y la asociacion `plato_momento`.
 - Falta endpoint general de monitoreo de notificaciones por evento.
 - Falta endpoint de consulta de `evento_calendar` por evento/origen para monitorear sincronizacion desde frontend.

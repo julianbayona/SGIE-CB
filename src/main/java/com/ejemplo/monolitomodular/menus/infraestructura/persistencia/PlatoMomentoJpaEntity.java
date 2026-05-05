@@ -23,4 +23,17 @@ public class PlatoMomentoJpaEntity {
 
     protected PlatoMomentoJpaEntity() {
     }
+
+    public PlatoMomentoJpaEntity(UUID platoId, UUID tipoMomentoId) {
+        this.platoId = platoId;
+        this.tipoMomentoId = tipoMomentoId;
+    }
+
+    public UUID getPlatoId() {
+        return platoId;
+    }
+
+    public UUID getTipoMomentoId() {
+        return tipoMomentoId;
+    }
 }

@@ -163,7 +163,7 @@ El contrato principal para frontend esta documentado en `docs/api-contract.md`.
 Para ejecutar una prueba E2E local del flujo principal:
 
 ```powershell
-.\scripts\e2e-flujo-principal.ps1 -SeedMenuBasicoEnDocker
+.\scripts\e2e-flujo-principal.ps1
 ```
 
 Para Railway:
@@ -172,7 +172,7 @@ Para Railway:
 .\scripts\e2e-flujo-principal.ps1 -BaseUrl "https://sgie-cb-production.up.railway.app" -Nombre "Administrador" -Contrasena "admin123"
 ```
 
-Antes de probar menu/cotizacion en una base vacia, cargar `scripts/seed-menu-basico.sql` o implementar los CRUD pendientes de `plato` y `tipo_momento_menu`.
+El script crea por API los catalogos necesarios para cliente, evento, reserva, menu, montaje, cotizacion, pago, prueba de plato, Calendar y email.
 
 - `POST /api/clientes`
 - `GET /api/clientes`

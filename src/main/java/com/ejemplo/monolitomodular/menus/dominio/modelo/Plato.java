@@ -28,8 +28,20 @@ public class Plato {
         this.activo = activo;
     }
 
+    public static Plato nuevo(String nombre, String descripcion, BigDecimal precioBase) {
+        return new Plato(UUID.randomUUID(), nombre, descripcion, precioBase, true);
+    }
+
     public static Plato reconstruir(UUID id, String nombre, String descripcion, BigDecimal precioBase, boolean activo) {
         return new Plato(id, nombre, descripcion, precioBase, activo);
+    }
+
+    public Plato actualizar(String nombre, String descripcion, BigDecimal precioBase) {
+        return new Plato(id, nombre, descripcion, precioBase, activo);
+    }
+
+    public Plato desactivar() {
+        return new Plato(id, nombre, descripcion, precioBase, false);
     }
 
     public UUID getId() {

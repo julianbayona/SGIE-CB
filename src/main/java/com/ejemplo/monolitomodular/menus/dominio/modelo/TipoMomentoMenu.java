@@ -20,8 +20,20 @@ public class TipoMomentoMenu {
         this.activo = activo;
     }
 
+    public static TipoMomentoMenu nuevo(String nombre) {
+        return new TipoMomentoMenu(UUID.randomUUID(), nombre, true);
+    }
+
     public static TipoMomentoMenu reconstruir(UUID id, String nombre, boolean activo) {
         return new TipoMomentoMenu(id, nombre, activo);
+    }
+
+    public TipoMomentoMenu actualizar(String nombre) {
+        return new TipoMomentoMenu(id, nombre, activo);
+    }
+
+    public TipoMomentoMenu desactivar() {
+        return new TipoMomentoMenu(id, nombre, false);
     }
 
     public UUID getId() {

@@ -6,6 +6,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -28,7 +29,31 @@ public class PlatoJpaEntity {
     @Column(nullable = false)
     private boolean activo;
 
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
     protected PlatoJpaEntity() {
+    }
+
+    public PlatoJpaEntity(
+            UUID id,
+            String nombre,
+            String descripcion,
+            BigDecimal precioBase,
+            boolean activo,
+            LocalDateTime createdAt,
+            LocalDateTime updatedAt
+    ) {
+        this.id = id;
+        this.nombre = nombre;
+        this.descripcion = descripcion;
+        this.precioBase = precioBase;
+        this.activo = activo;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
     }
 
     public UUID getId() {
@@ -49,5 +74,9 @@ public class PlatoJpaEntity {
 
     public boolean isActivo() {
         return activo;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
     }
 }

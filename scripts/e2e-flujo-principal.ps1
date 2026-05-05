@@ -2,9 +2,6 @@ param(
     [string]$BaseUrl = "http://localhost:8080",
     [string]$Nombre = "Administrador",
     [string]$Contrasena = "admin123",
-    [string]$TipoMomentoId = "20000000-0000-0000-0000-000000000001",
-    [string]$PlatoId = "20000000-0000-0000-0000-000000000002",
-    [switch]$SeedMenuBasicoEnDocker,
     [string]$DbContainer = "sgie-postgres",
     [string]$DbUser = "postgres",
     [string]$DbName = "sgie"
@@ -86,12 +83,6 @@ function Invoke-ApiDownload {
     }
 }
 
-if ($SeedMenuBasicoEnDocker) {
-    Write-Step "Cargando seed minimo de menu en Docker"
-    Get-Content -Raw "$PSScriptRoot\seed-menu-basico.sql" |
-        docker exec -i $DbContainer psql -U $DbUser -d $DbName
-}
-
 $suffix = Get-Date -Format "yyyyMMddHHmmss"
 $fechaEventoInicio = "2026-08-10T18:00:00"
 $fechaEventoFin = "2026-08-11T02:00:00"
@@ -139,6 +130,18 @@ $tipoAdicional = Invoke-Api -Method Post -Path "/api/catalogos/tipos-adicional" 
     modoCobro = "SERVICIO"
     precioBase = 180000
 }
+$tipoMomento = Invoke-Api -Method Post -Path "/api/catalogos/tipos-momento-menu" -Headers $headers -Body @{
+    nombre = "Plato fuerte E2E $suffix"
+}
+$plato = Invoke-Api -Method Post -Path "/api/catalogos/platos" -Headers $headers -Body @{
+    nombre = "Pollo E2E $suffix"
+    descripcion = "Plato fuerte para prueba E2E"
+    precioBase = 28000
+}
+$platoMomento = Invoke-Api -Method Post -Path "/api/catalogos/plato-momentos" -Headers $headers -Body @{
+    platoId = $plato.id
+    tipoMomentoId = $tipoMomento.id
+}
 $salon = Invoke-Api -Method Post -Path "/api/salones" -Headers $headers -Body @{
     nombre = "Salon E2E $suffix"
     capacidad = 120
@@ -176,26 +179,22 @@ $reserva = Invoke-Api -Method Post -Path "/api/eventos/$($evento.id)/reservas" -
 Write-Host "ReservaId=$($reserva.id), reservaRaizId=$($reserva.reservaRaizId)"
 
 Write-Step "Configurando menu"
-try {
-    $menu = Invoke-Api -Method Put -Path "/api/reservas/$($reserva.reservaRaizId)/menu" -Headers $headers -Body @{
-        notasGenerales = "Menu E2E"
-        selecciones = @(
-            @{
-                tipoMomentoId = $TipoMomentoId
-                items = @(
-                    @{
-                        platoId = $PlatoId
-                        cantidad = 80
-                        excepciones = "2 vegetarianos"
-                    }
-                )
-            }
-        )
-    }
-    Write-Host "MenuId=$($menu.id)"
-} catch {
-    throw "No se pudo configurar menu. Si estas en local, ejecuta este script con -SeedMenuBasicoEnDocker o carga scripts/seed-menu-basico.sql en tu base de datos.`n$($_.Exception.Message)"
+$menu = Invoke-Api -Method Put -Path "/api/reservas/$($reserva.reservaRaizId)/menu" -Headers $headers -Body @{
+    notasGenerales = "Menu E2E"
+    selecciones = @(
+        @{
+            tipoMomentoId = $tipoMomento.id
+            items = @(
+                @{
+                    platoId = $plato.id
+                    cantidad = 80
+                    excepciones = "2 vegetarianos"
+                }
+            )
+        }
+    )
 }
+Write-Host "MenuId=$($menu.id)"
 
 Write-Step "Configurando montaje"
 $montaje = Invoke-Api -Method Put -Path "/api/reservas/$($reserva.reservaRaizId)/montaje" -Headers $headers -Body @{

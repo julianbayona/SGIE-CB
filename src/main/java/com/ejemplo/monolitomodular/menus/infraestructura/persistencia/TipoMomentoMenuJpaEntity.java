@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -21,7 +22,27 @@ public class TipoMomentoMenuJpaEntity {
     @Column(nullable = false)
     private boolean activo;
 
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
     protected TipoMomentoMenuJpaEntity() {
+    }
+
+    public TipoMomentoMenuJpaEntity(
+            UUID id,
+            String nombre,
+            boolean activo,
+            LocalDateTime createdAt,
+            LocalDateTime updatedAt
+    ) {
+        this.id = id;
+        this.nombre = nombre;
+        this.activo = activo;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
     }
 
     public UUID getId() {
@@ -34,5 +55,9 @@ public class TipoMomentoMenuJpaEntity {
 
     public boolean isActivo() {
         return activo;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
     }
 }
