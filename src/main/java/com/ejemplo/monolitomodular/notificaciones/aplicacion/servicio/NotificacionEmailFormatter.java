@@ -97,14 +97,25 @@ class NotificacionEmailFormatter {
     }
 
     private EmailMessage recordatorioAnticipo(JsonNode payload) {
+        String cliente = valor(payload, "cliente");
+        String fechaEvento = fecha(valor(payload, "fechaEvento"));
+        String valorTotal = valor(payload, "valorTotal");
+        String totalPagado = valor(payload, "totalPagado");
+        String saldoPendiente = valor(payload, "saldoPendiente");
         return new EmailMessage(
                 "Recordatorio de anticipo - Club Boyaca",
                 """
-                Tienes un recordatorio de anticipo pendiente.
+                Hola %s,
 
-                Detalle:
-                %s
-                """.formatted(payload.toPrettyString()).trim()
+                Te recordamos que el evento tiene saldo de anticipo pendiente.
+
+                Fecha del evento: %s
+                Valor total: %s
+                Total pagado: %s
+                Saldo pendiente: %s
+
+                Club Boyaca
+                """.formatted(cliente, fechaEvento, valorTotal, totalPagado, saldoPendiente).trim()
         );
     }
 

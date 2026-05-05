@@ -2,12 +2,14 @@ package com.ejemplo.monolitomodular.notificaciones.infraestructura.persistencia;
 
 import com.ejemplo.monolitomodular.notificaciones.dominio.modelo.Notificacion;
 import com.ejemplo.monolitomodular.notificaciones.dominio.modelo.NotificacionDestinatario;
+import com.ejemplo.monolitomodular.notificaciones.dominio.modelo.TipoNotificacion;
 import com.ejemplo.monolitomodular.notificaciones.dominio.puerto.salida.NotificacionRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Repository
 public class NotificacionJpaRepositoryAdapter implements NotificacionRepository {
@@ -47,6 +49,11 @@ public class NotificacionJpaRepositoryAdapter implements NotificacionRepository 
         return notificacionRepository.buscarPendientes(fechaReferencia, PageRequest.of(0, limite)).stream()
                 .map(this::toDomain)
                 .toList();
+    }
+
+    @Override
+    public boolean existePorEventoYTipoDesde(UUID eventoId, TipoNotificacion tipo, LocalDateTime fechaDesde) {
+        return notificacionRepository.existsByEventoIdAndTipoAndFechaProgramadaGreaterThanEqual(eventoId, tipo, fechaDesde);
     }
 
     private Notificacion toDomain(NotificacionJpaEntity entity) {

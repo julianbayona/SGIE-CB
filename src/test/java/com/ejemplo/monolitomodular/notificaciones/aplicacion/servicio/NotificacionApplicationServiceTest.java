@@ -160,6 +160,14 @@ class NotificacionApplicationServiceTest {
                     .toList();
         }
 
+        @Override
+        public boolean existePorEventoYTipoDesde(UUID eventoId, TipoNotificacion tipo, LocalDateTime fechaDesde) {
+            return notificaciones.stream()
+                    .filter(notificacion -> notificacion.getEventoId().equals(eventoId))
+                    .filter(notificacion -> notificacion.getTipo() == tipo)
+                    .anyMatch(notificacion -> !notificacion.getFechaProgramada().isBefore(fechaDesde));
+        }
+
         Notificacion ultima() {
             return notificaciones.get(notificaciones.size() - 1);
         }

@@ -29,6 +29,7 @@ import com.ejemplo.monolitomodular.montajes.dominio.modelo.Montaje;
 import com.ejemplo.monolitomodular.montajes.dominio.modelo.MontajeMesaReserva;
 import com.ejemplo.monolitomodular.montajes.dominio.puerto.salida.MontajeRepository;
 import com.ejemplo.monolitomodular.pagos.dominio.modelo.Anticipo;
+import com.ejemplo.monolitomodular.pagos.dominio.modelo.EventoAnticipoPendiente;
 import com.ejemplo.monolitomodular.pagos.dominio.puerto.salida.AnticipoRepository;
 import com.ejemplo.monolitomodular.shared.dominio.excepcion.DomainException;
 import com.ejemplo.monolitomodular.usuarios.dominio.modelo.RolUsuario;
@@ -932,6 +933,11 @@ class CotizacionApplicationServiceTest {
         @Override
         public BigDecimal totalPorEventoId(UUID eventoId) {
             return totalPorEvento.getOrDefault(eventoId, BigDecimal.ZERO);
+        }
+
+        @Override
+        public List<EventoAnticipoPendiente> buscarEventosConAnticipoPendiente(LocalDateTime desde, LocalDateTime hasta, int limite) {
+            return List.of();
         }
     }
 }

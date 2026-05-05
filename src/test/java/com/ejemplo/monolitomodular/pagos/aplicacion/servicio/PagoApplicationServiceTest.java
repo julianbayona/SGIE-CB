@@ -15,6 +15,7 @@ import com.ejemplo.monolitomodular.eventos.dominio.puerto.salida.ReservaSalonRep
 import com.ejemplo.monolitomodular.pagos.aplicacion.dto.AnticipoView;
 import com.ejemplo.monolitomodular.pagos.aplicacion.dto.RegistrarAnticipoCommand;
 import com.ejemplo.monolitomodular.pagos.dominio.modelo.Anticipo;
+import com.ejemplo.monolitomodular.pagos.dominio.modelo.EventoAnticipoPendiente;
 import com.ejemplo.monolitomodular.pagos.dominio.puerto.salida.AnticipoRepository;
 import com.ejemplo.monolitomodular.shared.dominio.excepcion.DomainException;
 import com.ejemplo.monolitomodular.usuarios.dominio.modelo.RolUsuario;
@@ -265,6 +266,11 @@ class PagoApplicationServiceTest {
             return anticipos.stream()
                     .map(Anticipo::getValor)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
+        }
+
+        @Override
+        public List<EventoAnticipoPendiente> buscarEventosConAnticipoPendiente(LocalDateTime desde, LocalDateTime hasta, int limite) {
+            return List.of();
         }
     }
 

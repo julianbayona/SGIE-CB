@@ -22,4 +22,10 @@ public interface SpringDataNotificacionJpaRepository extends JpaRepository<Notif
             order by n.fechaProgramada asc
             """)
     List<NotificacionJpaEntity> buscarPendientes(LocalDateTime fechaReferencia, Pageable pageable);
+
+    boolean existsByEventoIdAndTipoAndFechaProgramadaGreaterThanEqual(
+            UUID eventoId,
+            com.ejemplo.monolitomodular.notificaciones.dominio.modelo.TipoNotificacion tipo,
+            LocalDateTime fechaDesde
+    );
 }
