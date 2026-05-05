@@ -36,12 +36,16 @@ DELETE FROM usuario;
 
 -- =============================================================
 -- 1. USUARIOS (necesarios como FK en eventos y reservas)
+-- Contraseña para todos: "admin123"
+-- Hash BCrypt: $2a$10$uSoIiTyJsMX.42k7wxfhLuBk.bAzmkI8tMkp666r0MXRDSXeaPLkC
+-- Generado con BCryptPasswordEncoder de Spring Security
 -- =============================================================
 INSERT INTO usuario (id_usuario, nombre, contrasena_hash, rol, activo, created_at, updated_at) VALUES
-  ('00000000-0000-0000-0000-000000000001', 'Administrador Sistema',  '$2a$10$placeholder', 'ADMIN',      true, NOW(), NOW()),
-  ('00000000-0000-0000-0000-000000000002', 'Patricia Castro',        '$2a$10$placeholder', 'COORDINADOR',true, NOW(), NOW()),
-  ('00000000-0000-0000-0000-000000000003', 'Andrés Morales',         '$2a$10$placeholder', 'COORDINADOR',true, NOW(), NOW()),
-  ('00000000-0000-0000-0000-000000000004', 'Luisa Fernanda Ríos',    '$2a$10$placeholder', 'OPERATIVO',  true, NOW(), NOW());
+  ('00000000-0000-0000-0000-000000000001', 'Administrador Sistema',  '$2a$10$uSoIiTyJsMX.42k7wxfhLuBk.bAzmkI8tMkp666r0MXRDSXeaPLkC', 'ADMINISTRADOR', true, NOW(), NOW()),
+  ('00000000-0000-0000-0000-000000000002', 'Patricia Castro',        '$2a$10$uSoIiTyJsMX.42k7wxfhLuBk.bAzmkI8tMkp666r0MXRDSXeaPLkC', 'GERENTE',       true, NOW(), NOW()),
+  ('00000000-0000-0000-0000-000000000003', 'Andrés Morales',         '$2a$10$uSoIiTyJsMX.42k7wxfhLuBk.bAzmkI8tMkp666r0MXRDSXeaPLkC', 'GERENTE',       true, NOW(), NOW()),
+  ('00000000-0000-0000-0000-000000000004', 'Luisa Fernanda Ríos',    '$2a$10$uSoIiTyJsMX.42k7wxfhLuBk.bAzmkI8tMkp666r0MXRDSXeaPLkC', 'JEFE_MESA',     true, NOW(), NOW()),
+  ('00000000-0000-0000-0000-000000000005', 'María González',         '$2a$10$uSoIiTyJsMX.42k7wxfhLuBk.bAzmkI8tMkp666r0MXRDSXeaPLkC', 'TESORERO',      true, NOW(), NOW());
 
 -- =============================================================
 -- 2. TIPOS DE EVENTO
@@ -319,7 +323,7 @@ INSERT INTO plato_momento (id_plato, id_tipo_momento) VALUES
 -- FIN DEL SEED
 -- =============================================================
 -- Resumen de lo insertado:
---   4  usuarios
+--   5  usuarios (1 admin, 2 gerentes, 1 jefe_mesa, 1 tesorero)
 --   8  tipos de evento
 --   6  tipos de comida
 --  12  colores
@@ -333,6 +337,13 @@ INSERT INTO plato_momento (id_plato, id_tipo_momento) VALUES
 --   7  momentos de menú
 --  26  platos
 --  26  relaciones plato-momento
+-- =============================================================
+-- CREDENCIALES DE ACCESO:
+--   Usuario: Administrador Sistema | Contraseña: admin123 | Rol: ADMINISTRADOR
+--   Usuario: Patricia Castro       | Contraseña: admin123 | Rol: GERENTE
+--   Usuario: Andrés Morales        | Contraseña: admin123 | Rol: GERENTE
+--   Usuario: Luisa Fernanda Ríos   | Contraseña: admin123 | Rol: JEFE_MESA
+--   Usuario: María González        | Contraseña: admin123 | Rol: TESORERO
 -- =============================================================
 
 -- =============================================================

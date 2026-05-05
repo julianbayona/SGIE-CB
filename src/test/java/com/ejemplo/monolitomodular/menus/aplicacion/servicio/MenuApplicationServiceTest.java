@@ -301,6 +301,11 @@ class MenuApplicationServiceTest {
         public boolean existeActivoPorId(UUID id) {
             return activos.contains(id);
         }
+
+        @Override
+        public java.util.List<TipoMomentoMenu> listarActivos() {
+            return java.util.List.of();
+        }
     }
 
     private static class PlatoRepositoryStub implements PlatoRepository {
@@ -319,6 +324,11 @@ class MenuApplicationServiceTest {
         @Override
         public boolean existeActivoParaMomento(UUID platoId, UUID tipoMomentoId) {
             return activos.contains(new PlatoMomento(platoId, tipoMomentoId));
+        }
+
+        @Override
+        public java.util.List<Plato> listarActivos() {
+            return java.util.List.of();
         }
     }
 

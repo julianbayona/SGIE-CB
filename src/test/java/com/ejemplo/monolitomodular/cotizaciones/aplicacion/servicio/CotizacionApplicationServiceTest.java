@@ -832,6 +832,11 @@ class CotizacionApplicationServiceTest {
         public boolean existeActivoParaMomento(UUID platoId, UUID tipoMomentoId) {
             return false;
         }
+
+        @Override
+        public java.util.List<Plato> listarActivos() {
+            return java.util.List.of(plato);
+        }
     }
 
     private static class TipoAdicionalRepositoryStub implements TipoAdicionalRepository {

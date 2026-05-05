@@ -4,6 +4,7 @@ import com.ejemplo.monolitomodular.menus.dominio.modelo.TipoMomentoMenu;
 import com.ejemplo.monolitomodular.menus.dominio.puerto.salida.TipoMomentoMenuRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -24,5 +25,12 @@ public class TipoMomentoMenuJpaRepositoryAdapter implements TipoMomentoMenuRepos
     @Override
     public boolean existeActivoPorId(UUID id) {
         return repository.existsByIdAndActivoTrue(id);
+    }
+
+    @Override
+    public List<TipoMomentoMenu> listarActivos() {
+        return repository.findByActivoTrue().stream()
+                .map(entity -> TipoMomentoMenu.reconstruir(entity.getId(), entity.getNombre(), entity.isActivo()))
+                .toList();
     }
 }
