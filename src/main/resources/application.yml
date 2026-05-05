@@ -1,6 +1,11 @@
 spring:
   application:
     name: sgie-club-boyaca
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
   datasource:
     url: jdbc:postgresql://${PGHOST:${DB_HOST:localhost}}:${PGPORT:${DB_PORT:5432}}/${PGDATABASE:${DB_NAME:sgie}}
     username: ${PGUSER:${DB_USERNAME:postgres}}
