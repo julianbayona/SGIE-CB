@@ -1,5 +1,6 @@
 package com.ejemplo.monolitomodular.pagos.presentacion.rest;
 
+import com.ejemplo.monolitomodular.auth.infraestructura.seguridad.UsuarioAutenticado;
 import com.ejemplo.monolitomodular.pagos.aplicacion.dto.AnticipoView;
 import com.ejemplo.monolitomodular.pagos.aplicacion.dto.EstadoFinancieroEventoView;
 import com.ejemplo.monolitomodular.pagos.aplicacion.dto.ProgramarRecordatorioAnticipoCommand;
@@ -16,6 +17,7 @@ import com.ejemplo.monolitomodular.pagos.presentacion.rest.dto.ProgramarRecordat
 import com.ejemplo.monolitomodular.pagos.presentacion.rest.dto.RegistrarAnticipoRequest;
 import com.ejemplo.monolitomodular.pagos.presentacion.rest.dto.RecordatorioAnticipoResponse;
 import jakarta.validation.Valid;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -65,12 +67,13 @@ public class PagoController {
 
     @PostMapping("/cotizaciones/{cotizacionId}/anticipos")
     public AnticipoResponse registrar(
+            @AuthenticationPrincipal UsuarioAutenticado usuario,
             @PathVariable UUID cotizacionId,
             @Valid @RequestBody RegistrarAnticipoRequest request
     ) {
         return toResponse(registrarAnticipoUseCase.ejecutar(new RegistrarAnticipoCommand(
                 cotizacionId,
-                request.usuarioId(),
+                usuario.id(),
                 request.valor(),
                 request.metodoPago(),
                 request.fechaPago(),
@@ -87,12 +90,13 @@ public class PagoController {
 
     @PostMapping("/eventos/{eventoId}/recordatorios-anticipo")
     public RecordatorioAnticipoResponse programarRecordatorio(
+            @AuthenticationPrincipal UsuarioAutenticado usuario,
             @PathVariable UUID eventoId,
             @Valid @RequestBody ProgramarRecordatorioAnticipoRequest request
     ) {
         return toResponse(programarRecordatorioAnticipoUseCase.ejecutar(new ProgramarRecordatorioAnticipoCommand(
                 eventoId,
-                request.usuarioId(),
+                usuario.id(),
                 request.fechaRecordatorio()
         )));
     }

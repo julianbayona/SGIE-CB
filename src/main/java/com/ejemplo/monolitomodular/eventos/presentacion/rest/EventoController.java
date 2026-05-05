@@ -1,5 +1,6 @@
 package com.ejemplo.monolitomodular.eventos.presentacion.rest;
 
+import com.ejemplo.monolitomodular.auth.infraestructura.seguridad.UsuarioAutenticado;
 import com.ejemplo.monolitomodular.eventos.aplicacion.dto.CrearEventoCommand;
 import com.ejemplo.monolitomodular.eventos.aplicacion.dto.CrearReservaSalonCommand;
 import com.ejemplo.monolitomodular.eventos.aplicacion.dto.EventoView;
@@ -13,11 +14,11 @@ import com.ejemplo.monolitomodular.eventos.aplicacion.puerto.entrada.ModificarRe
 import com.ejemplo.monolitomodular.eventos.presentacion.rest.dto.CrearEventoRequest;
 import com.ejemplo.monolitomodular.eventos.presentacion.rest.dto.CrearReservaSalonRequest;
 import com.ejemplo.monolitomodular.eventos.presentacion.rest.dto.EventoResponse;
-import com.ejemplo.monolitomodular.eventos.presentacion.rest.dto.ConfirmarEventoRequest;
 import com.ejemplo.monolitomodular.eventos.presentacion.rest.dto.ModificarReservaSalonRequest;
 import com.ejemplo.monolitomodular.eventos.presentacion.rest.dto.ReservaSalonResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -56,13 +57,16 @@ public class EventoController {
     }
 
     @PostMapping
-    public ResponseEntity<EventoResponse> crear(@Valid @RequestBody CrearEventoRequest request) {
+    public ResponseEntity<EventoResponse> crear(
+            @AuthenticationPrincipal UsuarioAutenticado usuario,
+            @Valid @RequestBody CrearEventoRequest request
+    ) {
         EventoView evento = crearEventoUseCase.ejecutar(
                 new CrearEventoCommand(
                         request.clienteId(),
                         request.tipoEventoId(),
                         request.tipoComidaId(),
-                        request.usuarioCreadorId(),
+                        usuario.id(),
                         request.fechaHoraInicio(),
                         request.fechaHoraFin()
                 )
@@ -83,13 +87,14 @@ public class EventoController {
 
     @PostMapping("/{eventoId}/reservas")
     public EventoResponse crearReserva(
+            @AuthenticationPrincipal UsuarioAutenticado usuario,
             @PathVariable UUID eventoId,
             @Valid @RequestBody CrearReservaSalonRequest request
     ) {
         return toResponse(crearReservaSalonUseCase.ejecutar(
                 eventoId,
                 new CrearReservaSalonCommand(
-                        request.usuarioId(),
+                        usuario.id(),
                         request.salonId(),
                         request.numInvitados(),
                         request.fechaHoraInicio(),
@@ -100,13 +105,14 @@ public class EventoController {
 
     @PatchMapping("/reservas/{reservaRaizId}")
     public EventoResponse modificarReserva(
+            @AuthenticationPrincipal UsuarioAutenticado usuario,
             @PathVariable UUID reservaRaizId,
             @Valid @RequestBody ModificarReservaSalonRequest request
     ) {
         return toResponse(modificarReservaSalonUseCase.ejecutar(
                 reservaRaizId,
                 new ModificarReservaSalonCommand(
-                        request.usuarioId(),
+                        usuario.id(),
                         request.salonId(),
                         request.numInvitados(),
                         request.fechaHoraInicio(),
@@ -124,10 +130,10 @@ public class EventoController {
 
     @PostMapping("/{eventoId}/confirmar")
     public EventoResponse confirmar(
-            @PathVariable UUID eventoId,
-            @Valid @RequestBody ConfirmarEventoRequest request
+            @AuthenticationPrincipal UsuarioAutenticado usuario,
+            @PathVariable UUID eventoId
     ) {
-        return toResponse(confirmarEventoUseCase.confirmar(eventoId, request.usuarioId()));
+        return toResponse(confirmarEventoUseCase.confirmar(eventoId, usuario.id()));
     }
 
     private EventoResponse toResponse(EventoView evento) {

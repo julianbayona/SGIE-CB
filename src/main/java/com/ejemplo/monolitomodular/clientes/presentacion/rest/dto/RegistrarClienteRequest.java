@@ -5,8 +5,6 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-import java.util.UUID;
-
 public record RegistrarClienteRequest(
         @NotBlank(message = "La cedula es obligatoria")
         String cedula,
@@ -18,7 +16,6 @@ public record RegistrarClienteRequest(
         @Email(message = "El correo debe tener un formato valido")
         String correo,
         @NotNull(message = "El tipo de cliente es obligatorio")
-        TipoCliente tipoCliente,
-        UUID creadoPor
+        TipoCliente tipoCliente
 ) {
 }

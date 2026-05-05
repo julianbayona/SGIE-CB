@@ -1,4 +1,6 @@
 target/
 .m2/
+.env
+.env.*
 credentials*.json
 client_secret*.json

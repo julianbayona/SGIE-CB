@@ -7,8 +7,6 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 public record CrearReservaSalonRequest(
-        @NotNull(message = "El usuario creador de la reserva es obligatorio")
-        UUID usuarioId,
         @NotNull(message = "El salon es obligatorio")
         UUID salonId,
         @Min(value = 1, message = "El numero de invitados debe ser mayor a cero")

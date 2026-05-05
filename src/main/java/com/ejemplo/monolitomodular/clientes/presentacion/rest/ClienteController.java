@@ -1,5 +1,6 @@
 package com.ejemplo.monolitomodular.clientes.presentacion.rest;
 
+import com.ejemplo.monolitomodular.auth.infraestructura.seguridad.UsuarioAutenticado;
 import com.ejemplo.monolitomodular.clientes.aplicacion.dto.ClienteView;
 import com.ejemplo.monolitomodular.clientes.aplicacion.dto.RegistrarClienteCommand;
 import com.ejemplo.monolitomodular.clientes.aplicacion.puerto.entrada.ConsultarClienteUseCase;
@@ -8,6 +9,7 @@ import com.ejemplo.monolitomodular.clientes.presentacion.rest.dto.ClienteRespons
 import com.ejemplo.monolitomodular.clientes.presentacion.rest.dto.RegistrarClienteRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -37,7 +39,10 @@ public class ClienteController {
     }
 
     @PostMapping
-    public ResponseEntity<ClienteResponse> crear(@Valid @RequestBody RegistrarClienteRequest request) {
+    public ResponseEntity<ClienteResponse> crear(
+            @AuthenticationPrincipal UsuarioAutenticado usuario,
+            @Valid @RequestBody RegistrarClienteRequest request
+    ) {
         ClienteView cliente = registrarClienteUseCase.ejecutar(
                 new RegistrarClienteCommand(
                         request.cedula(),
@@ -45,7 +50,7 @@ public class ClienteController {
                         request.telefono(),
                         request.correo(),
                         request.tipoCliente(),
-                        request.creadoPor()
+                        usuario.id()
                 )
         );
 

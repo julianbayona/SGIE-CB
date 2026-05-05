@@ -1,5 +1,6 @@
 package com.ejemplo.monolitomodular.menus.presentacion.rest;
 
+import com.ejemplo.monolitomodular.auth.infraestructura.seguridad.UsuarioAutenticado;
 import com.ejemplo.monolitomodular.menus.aplicacion.dto.ConfigurarMenuCommand;
 import com.ejemplo.monolitomodular.menus.aplicacion.dto.ItemMenuCommand;
 import com.ejemplo.monolitomodular.menus.aplicacion.dto.ItemMenuView;
@@ -15,6 +16,7 @@ import com.ejemplo.monolitomodular.menus.presentacion.rest.dto.MenuResponse;
 import com.ejemplo.monolitomodular.menus.presentacion.rest.dto.SeleccionMenuRequest;
 import com.ejemplo.monolitomodular.menus.presentacion.rest.dto.SeleccionMenuResponse;
 import jakarta.validation.Valid;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -37,8 +39,12 @@ public class MenuController {
     }
 
     @PutMapping
-    public MenuResponse configurar(@PathVariable UUID reservaRaizId, @Valid @RequestBody ConfigurarMenuRequest request) {
-        return toResponse(configurarMenuUseCase.ejecutar(toCommand(reservaRaizId, request)));
+    public MenuResponse configurar(
+            @AuthenticationPrincipal UsuarioAutenticado usuario,
+            @PathVariable UUID reservaRaizId,
+            @Valid @RequestBody ConfigurarMenuRequest request
+    ) {
+        return toResponse(configurarMenuUseCase.ejecutar(toCommand(reservaRaizId, usuario, request)));
     }
 
     @GetMapping
@@ -46,10 +52,10 @@ public class MenuController {
         return toResponse(consultarMenuUseCase.obtenerPorReservaRaizId(reservaRaizId));
     }
 
-    private ConfigurarMenuCommand toCommand(UUID reservaRaizId, ConfigurarMenuRequest request) {
+    private ConfigurarMenuCommand toCommand(UUID reservaRaizId, UsuarioAutenticado usuario, ConfigurarMenuRequest request) {
         return new ConfigurarMenuCommand(
                 reservaRaizId,
-                request.usuarioId(),
+                usuario.id(),
                 request.notasGenerales(),
                 request.selecciones().stream().map(this::toCommand).toList()
         );

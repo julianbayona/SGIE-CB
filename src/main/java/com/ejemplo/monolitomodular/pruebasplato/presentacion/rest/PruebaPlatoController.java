@@ -1,11 +1,13 @@
 package com.ejemplo.monolitomodular.pruebasplato.presentacion.rest;
 
+import com.ejemplo.monolitomodular.auth.infraestructura.seguridad.UsuarioAutenticado;
 import com.ejemplo.monolitomodular.pruebasplato.aplicacion.dto.ProgramarPruebaPlatoCommand;
 import com.ejemplo.monolitomodular.pruebasplato.aplicacion.dto.PruebaPlatoView;
 import com.ejemplo.monolitomodular.pruebasplato.aplicacion.puerto.entrada.ProgramarPruebaPlatoUseCase;
 import com.ejemplo.monolitomodular.pruebasplato.presentacion.rest.dto.ProgramarPruebaPlatoRequest;
 import com.ejemplo.monolitomodular.pruebasplato.presentacion.rest.dto.PruebaPlatoResponse;
 import jakarta.validation.Valid;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,12 +28,13 @@ public class PruebaPlatoController {
 
     @PostMapping("/eventos/{eventoId}/pruebas-plato")
     public PruebaPlatoResponse programar(
+            @AuthenticationPrincipal UsuarioAutenticado usuario,
             @PathVariable UUID eventoId,
             @Valid @RequestBody ProgramarPruebaPlatoRequest request
     ) {
         return toResponse(programarPruebaPlatoUseCase.ejecutar(new ProgramarPruebaPlatoCommand(
                 eventoId,
-                request.usuarioId(),
+                usuario.id(),
                 request.fechaRealizacion()
         )));
     }

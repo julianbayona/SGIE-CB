@@ -1,5 +1,6 @@
 package com.ejemplo.monolitomodular.cotizaciones.presentacion.rest;
 
+import com.ejemplo.monolitomodular.auth.infraestructura.seguridad.UsuarioAutenticado;
 import com.ejemplo.monolitomodular.cotizaciones.aplicacion.dto.ActualizarItemCotizacionCommand;
 import com.ejemplo.monolitomodular.cotizaciones.aplicacion.dto.ActualizarItemsCotizacionCommand;
 import com.ejemplo.monolitomodular.cotizaciones.aplicacion.dto.CotizacionItemView;
@@ -22,6 +23,7 @@ import com.ejemplo.monolitomodular.cotizaciones.presentacion.rest.dto.GenerarCot
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -69,10 +71,11 @@ public class CotizacionController {
 
     @PostMapping("/reservas/{reservaRaizId}/cotizaciones")
     public CotizacionResponse generar(
+            @AuthenticationPrincipal UsuarioAutenticado usuario,
             @PathVariable UUID reservaRaizId,
             @Valid @RequestBody GenerarCotizacionRequest request
     ) {
-        return toResponse(generarCotizacionUseCase.ejecutar(toCommand(reservaRaizId, request)));
+        return toResponse(generarCotizacionUseCase.ejecutar(toCommand(reservaRaizId, usuario, request)));
     }
 
     @GetMapping("/cotizaciones/{id}")
@@ -152,10 +155,10 @@ public class CotizacionController {
         return toResponse(enviarCotizacionUseCase.rechazar(id));
     }
 
-    private GenerarCotizacionCommand toCommand(UUID reservaRaizId, GenerarCotizacionRequest request) {
+    private GenerarCotizacionCommand toCommand(UUID reservaRaizId, UsuarioAutenticado usuario, GenerarCotizacionRequest request) {
         return new GenerarCotizacionCommand(
                 reservaRaizId,
-                request.usuarioId(),
+                usuario.id(),
                 request.descuento(),
                 request.observaciones()
         );

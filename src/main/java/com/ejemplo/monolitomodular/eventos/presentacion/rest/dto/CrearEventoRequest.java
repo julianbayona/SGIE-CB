@@ -13,8 +13,6 @@ public record CrearEventoRequest(
         UUID tipoEventoId,
         @NotNull(message = "El tipo de comida es obligatorio")
         UUID tipoComidaId,
-        @NotNull(message = "El usuario creador es obligatorio")
-        UUID usuarioCreadorId,
         @NotNull(message = "La fecha y hora de inicio es obligatoria")
         LocalDateTime fechaHoraInicio,
         @NotNull(message = "La fecha y hora de fin es obligatoria")

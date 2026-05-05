@@ -1,5 +1,6 @@
 package com.ejemplo.monolitomodular.montajes.presentacion.rest;
 
+import com.ejemplo.monolitomodular.auth.infraestructura.seguridad.UsuarioAutenticado;
 import com.ejemplo.monolitomodular.montajes.aplicacion.dto.AdicionalEventoCommand;
 import com.ejemplo.monolitomodular.montajes.aplicacion.dto.AdicionalEventoView;
 import com.ejemplo.monolitomodular.montajes.aplicacion.dto.ConfigurarMontajeCommand;
@@ -19,6 +20,7 @@ import com.ejemplo.monolitomodular.montajes.presentacion.rest.dto.MontajeMesaRes
 import com.ejemplo.monolitomodular.montajes.presentacion.rest.dto.MontajeMesaReservaResponse;
 import com.ejemplo.monolitomodular.montajes.presentacion.rest.dto.MontajeResponse;
 import jakarta.validation.Valid;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -45,10 +47,11 @@ public class MontajeController {
 
     @PutMapping
     public MontajeResponse configurar(
+            @AuthenticationPrincipal UsuarioAutenticado usuario,
             @PathVariable UUID reservaRaizId,
             @Valid @RequestBody ConfigurarMontajeRequest request
     ) {
-        return toResponse(configurarMontajeUseCase.ejecutar(toCommand(reservaRaizId, request)));
+        return toResponse(configurarMontajeUseCase.ejecutar(toCommand(reservaRaizId, usuario, request)));
     }
 
     @GetMapping
@@ -56,10 +59,10 @@ public class MontajeController {
         return toResponse(consultarMontajeUseCase.obtenerPorReservaRaizId(reservaRaizId));
     }
 
-    private ConfigurarMontajeCommand toCommand(UUID reservaRaizId, ConfigurarMontajeRequest request) {
+    private ConfigurarMontajeCommand toCommand(UUID reservaRaizId, UsuarioAutenticado usuario, ConfigurarMontajeRequest request) {
         return new ConfigurarMontajeCommand(
                 reservaRaizId,
-                request.usuarioId(),
+                usuario.id(),
                 request.observaciones(),
                 request.mesas().stream().map(this::toCommand).toList(),
                 toCommand(request.infraestructura()),
