@@ -13,8 +13,20 @@ public class PublicPageController {
                 "SGIE Club Boyaca",
                 """
                         <h1>SGIE Club Boyaca</h1>
-                        <p>Sistema de Gestion Integral de Eventos del Club Boyaca.</p>
-                        <p>Esta aplicacion es de uso operativo interno para la gestion de clientes, eventos, reservas, cotizaciones, pagos, notificaciones y sincronizacion con Google Calendar.</p>
+                        <p><strong>Sistema de Gestion Integral de Eventos del Club Boyaca.</strong></p>
+                        <p>SGIE Club Boyaca es una aplicacion web de uso operativo interno para administrar el ciclo completo de eventos sociales y empresariales del Club Boyaca.</p>
+                        <p>Su proposito es centralizar la informacion de clientes, solicitudes de evento, reservas de salones, menus, montaje, cotizaciones, anticipos, pagos, recordatorios y notificaciones operativas.</p>
+                        <p>La aplicacion utiliza Google Calendar unicamente para crear y sincronizar eventos relacionados con pruebas de plato y eventos confirmados, con el fin de coordinar la agenda operativa del Club.</p>
+                        <p>El acceso al sistema esta restringido a usuarios internos autorizados. Esta pagina publica solo informa el proposito de la aplicacion y enlaza sus documentos legales.</p>
+                        <h2>Funciones principales</h2>
+                        <ul>
+                          <li>Gestion de clientes y solicitudes de evento.</li>
+                          <li>Reserva y control de disponibilidad de salones.</li>
+                          <li>Configuracion de menu, montaje y recursos del evento.</li>
+                          <li>Generacion de cotizaciones y seguimiento de pagos.</li>
+                          <li>Programacion de pruebas de plato y eventos confirmados en Google Calendar.</li>
+                          <li>Envio de notificaciones operativas por correo electronico.</li>
+                        </ul>
                         <ul>
                           <li><a href="/privacy">Politica de privacidad</a></li>
                           <li><a href="/terms">Terminos del servicio</a></li>
