@@ -22,6 +22,7 @@ class NotificacionEmailFormatter {
                 case EVENTO_CONFIRMADO_CLIENTE -> eventoConfirmadoCliente(payload);
                 case EVENTO_CONFIRMADO_PERSONAL -> eventoConfirmadoPersonal(payload);
                 case RECORDATORIO_ANTICIPO -> recordatorioAnticipo(payload);
+                case COTIZACION_CLIENTE -> cotizacionCliente(payload);
             };
         } catch (Exception ex) {
             return new EmailMessage("SGIE - " + tipo.name(), payloadJson);
@@ -116,6 +117,27 @@ class NotificacionEmailFormatter {
 
                 Club Boyaca
                 """.formatted(cliente, fechaEvento, valorTotal, totalPagado, saldoPendiente).trim()
+        );
+    }
+
+    private EmailMessage cotizacionCliente(JsonNode payload) {
+        String cliente = valor(payload, "cliente");
+        String fechaEvento = fecha(valor(payload, "fechaEvento"));
+        String valorTotal = valor(payload, "valorTotal");
+        return new EmailMessage(
+                "Cotizacion de evento - Club Boyaca",
+                """
+                Hola %s,
+
+                Te enviamos la cotizacion de tu evento.
+
+                Fecha del evento: %s
+                Valor total: %s
+
+                Puedes comunicarte con el Club Boyaca para aprobarla o solicitar ajustes.
+
+                Club Boyaca
+                """.formatted(cliente, fechaEvento, valorTotal).trim()
         );
     }
 

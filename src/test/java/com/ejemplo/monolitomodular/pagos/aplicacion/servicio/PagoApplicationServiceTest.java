@@ -308,6 +308,11 @@ class PagoApplicationServiceTest {
         }
 
         @Override
+        public List<Cotizacion> listarPorEventoId(UUID eventoId) {
+            return List.of(cotizacion);
+        }
+
+        @Override
         public void desactualizarActivasPorReservaId(UUID reservaId) {
         }
     }

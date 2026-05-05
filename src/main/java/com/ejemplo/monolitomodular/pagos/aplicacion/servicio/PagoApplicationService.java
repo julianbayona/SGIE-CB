@@ -8,7 +8,10 @@ import com.ejemplo.monolitomodular.eventos.dominio.modelo.ReservaSalon;
 import com.ejemplo.monolitomodular.eventos.dominio.puerto.salida.EventoRepository;
 import com.ejemplo.monolitomodular.eventos.dominio.puerto.salida.ReservaSalonRepository;
 import com.ejemplo.monolitomodular.pagos.aplicacion.dto.AnticipoView;
+import com.ejemplo.monolitomodular.pagos.aplicacion.dto.EstadoFinancieroEventoView;
 import com.ejemplo.monolitomodular.pagos.aplicacion.dto.RegistrarAnticipoCommand;
+import com.ejemplo.monolitomodular.pagos.aplicacion.puerto.entrada.ConsultarAnticiposUseCase;
+import com.ejemplo.monolitomodular.pagos.aplicacion.puerto.entrada.ConsultarEstadoFinancieroEventoUseCase;
 import com.ejemplo.monolitomodular.pagos.aplicacion.puerto.entrada.RegistrarAnticipoUseCase;
 import com.ejemplo.monolitomodular.pagos.dominio.modelo.Anticipo;
 import com.ejemplo.monolitomodular.pagos.dominio.puerto.salida.AnticipoRepository;
@@ -18,9 +21,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.UUID;
 
 @Service
-public class PagoApplicationService implements RegistrarAnticipoUseCase {
+public class PagoApplicationService implements RegistrarAnticipoUseCase, ConsultarAnticiposUseCase, ConsultarEstadoFinancieroEventoUseCase {
 
     private final AnticipoRepository anticipoRepository;
     private final CotizacionRepository cotizacionRepository;
@@ -73,6 +78,34 @@ public class PagoApplicationService implements RegistrarAnticipoUseCase {
 
         Anticipo guardado = anticipoRepository.guardar(anticipo);
         return toView(guardado, nuevoTotal, cotizacion.getValorTotal());
+    }
+
+    @Override
+    public List<AnticipoView> listarPorCotizacion(UUID cotizacionId) {
+        Cotizacion cotizacion = cotizacionRepository.buscarPorId(cotizacionId)
+                .orElseThrow(() -> new DomainException("Cotizacion no encontrada"));
+        BigDecimal totalPagado = anticipoRepository.totalPorCotizacionId(cotizacionId);
+        return anticipoRepository.listarPorCotizacionId(cotizacionId).stream()
+                .map(anticipo -> toView(anticipo, totalPagado, cotizacion.getValorTotal()))
+                .toList();
+    }
+
+    @Override
+    public EstadoFinancieroEventoView consultar(UUID eventoId) {
+        Evento evento = eventoRepository.buscarPorId(eventoId)
+                .orElseThrow(() -> new DomainException("Evento no encontrado"));
+        Cotizacion cotizacion = cotizacionRepository.buscarAceptadaVigentePorEventoId(evento.getId())
+                .orElseThrow(() -> new DomainException("El evento no tiene cotizacion aceptada vigente"));
+        BigDecimal totalPagado = anticipoRepository.totalPorEventoId(evento.getId());
+        BigDecimal saldoPendiente = cotizacion.getValorTotal().subtract(totalPagado);
+        return new EstadoFinancieroEventoView(
+                evento.getId(),
+                cotizacion.getId(),
+                cotizacion.getValorTotal(),
+                totalPagado,
+                saldoPendiente,
+                saldoPendiente.compareTo(BigDecimal.ZERO) == 0
+        );
     }
 
     private AnticipoView toView(Anticipo anticipo, BigDecimal totalPagado, BigDecimal valorTotalCotizacion) {

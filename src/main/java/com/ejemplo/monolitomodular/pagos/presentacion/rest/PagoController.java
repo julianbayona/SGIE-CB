@@ -1,24 +1,30 @@
 package com.ejemplo.monolitomodular.pagos.presentacion.rest;
 
 import com.ejemplo.monolitomodular.pagos.aplicacion.dto.AnticipoView;
+import com.ejemplo.monolitomodular.pagos.aplicacion.dto.EstadoFinancieroEventoView;
 import com.ejemplo.monolitomodular.pagos.aplicacion.dto.ProgramarRecordatorioAnticipoCommand;
 import com.ejemplo.monolitomodular.pagos.aplicacion.dto.RegistrarAnticipoCommand;
 import com.ejemplo.monolitomodular.pagos.aplicacion.dto.RecordatorioAnticipoView;
+import com.ejemplo.monolitomodular.pagos.aplicacion.puerto.entrada.ConsultarAnticiposUseCase;
+import com.ejemplo.monolitomodular.pagos.aplicacion.puerto.entrada.ConsultarEstadoFinancieroEventoUseCase;
 import com.ejemplo.monolitomodular.pagos.aplicacion.puerto.entrada.ProcesarRecordatoriosAnticipoProgramadosUseCase;
 import com.ejemplo.monolitomodular.pagos.aplicacion.puerto.entrada.ProgramarRecordatorioAnticipoUseCase;
 import com.ejemplo.monolitomodular.pagos.aplicacion.puerto.entrada.RegistrarAnticipoUseCase;
 import com.ejemplo.monolitomodular.pagos.presentacion.rest.dto.AnticipoResponse;
+import com.ejemplo.monolitomodular.pagos.presentacion.rest.dto.EstadoFinancieroEventoResponse;
 import com.ejemplo.monolitomodular.pagos.presentacion.rest.dto.ProgramarRecordatorioAnticipoRequest;
 import com.ejemplo.monolitomodular.pagos.presentacion.rest.dto.RegistrarAnticipoRequest;
 import com.ejemplo.monolitomodular.pagos.presentacion.rest.dto.RecordatorioAnticipoResponse;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -26,17 +32,35 @@ import java.util.UUID;
 public class PagoController {
 
     private final RegistrarAnticipoUseCase registrarAnticipoUseCase;
+    private final ConsultarAnticiposUseCase consultarAnticiposUseCase;
+    private final ConsultarEstadoFinancieroEventoUseCase consultarEstadoFinancieroEventoUseCase;
     private final ProgramarRecordatorioAnticipoUseCase programarRecordatorioAnticipoUseCase;
     private final ProcesarRecordatoriosAnticipoProgramadosUseCase procesarRecordatoriosAnticipoProgramadosUseCase;
 
     public PagoController(
             RegistrarAnticipoUseCase registrarAnticipoUseCase,
+            ConsultarAnticiposUseCase consultarAnticiposUseCase,
+            ConsultarEstadoFinancieroEventoUseCase consultarEstadoFinancieroEventoUseCase,
             ProgramarRecordatorioAnticipoUseCase programarRecordatorioAnticipoUseCase,
             ProcesarRecordatoriosAnticipoProgramadosUseCase procesarRecordatoriosAnticipoProgramadosUseCase
     ) {
         this.registrarAnticipoUseCase = registrarAnticipoUseCase;
+        this.consultarAnticiposUseCase = consultarAnticiposUseCase;
+        this.consultarEstadoFinancieroEventoUseCase = consultarEstadoFinancieroEventoUseCase;
         this.programarRecordatorioAnticipoUseCase = programarRecordatorioAnticipoUseCase;
         this.procesarRecordatoriosAnticipoProgramadosUseCase = procesarRecordatoriosAnticipoProgramadosUseCase;
+    }
+
+    @GetMapping("/cotizaciones/{cotizacionId}/anticipos")
+    public List<AnticipoResponse> listarAnticipos(@PathVariable UUID cotizacionId) {
+        return consultarAnticiposUseCase.listarPorCotizacion(cotizacionId).stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    @GetMapping("/eventos/{eventoId}/estado-financiero")
+    public EstadoFinancieroEventoResponse estadoFinanciero(@PathVariable UUID eventoId) {
+        return toResponse(consultarEstadoFinancieroEventoUseCase.consultar(eventoId));
     }
 
     @PostMapping("/cotizaciones/{cotizacionId}/anticipos")
@@ -95,6 +119,17 @@ public class PagoController {
                 view.fechaRecordatorio(),
                 view.estado(),
                 view.notificacionId()
+        );
+    }
+
+    private EstadoFinancieroEventoResponse toResponse(EstadoFinancieroEventoView view) {
+        return new EstadoFinancieroEventoResponse(
+                view.eventoId(),
+                view.cotizacionVigenteId(),
+                view.valorTotal(),
+                view.totalPagado(),
+                view.saldoPendiente(),
+                view.pagadoTotalmente()
         );
     }
 }

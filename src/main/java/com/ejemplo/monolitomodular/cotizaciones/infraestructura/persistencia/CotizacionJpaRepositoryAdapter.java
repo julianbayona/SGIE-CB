@@ -74,6 +74,13 @@ public class CotizacionJpaRepositoryAdapter implements CotizacionRepository {
     }
 
     @Override
+    public List<Cotizacion> listarPorEventoId(UUID eventoId) {
+        return cotizacionRepository.findByEventoIdOrderByCreatedAtDesc(eventoId).stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
     public void desactualizarActivasPorReservaId(UUID reservaId) {
         cotizacionRepository.desactualizarActivasPorReservaId(reservaId, LocalDateTime.now());
     }

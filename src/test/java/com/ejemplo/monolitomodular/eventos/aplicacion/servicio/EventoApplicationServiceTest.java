@@ -1192,6 +1192,11 @@ class EventoApplicationServiceTest {
         }
 
         @Override
+        public List<Cotizacion> listarPorEventoId(UUID eventoId) {
+            return cotizacionAceptada.stream().toList();
+        }
+
+        @Override
         public void desactualizarActivasPorReservaId(UUID reservaId) {
         }
     }

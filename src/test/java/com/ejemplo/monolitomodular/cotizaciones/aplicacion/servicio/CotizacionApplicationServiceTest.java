@@ -764,6 +764,11 @@ class CotizacionApplicationServiceTest {
         }
 
         @Override
+        public List<Cotizacion> listarPorEventoId(UUID eventoId) {
+            return cotizaciones;
+        }
+
+        @Override
         public void desactualizarActivasPorReservaId(UUID reservaId) {
         }
 

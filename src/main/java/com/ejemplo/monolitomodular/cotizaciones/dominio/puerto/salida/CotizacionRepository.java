@@ -2,6 +2,7 @@ package com.ejemplo.monolitomodular.cotizaciones.dominio.puerto.salida;
 
 import com.ejemplo.monolitomodular.cotizaciones.dominio.modelo.Cotizacion;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -16,6 +17,8 @@ public interface CotizacionRepository {
     Optional<Cotizacion> buscarUltimaPorReservaRaizId(UUID reservaRaizId);
 
     Optional<Cotizacion> buscarAceptadaVigentePorEventoId(UUID eventoId);
+
+    List<Cotizacion> listarPorEventoId(UUID eventoId);
 
     void desactualizarActivasPorReservaId(UUID reservaId);
 }

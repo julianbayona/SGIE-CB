@@ -303,6 +303,11 @@ class ReservaSnapshotServiceTest {
         }
 
         @Override
+        public List<Cotizacion> listarPorEventoId(UUID eventoId) {
+            return List.of();
+        }
+
+        @Override
         public void desactualizarActivasPorReservaId(UUID reservaId) {
             reservaDesactualizada = reservaId;
         }
