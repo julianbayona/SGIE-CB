@@ -10,4 +10,8 @@ public interface UsuarioRepository {
     Usuario guardar(Usuario usuario);
 
     Optional<Usuario> buscarPorId(UUID id);
+
+    default Optional<Usuario> buscarPorNombre(String nombre) {
+        return Optional.empty();
+    }
 }

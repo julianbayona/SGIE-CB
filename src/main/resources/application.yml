@@ -32,6 +32,10 @@ server:
   port: 8080
 
 sgie:
+  auth:
+    jwt:
+      secret: ${SGIE_AUTH_JWT_SECRET:dev-secret-change-this-value-before-deploying-sgie-club-boyaca}
+      expiration-minutes: ${SGIE_AUTH_JWT_EXPIRATION_MINUTES:30}
   notificaciones:
     email:
       enabled: ${SGIE_EMAIL_ENABLED:false}

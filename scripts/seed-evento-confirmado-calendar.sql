@@ -5,7 +5,7 @@ insert into usuario (id_usuario, nombre, contrasena_hash, rol, activo, created_a
 values (
     '10000000-0000-0000-0000-000000000001',
     'Administrador Confirmacion',
-    '$2a$10$abcdefghijklmnopqrstuuuuuuuuuuuuuuuuuuuuuuuuuuuuu',
+    '$2a$10$tnl0KOJZXBuD9kRAYaNC8epZlRjCAFRcaRaO3MV1OD6P9XxWoU1fu',
     'ADMINISTRADOR',
     true,
     now(),

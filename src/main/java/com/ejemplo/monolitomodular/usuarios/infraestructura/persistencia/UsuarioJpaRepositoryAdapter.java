@@ -37,6 +37,11 @@ public class UsuarioJpaRepositoryAdapter implements UsuarioRepository {
         return repository.findById(id).map(this::toDomain);
     }
 
+    @Override
+    public Optional<Usuario> buscarPorNombre(String nombre) {
+        return repository.findFirstByNombreIgnoreCase(nombre.trim()).map(this::toDomain);
+    }
+
     private Usuario toDomain(UsuarioJpaEntity entity) {
         return Usuario.reconstruir(
                 entity.getId(),
