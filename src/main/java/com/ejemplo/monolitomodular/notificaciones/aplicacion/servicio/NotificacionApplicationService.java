@@ -1,6 +1,7 @@
 package com.ejemplo.monolitomodular.notificaciones.aplicacion.servicio;
 
 import com.ejemplo.monolitomodular.notificaciones.aplicacion.dto.CrearNotificacionCommand;
+import com.ejemplo.monolitomodular.notificaciones.aplicacion.dto.EnviarEmailCommand;
 import com.ejemplo.monolitomodular.notificaciones.aplicacion.dto.EnviarWhatsAppCommand;
 import com.ejemplo.monolitomodular.notificaciones.aplicacion.dto.NotificacionView;
 import com.ejemplo.monolitomodular.notificaciones.aplicacion.puerto.entrada.CrearNotificacionUseCase;
@@ -8,6 +9,7 @@ import com.ejemplo.monolitomodular.notificaciones.aplicacion.puerto.entrada.Proc
 import com.ejemplo.monolitomodular.notificaciones.dominio.modelo.Notificacion;
 import com.ejemplo.monolitomodular.notificaciones.dominio.modelo.EstadoDestinatarioNotificacion;
 import com.ejemplo.monolitomodular.notificaciones.dominio.modelo.NotificacionDestinatario;
+import com.ejemplo.monolitomodular.notificaciones.dominio.puerto.salida.EmailPort;
 import com.ejemplo.monolitomodular.notificaciones.dominio.puerto.salida.NotificacionRepository;
 import com.ejemplo.monolitomodular.notificaciones.dominio.puerto.salida.WhatsAppPort;
 import org.springframework.stereotype.Service;
@@ -22,13 +24,16 @@ public class NotificacionApplicationService implements CrearNotificacionUseCase,
 
     private final NotificacionRepository notificacionRepository;
     private final WhatsAppPort whatsAppPort;
+    private final EmailPort emailPort;
 
     public NotificacionApplicationService(
             NotificacionRepository notificacionRepository,
-            WhatsAppPort whatsAppPort
+            WhatsAppPort whatsAppPort,
+            EmailPort emailPort
     ) {
         this.notificacionRepository = notificacionRepository;
         this.whatsAppPort = whatsAppPort;
+        this.emailPort = emailPort;
     }
 
     @Override
@@ -42,7 +47,8 @@ public class NotificacionApplicationService implements CrearNotificacionUseCase,
                 command.destinatarios().stream()
                         .map(destinatario -> new Notificacion.DestinatarioNuevo(
                                 destinatario.usuarioId(),
-                                destinatario.telefono()
+                                destinatario.telefono(),
+                                destinatario.correo()
                         ))
                         .toList()
         );
@@ -72,12 +78,33 @@ public class NotificacionApplicationService implements CrearNotificacionUseCase,
         if (destinatario.getEstado() == EstadoDestinatarioNotificacion.ENVIADO) {
             return destinatario;
         }
-        boolean exitoso = whatsAppPort.enviar(new EnviarWhatsAppCommand(
+        boolean exitoso = enviarWhatsAppSiAplica(notificacion, destinatario)
+                && enviarEmailSiAplica(notificacion, destinatario);
+        return exitoso ? destinatario.marcarEnviado() : destinatario.marcarError();
+    }
+
+    private boolean enviarWhatsAppSiAplica(Notificacion notificacion, NotificacionDestinatario destinatario) {
+        if (!destinatario.tieneTelefono()) {
+            return true;
+        }
+        return whatsAppPort.enviar(new EnviarWhatsAppCommand(
                 notificacion.getId(),
                 destinatario.getTelefono(),
                 notificacion.getPayloadJson()
         )).exitoso();
-        return exitoso ? destinatario.marcarEnviado() : destinatario.marcarError();
+    }
+
+    private boolean enviarEmailSiAplica(Notificacion notificacion, NotificacionDestinatario destinatario) {
+        if (!destinatario.tieneCorreo()) {
+            return true;
+        }
+        return emailPort.enviar(new EnviarEmailCommand(
+                notificacion.getId(),
+                destinatario.getCorreo(),
+                notificacion.getTipo(),
+                "SGIE - " + notificacion.getTipo().name(),
+                notificacion.getPayloadJson()
+        )).exitoso();
     }
 
     private NotificacionView toView(Notificacion notificacion) {

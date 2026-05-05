@@ -24,8 +24,11 @@ public class NotificacionDestinatarioJpaEntity {
     @Column(name = "id_usuario")
     private UUID usuarioId;
 
-    @Column(name = "telefono", nullable = false, length = 30)
+    @Column(name = "telefono", length = 30)
     private String telefono;
+
+    @Column(name = "correo", length = 120)
+    private String correo;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "estado", nullable = false, length = 40)
@@ -39,12 +42,14 @@ public class NotificacionDestinatarioJpaEntity {
             UUID notificacionId,
             UUID usuarioId,
             String telefono,
+            String correo,
             EstadoDestinatarioNotificacion estado
     ) {
         this.id = id;
         this.notificacionId = notificacionId;
         this.usuarioId = usuarioId;
         this.telefono = telefono;
+        this.correo = correo;
         this.estado = estado;
     }
 
@@ -62,6 +67,10 @@ public class NotificacionDestinatarioJpaEntity {
 
     public String getTelefono() {
         return telefono;
+    }
+
+    public String getCorreo() {
+        return correo;
     }
 
     public EstadoDestinatarioNotificacion getEstado() {

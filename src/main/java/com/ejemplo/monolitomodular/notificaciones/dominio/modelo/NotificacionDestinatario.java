@@ -11,6 +11,7 @@ public class NotificacionDestinatario {
     private final UUID notificacionId;
     private final UUID usuarioId;
     private final String telefono;
+    private final String correo;
     private final EstadoDestinatarioNotificacion estado;
 
     private NotificacionDestinatario(
@@ -18,21 +19,27 @@ public class NotificacionDestinatario {
             UUID notificacionId,
             UUID usuarioId,
             String telefono,
+            String correo,
             EstadoDestinatarioNotificacion estado
     ) {
         this.id = Objects.requireNonNull(id, "El id del destinatario es obligatorio");
         this.notificacionId = Objects.requireNonNull(notificacionId, "La notificacion del destinatario es obligatoria");
         this.usuarioId = usuarioId;
-        this.telefono = validarTelefono(telefono);
+        this.telefono = normalizar(telefono);
+        this.correo = normalizar(correo);
+        if (this.telefono == null && this.correo == null) {
+            throw new DomainException("El destinatario debe tener telefono o correo");
+        }
         this.estado = Objects.requireNonNull(estado, "El estado del destinatario es obligatorio");
     }
 
-    public static NotificacionDestinatario nuevo(UUID notificacionId, UUID usuarioId, String telefono) {
+    public static NotificacionDestinatario nuevo(UUID notificacionId, UUID usuarioId, String telefono, String correo) {
         return new NotificacionDestinatario(
                 UUID.randomUUID(),
                 notificacionId,
                 usuarioId,
                 telefono,
+                correo,
                 EstadoDestinatarioNotificacion.PENDIENTE
         );
     }
@@ -42,24 +49,25 @@ public class NotificacionDestinatario {
             UUID notificacionId,
             UUID usuarioId,
             String telefono,
+            String correo,
             EstadoDestinatarioNotificacion estado
     ) {
-        return new NotificacionDestinatario(id, notificacionId, usuarioId, telefono, estado);
+        return new NotificacionDestinatario(id, notificacionId, usuarioId, telefono, correo, estado);
     }
 
     public NotificacionDestinatario marcarEnviado() {
-        return new NotificacionDestinatario(id, notificacionId, usuarioId, telefono, EstadoDestinatarioNotificacion.ENVIADO);
+        return new NotificacionDestinatario(id, notificacionId, usuarioId, telefono, correo, EstadoDestinatarioNotificacion.ENVIADO);
     }
 
     public NotificacionDestinatario marcarError() {
-        return new NotificacionDestinatario(id, notificacionId, usuarioId, telefono, EstadoDestinatarioNotificacion.ERROR);
+        return new NotificacionDestinatario(id, notificacionId, usuarioId, telefono, correo, EstadoDestinatarioNotificacion.ERROR);
     }
 
-    private static String validarTelefono(String telefono) {
-        if (telefono == null || telefono.isBlank()) {
-            throw new DomainException("El telefono del destinatario es obligatorio");
+    private static String normalizar(String valor) {
+        if (valor == null || valor.isBlank()) {
+            return null;
         }
-        return telefono.trim();
+        return valor.trim();
     }
 
     public UUID getId() {
@@ -76,6 +84,18 @@ public class NotificacionDestinatario {
 
     public String getTelefono() {
         return telefono;
+    }
+
+    public String getCorreo() {
+        return correo;
+    }
+
+    public boolean tieneTelefono() {
+        return telefono != null;
+    }
+
+    public boolean tieneCorreo() {
+        return correo != null;
     }
 
     public EstadoDestinatarioNotificacion getEstado() {

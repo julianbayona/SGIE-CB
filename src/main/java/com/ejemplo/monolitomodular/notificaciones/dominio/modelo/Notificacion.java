@@ -61,7 +61,8 @@ public class Notificacion {
                 .map(destinatario -> NotificacionDestinatario.nuevo(
                         notificacionId,
                         destinatario.usuarioId(),
-                        destinatario.telefono()
+                        destinatario.telefono(),
+                        destinatario.correo()
                 ))
                 .toList();
         return new Notificacion(
@@ -191,6 +192,6 @@ public class Notificacion {
         return destinatarios;
     }
 
-    public record DestinatarioNuevo(UUID usuarioId, String telefono) {
+    public record DestinatarioNuevo(UUID usuarioId, String telefono, String correo) {
     }
 }

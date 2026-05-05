@@ -1,12 +1,15 @@
 package com.ejemplo.monolitomodular.notificaciones.aplicacion.servicio;
 
 import com.ejemplo.monolitomodular.notificaciones.aplicacion.dto.CrearNotificacionCommand;
+import com.ejemplo.monolitomodular.notificaciones.aplicacion.dto.EnviarEmailCommand;
+import com.ejemplo.monolitomodular.notificaciones.aplicacion.dto.EnviarEmailResult;
 import com.ejemplo.monolitomodular.notificaciones.aplicacion.dto.EnviarWhatsAppCommand;
 import com.ejemplo.monolitomodular.notificaciones.aplicacion.dto.EnviarWhatsAppResult;
 import com.ejemplo.monolitomodular.notificaciones.aplicacion.dto.NotificacionView;
 import com.ejemplo.monolitomodular.notificaciones.dominio.modelo.EstadoNotificacion;
 import com.ejemplo.monolitomodular.notificaciones.dominio.modelo.Notificacion;
 import com.ejemplo.monolitomodular.notificaciones.dominio.modelo.TipoNotificacion;
+import com.ejemplo.monolitomodular.notificaciones.dominio.puerto.salida.EmailPort;
 import com.ejemplo.monolitomodular.notificaciones.dominio.puerto.salida.NotificacionRepository;
 import com.ejemplo.monolitomodular.notificaciones.dominio.puerto.salida.WhatsAppPort;
 import org.junit.jupiter.api.Test;
@@ -27,7 +30,8 @@ class NotificacionApplicationServiceTest {
     void deberiaCrearYProcesarNotificacionPendiente() {
         NotificacionRepositoryStub repository = new NotificacionRepositoryStub();
         WhatsAppPortStub whatsAppPort = new WhatsAppPortStub(true);
-        NotificacionApplicationService service = new NotificacionApplicationService(repository, whatsAppPort);
+        EmailPortStub emailPort = new EmailPortStub(true);
+        NotificacionApplicationService service = new NotificacionApplicationService(repository, whatsAppPort, emailPort);
 
         NotificacionView creada = service.ejecutar(command(LocalDateTime.now().minusMinutes(1)));
         int procesadas = service.procesarPendientes(10);
@@ -35,6 +39,7 @@ class NotificacionApplicationServiceTest {
         assertEquals(EstadoNotificacion.PENDIENTE, creada.estado());
         assertEquals(1, procesadas);
         assertEquals(1, whatsAppPort.envios());
+        assertEquals(0, emailPort.envios());
         assertEquals(EstadoNotificacion.ENVIADA, repository.ultima().getEstado());
         assertEquals(1, repository.ultima().getIntentos());
     }
@@ -43,7 +48,7 @@ class NotificacionApplicationServiceTest {
     void deberiaMarcarErrorCuandoWhatsappFalla() {
         NotificacionRepositoryStub repository = new NotificacionRepositoryStub();
         WhatsAppPortStub whatsAppPort = new WhatsAppPortStub(false);
-        NotificacionApplicationService service = new NotificacionApplicationService(repository, whatsAppPort);
+        NotificacionApplicationService service = new NotificacionApplicationService(repository, whatsAppPort, new EmailPortStub(true));
         service.ejecutar(command(LocalDateTime.now().minusMinutes(1)));
 
         int procesadas = service.procesarPendientes(10);
@@ -58,7 +63,7 @@ class NotificacionApplicationServiceTest {
     void deberiaReintentarSoloDestinatariosNoEnviados() {
         NotificacionRepositoryStub repository = new NotificacionRepositoryStub();
         WhatsAppParcialPortStub whatsAppPort = new WhatsAppParcialPortStub();
-        NotificacionApplicationService service = new NotificacionApplicationService(repository, whatsAppPort);
+        NotificacionApplicationService service = new NotificacionApplicationService(repository, whatsAppPort, new EmailPortStub(true));
         service.ejecutar(new CrearNotificacionCommand(
                 UUID.randomUUID(),
                 TipoNotificacion.PRUEBA_PLATO_CLIENTE,
@@ -86,7 +91,7 @@ class NotificacionApplicationServiceTest {
     void noDeberiaProcesarNotificacionProgramadaAFuturo() {
         NotificacionRepositoryStub repository = new NotificacionRepositoryStub();
         WhatsAppPortStub whatsAppPort = new WhatsAppPortStub(true);
-        NotificacionApplicationService service = new NotificacionApplicationService(repository, whatsAppPort);
+        NotificacionApplicationService service = new NotificacionApplicationService(repository, whatsAppPort, new EmailPortStub(true));
         service.ejecutar(command(LocalDateTime.now().plusDays(1)));
 
         int procesadas = service.procesarPendientes(10);
@@ -94,6 +99,29 @@ class NotificacionApplicationServiceTest {
         assertEquals(0, procesadas);
         assertEquals(0, whatsAppPort.envios());
         assertEquals(EstadoNotificacion.PENDIENTE, repository.ultima().getEstado());
+    }
+
+    @Test
+    void deberiaEnviarEmailCuandoDestinatarioTieneCorreo() {
+        NotificacionRepositoryStub repository = new NotificacionRepositoryStub();
+        WhatsAppPortStub whatsAppPort = new WhatsAppPortStub(true);
+        EmailPortStub emailPort = new EmailPortStub(true);
+        NotificacionApplicationService service = new NotificacionApplicationService(repository, whatsAppPort, emailPort);
+        service.ejecutar(new CrearNotificacionCommand(
+                UUID.randomUUID(),
+                TipoNotificacion.PRUEBA_PLATO_CLIENTE,
+                LocalDateTime.now().minusMinutes(1),
+                "{\"mensaje\":\"Prueba\"}",
+                List.of(new CrearNotificacionCommand.Destinatario(null, "573001112233", "cliente@correo.com"))
+        ));
+
+        int procesadas = service.procesarPendientes(10);
+
+        assertEquals(1, procesadas);
+        assertEquals(1, whatsAppPort.envios());
+        assertEquals(1, emailPort.envios());
+        assertEquals("cliente@correo.com", emailPort.ultimoCorreo());
+        assertEquals(EstadoNotificacion.ENVIADA, repository.ultima().getEstado());
     }
 
     private static CrearNotificacionCommand command(LocalDateTime fechaProgramada) {
@@ -174,6 +202,32 @@ class NotificacionApplicationServiceTest {
 
         int enviosPorTelefono(String telefono) {
             return enviosPorTelefono.getOrDefault(telefono, 0);
+        }
+    }
+
+    private static class EmailPortStub implements EmailPort {
+
+        private final boolean exitoso;
+        private int envios;
+        private String ultimoCorreo;
+
+        private EmailPortStub(boolean exitoso) {
+            this.exitoso = exitoso;
+        }
+
+        @Override
+        public EnviarEmailResult enviar(EnviarEmailCommand command) {
+            envios++;
+            ultimoCorreo = command.correo();
+            return exitoso ? EnviarEmailResult.ok() : EnviarEmailResult.error("Fallo simulado");
+        }
+
+        int envios() {
+            return envios;
+        }
+
+        String ultimoCorreo() {
+            return ultimoCorreo;
         }
     }
 }

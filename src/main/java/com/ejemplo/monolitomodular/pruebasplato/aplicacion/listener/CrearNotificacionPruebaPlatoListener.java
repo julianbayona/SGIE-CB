@@ -26,7 +26,7 @@ public class CrearNotificacionPruebaPlatoListener {
                 TipoNotificacion.PRUEBA_PLATO_CLIENTE,
                 LocalDateTime.now(),
                 payload(event),
-                List.of(new CrearNotificacionCommand.Destinatario(null, event.telefonoCliente()))
+                List.of(new CrearNotificacionCommand.Destinatario(null, event.telefonoCliente(), event.correoCliente()))
         ));
     }
 

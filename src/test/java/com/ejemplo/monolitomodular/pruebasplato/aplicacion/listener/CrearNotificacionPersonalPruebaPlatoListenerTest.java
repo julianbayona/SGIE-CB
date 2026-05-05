@@ -22,7 +22,10 @@ class CrearNotificacionPersonalPruebaPlatoListenerTest {
                 useCase,
                 "573001111111",
                 "573002222222",
-                "573003333333"
+                "573003333333",
+                "",
+                "",
+                ""
         );
         UUID eventoId = UUID.randomUUID();
 
@@ -48,7 +51,10 @@ class CrearNotificacionPersonalPruebaPlatoListenerTest {
                 useCase,
                 "573001111111",
                 "",
-                "573003333333"
+                "573003333333",
+                "",
+                "",
+                ""
         );
 
         listener.manejar(new PruebaPlatoProgramadaEvent(

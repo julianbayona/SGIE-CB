@@ -72,6 +72,7 @@ public class NotificacionJpaRepositoryAdapter implements NotificacionRepository 
                 entity.getNotificacionId(),
                 entity.getUsuarioId(),
                 entity.getTelefono(),
+                entity.getCorreo(),
                 entity.getEstado()
         );
     }
@@ -82,6 +83,7 @@ public class NotificacionJpaRepositoryAdapter implements NotificacionRepository 
                 destinatario.getNotificacionId(),
                 destinatario.getUsuarioId(),
                 destinatario.getTelefono(),
+                destinatario.getCorreo(),
                 destinatario.getEstado()
         );
     }

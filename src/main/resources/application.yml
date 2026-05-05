@@ -16,21 +16,39 @@ spring:
           time_zone: America/Bogota
   flyway:
     enabled: true
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:25}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_SMTP_AUTH:false}
+          starttls:
+            enable: ${MAIL_SMTP_STARTTLS_ENABLE:false}
 
 server:
   port: 8080
 
 sgie:
   notificaciones:
+    email:
+      enabled: ${SGIE_EMAIL_ENABLED:false}
+      from: ${SGIE_EMAIL_FROM:${MAIL_USERNAME:}}
     scheduler:
       fixed-delay-ms: ${SGIE_NOTIFICACIONES_SCHEDULER_FIXED_DELAY_MS:60000}
       limite: ${SGIE_NOTIFICACIONES_SCHEDULER_LIMITE:20}
     personal:
       grupo-whatsapp-id: ${SGIE_NOTIFICACIONES_PERSONAL_GRUPO_WHATSAPP_ID:}
+      correos: ${SGIE_NOTIFICACIONES_PERSONAL_CORREOS:}
     prueba-plato:
       chef-telefono: ${SGIE_NOTIFICACIONES_PRUEBA_PLATO_CHEF_TELEFONO:}
       gerente-telefono: ${SGIE_NOTIFICACIONES_PRUEBA_PLATO_GERENTE_TELEFONO:}
       tesorero-telefono: ${SGIE_NOTIFICACIONES_PRUEBA_PLATO_TESORERO_TELEFONO:}
+      chef-correo: ${SGIE_NOTIFICACIONES_PRUEBA_PLATO_CHEF_CORREO:}
+      gerente-correo: ${SGIE_NOTIFICACIONES_PRUEBA_PLATO_GERENTE_CORREO:}
+      tesorero-correo: ${SGIE_NOTIFICACIONES_PRUEBA_PLATO_TESORERO_CORREO:}
   calendario:
     scheduler:
       fixed-delay-ms: ${SGIE_CALENDARIO_SCHEDULER_FIXED_DELAY_MS:60000}

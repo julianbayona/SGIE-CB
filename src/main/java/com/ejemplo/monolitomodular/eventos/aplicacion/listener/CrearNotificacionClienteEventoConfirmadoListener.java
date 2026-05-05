@@ -36,7 +36,7 @@ public class CrearNotificacionClienteEventoConfirmadoListener {
                 TipoNotificacion.EVENTO_CONFIRMADO_CLIENTE,
                 LocalDateTime.now(),
                 payload(event, cliente),
-                List.of(new CrearNotificacionCommand.Destinatario(null, cliente.getTelefono()))
+                List.of(new CrearNotificacionCommand.Destinatario(null, cliente.getTelefono(), cliente.getCorreo()))
         ));
     }
 

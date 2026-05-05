@@ -16,7 +16,11 @@ public record CrearNotificacionCommand(
 
     public record Destinatario(
             UUID usuarioId,
-            String telefono
+            String telefono,
+            String correo
     ) {
+        public Destinatario(UUID usuarioId, String telefono) {
+            this(usuarioId, telefono, null);
+        }
     }
 }

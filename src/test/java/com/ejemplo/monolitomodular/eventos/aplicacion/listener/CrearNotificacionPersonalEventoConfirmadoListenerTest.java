@@ -20,7 +20,8 @@ class CrearNotificacionPersonalEventoConfirmadoListenerTest {
         CrearNotificacionUseCaseStub useCase = new CrearNotificacionUseCaseStub();
         CrearNotificacionPersonalEventoConfirmadoListener listener = new CrearNotificacionPersonalEventoConfirmadoListener(
                 useCase,
-                "grupo-personal@g.us"
+                "grupo-personal@g.us",
+                ""
         );
         UUID eventoId = UUID.randomUUID();
 
@@ -42,6 +43,7 @@ class CrearNotificacionPersonalEventoConfirmadoListenerTest {
         CrearNotificacionUseCaseStub useCase = new CrearNotificacionUseCaseStub();
         CrearNotificacionPersonalEventoConfirmadoListener listener = new CrearNotificacionPersonalEventoConfirmadoListener(
                 useCase,
+                "",
                 ""
         );
 

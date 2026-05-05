@@ -65,9 +65,22 @@ DB_USERNAME=postgres
 DB_PASSWORD=postgres
 
 SGIE_NOTIFICACIONES_PERSONAL_GRUPO_WHATSAPP_ID=grupo-personal@g.us
+SGIE_NOTIFICACIONES_PERSONAL_CORREOS=gerente@club.com,tesorero@club.com
 SGIE_NOTIFICACIONES_PRUEBA_PLATO_CHEF_TELEFONO=573001111111
 SGIE_NOTIFICACIONES_PRUEBA_PLATO_GERENTE_TELEFONO=573002222222
 SGIE_NOTIFICACIONES_PRUEBA_PLATO_TESORERO_TELEFONO=573003333333
+SGIE_NOTIFICACIONES_PRUEBA_PLATO_CHEF_CORREO=chef@club.com
+SGIE_NOTIFICACIONES_PRUEBA_PLATO_GERENTE_CORREO=gerente@club.com
+SGIE_NOTIFICACIONES_PRUEBA_PLATO_TESORERO_CORREO=tesorero@club.com
+
+SGIE_EMAIL_ENABLED=false
+SGIE_EMAIL_FROM=
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=
+MAIL_PASSWORD=
+MAIL_SMTP_AUTH=true
+MAIL_SMTP_STARTTLS_ENABLE=true
 
 SGIE_CALENDARIO_PRUEBA_PLATO_CHEF_CORREO=chef@club.com
 SGIE_CALENDARIO_PRUEBA_PLATO_GERENTE_CORREO=gerente@club.com
@@ -86,6 +99,21 @@ SGIE_CALENDARIO_GOOGLE_INCLUDE_ATTENDEES=true
 ```
 
 En desarrollo pueden usarse valores locales. En produccion deben configurarse directamente en el servidor o plataforma de despliegue, sin guardar credenciales reales en Git.
+
+Para enviar correos temporales desde el outbox de notificaciones, activar SMTP:
+
+```env
+SGIE_EMAIL_ENABLED=true
+SGIE_EMAIL_FROM=cuenta-operativa@club.com
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=cuenta-operativa@club.com
+MAIL_PASSWORD=APP_PASSWORD_O_PASSWORD_SMTP
+MAIL_SMTP_AUTH=true
+MAIL_SMTP_STARTTLS_ENABLE=true
+```
+
+Si `SGIE_EMAIL_ENABLED=false`, el sistema no envia correos reales y solo registra el intento en logs, igual que el adaptador temporal de WhatsApp.
 
 Para usar Google Calendar se requiere OAuth. Este modo permite crear eventos con asistentes reales y enviar invitaciones por correo desde una cuenta operativa del Club.
 
