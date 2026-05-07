@@ -20,6 +20,8 @@ function toClient(c: ClienteResponse): Client {
   };
 }
 
+const PAGE_SIZE = 7;
+
 const ClientsPage: React.FC = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,6 +30,7 @@ const ClientsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingClientId, setEditingClientId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Carga inicial y búsqueda con debounce
   useEffect(() => {
@@ -127,6 +130,17 @@ const ClientsPage: React.FC = () => {
     });
   }, [activeTab, clients]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, searchQuery]);
+
+  const totalPages = Math.ceil(visibleClients.length / PAGE_SIZE);
+  const safeCurrentPage = Math.min(currentPage, totalPages || 1);
+  const pageStart = (safeCurrentPage - 1) * PAGE_SIZE;
+  const paginatedClients = visibleClients.slice(pageStart, pageStart + PAGE_SIZE);
+  const from = visibleClients.length === 0 ? 0 : pageStart + 1;
+  const to = Math.min(pageStart + PAGE_SIZE, visibleClients.length);
+
   return (
     <section className="space-y-6 relative isolate min-h-[calc(100vh-10rem)]">
       <ClientsHeader
@@ -149,9 +163,16 @@ const ClientsPage: React.FC = () => {
             Cargando clientes…
           </div>
         ) : (
-          <ClientsTable clients={visibleClients} onEditClient={openEditForm} />
+          <ClientsTable clients={paginatedClients} onEditClient={openEditForm} />
         )}
-        <ClientsTablePagination from={1} to={visibleClients.length} total={visibleClients.length} />
+        <ClientsTablePagination
+          from={from}
+          to={to}
+          total={visibleClients.length}
+          currentPage={safeCurrentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
       <ClientFormModal

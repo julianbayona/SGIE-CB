@@ -16,6 +16,7 @@ import type {
   CatalogoBasicoResponse,
 } from '@/api/types';
 import type { QuoteStatus } from '@/features/quotes/types';
+import { formatShortId } from '@/utils/formatters';
 
 const estadoMap: Record<EstadoCotizacion, QuoteStatus> = {
   BORRADOR: 'Borrador',
@@ -405,7 +406,7 @@ const EventQuotePage: React.FC = () => {
               <div>
                 <p className="text-xs font-bold uppercase tracking-wider text-stone-500">Cotización activa</p>
                 <h3 className="mt-1 font-display text-2xl font-bold text-on-surface">
-                  #{event.id.replace('EVT', 'COT').replace('EV-', 'COT-')}
+                  {formatShortId(cotizacion.id, 'COT-')}
                 </h3>
                 <p className="mt-1 text-sm text-on-surface-variant">
                   {event.title} - {event.dateLabel}
@@ -619,7 +620,7 @@ const EventQuotePage: React.FC = () => {
             <div className="flex items-center justify-between gap-3">
               <div>
                 <div className="flex items-center gap-2">
-                  <p className="font-semibold text-on-surface">#{cotizacion.id.slice(0, 8).toUpperCase()}</p>
+                  <p className="font-semibold text-on-surface">{formatShortId(cotizacion.id, 'COT-')}</p>
                   <span className="text-[10px] font-bold text-gold">Vigente</span>
                 </div>
                 <p className="text-xs text-on-surface-variant">{new Date().toLocaleDateString('es-CO')}</p>

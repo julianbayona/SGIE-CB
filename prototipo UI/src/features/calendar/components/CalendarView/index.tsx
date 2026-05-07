@@ -8,6 +8,9 @@ import DayView from '../DayView';
 
 const CalendarView: React.FC = () => {
   const { view } = useCalendarStore();
+  const visibleEventStatuses = eventStatuses.filter(
+    (status) => status !== 'Esperando selección de menú'
+  );
 
   const renderView = () => {
     switch (view) {
@@ -30,7 +33,7 @@ const CalendarView: React.FC = () => {
       </div>
       <div className="flex flex-wrap items-center gap-2 border-t border-outline-variant/20 px-4 py-3 bg-surface-container-lowest">
         <span className="text-[10px] font-bold uppercase tracking-widest text-text3 mr-1">Estados</span>
-        {eventStatuses.map((status) => (
+        {visibleEventStatuses.map((status) => (
           <StatusBadge key={status} type="event" status={status} />
         ))}
       </div>

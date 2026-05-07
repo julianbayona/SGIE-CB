@@ -12,6 +12,7 @@ import type {
   SobremantelResponse,
   PlatoMomentoResponse,
 } from '@/api/types';
+import { formatShortId } from '@/utils/formatters';
 
 type CatalogKey =
   | 'tipo_evento'
@@ -85,8 +86,8 @@ const buildPlatoMomentoRows = (
   const momentosById = new Map(momentos.map((momento) => [momento.id, momento]));
 
   return relaciones.map((relacion) => {
-    const platoNombre = platosById.get(relacion.platoId)?.nombre ?? relacion.platoId;
-    const momentoNombre = momentosById.get(relacion.tipoMomentoId)?.nombre ?? relacion.tipoMomentoId;
+    const platoNombre = platosById.get(relacion.platoId)?.nombre ?? formatShortId(relacion.platoId, 'PLA-');
+    const momentoNombre = momentosById.get(relacion.tipoMomentoId)?.nombre ?? formatShortId(relacion.tipoMomentoId, 'MOM-');
 
     return {
       id: `${relacion.platoId}|${relacion.tipoMomentoId}`,

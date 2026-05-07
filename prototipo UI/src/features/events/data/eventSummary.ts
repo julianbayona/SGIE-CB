@@ -1,4 +1,5 @@
 import type { EventStatus } from '@/features/events/types';
+import { formatShortId } from '@/utils/formatters';
 
 export interface EventSummaryData {
   id: string;
@@ -23,7 +24,7 @@ export const getEventSummaryById = (eventId?: string): EventSummaryData => {
   // Datos por defecto cuando no se encuentra el evento
   return {
     id: normalizedId,
-    title: `Evento - ${normalizedId}`,
+    title: `Evento - ${formatShortId(normalizedId, 'EV-')}`,
     dateLabel: 'Por confirmar',
     timeLabel: 'Por confirmar',
     status: 'Pendiente',

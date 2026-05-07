@@ -1,6 +1,7 @@
 import React from 'react';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import type { EventRecord } from '@/features/events/types';
+import { formatShortId } from '@/utils/formatters';
 
 interface EventTableRowProps {
   event: EventRecord;
@@ -11,7 +12,7 @@ const EventTableRow: React.FC<EventTableRowProps> = ({ event, onViewEvent }) => 
   return (
     <tr className="hover:bg-stone-50/70 transition-colors">
       <td className="px-6 py-4">
-        <p className="font-bold text-text1 text-sm">#{event.id.slice(0, 8).toUpperCase()}</p>
+        <p className="font-bold text-text1 text-sm">{formatShortId(event.id, 'EV-')}</p>
         <p className="text-xs text-text3">{event.dateLabel}</p>
       </td>
 

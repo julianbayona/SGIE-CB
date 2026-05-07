@@ -10,6 +10,7 @@ import clientesApi from '@/api/clientes';
 import salonesApi from '@/api/salones';
 import catalogosApi from '@/api/catalogos';
 import type { EventoResponse, EstadoEvento, ClienteResponse, SalonResponse, CatalogoBasicoResponse } from '@/api/types';
+import { formatShortId } from '@/utils/formatters';
 
 const estadoMap: Record<EstadoEvento, EventStatus> = {
   PENDIENTE: 'Pendiente',
@@ -28,6 +29,8 @@ const nextActionMap: Record<EstadoEvento, string> = {
   CONFIRMADO: 'Coordinar personal',
   CANCELADO: 'Sin acciones pendientes',
 };
+
+const PAGE_SIZE = 7;
 
 function toEventRecord(
   e: EventoResponse,
@@ -64,7 +67,7 @@ function toEventRecord(
     id: e.id,
     dateLabel,
     clientName: cliente?.nombreCompleto ?? 'Cliente desconocido',
-    clientDocument: cliente?.cedula ?? `ID: ${e.clienteId.slice(0, 8)}`,
+    clientDocument: cliente?.cedula ?? formatShortId(e.clienteId, 'CLI-'),
     clientInitials: cliente ? getInitials(cliente.nombreCompleto) : '??',
     hall: salon?.nombre ?? 'Sin salón',
     eventKind: (tipoEvento?.nombre ?? 'Social') as EventRecord['eventKind'],
@@ -80,6 +83,7 @@ const EventsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<EventsTab>('Todos');
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     let cancelled = false;
@@ -129,6 +133,17 @@ const EventsPage: React.FC = () => {
     return events;
   }, [activeTab, events]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab]);
+
+  const totalPages = Math.ceil(visibleEvents.length / PAGE_SIZE);
+  const safeCurrentPage = Math.min(currentPage, totalPages || 1);
+  const pageStart = (safeCurrentPage - 1) * PAGE_SIZE;
+  const paginatedEvents = visibleEvents.slice(pageStart, pageStart + PAGE_SIZE);
+  const from = visibleEvents.length === 0 ? 0 : pageStart + 1;
+  const to = Math.min(pageStart + PAGE_SIZE, visibleEvents.length);
+
   return (
     <section className="space-y-6">
       <EventsPageHeader />
@@ -147,11 +162,18 @@ const EventsPage: React.FC = () => {
           </div>
         ) : (
           <EventsTable
-            events={visibleEvents}
+            events={paginatedEvents}
             onViewEvent={(eventId) => navigate(`/events/${eventId}`)}
           />
         )}
-        <EventsTablePagination from={1} to={visibleEvents.length} total={events.length} />
+        <EventsTablePagination
+          from={from}
+          to={to}
+          total={visibleEvents.length}
+          currentPage={safeCurrentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       </div>
     </section>
   );

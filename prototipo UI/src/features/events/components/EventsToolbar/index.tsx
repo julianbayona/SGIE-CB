@@ -41,13 +41,6 @@ const EventsToolbar: React.FC<EventsToolbarProps> = ({ activeTab, onTabChange })
             <span className="material-symbols-outlined text-sm">tune</span>
             Filtros
           </button>
-          <button
-            type="button"
-            className="p-2 bg-panel text-text2 rounded flex items-center gap-2 text-xs font-semibold hover:bg-hover transition-colors"
-          >
-            <span className="material-symbols-outlined text-sm">download</span>
-            Exportar
-          </button>
         </div>
       </div>
     </div>

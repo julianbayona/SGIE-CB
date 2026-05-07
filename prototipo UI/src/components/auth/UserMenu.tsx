@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { formatShortId } from '@/utils/formatters';
 
 const rolLabels: Record<string, string> = {
   ADMINISTRADOR: 'Administrador',
@@ -80,7 +81,7 @@ const UserMenu: React.FC = () => {
           <div className="px-4 py-3 border-b border-outline-variant/20">
             <p className="text-sm font-semibold text-on-surface">{user.nombre}</p>
             <p className="text-xs text-on-surface-variant mt-1">{rolLabels[user.rol] || user.rol}</p>
-            <p className="text-xs text-on-surface-variant mt-1">ID: {user.usuarioId.slice(0, 8)}</p>
+            <p className="text-xs text-on-surface-variant mt-1">ID: {formatShortId(user.usuarioId, 'USR-')}</p>
           </div>
 
           {/* Opciones del menú */}

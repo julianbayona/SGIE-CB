@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import type { EventSummaryData } from '@/features/events/data/eventSummary';
+import { formatShortId } from '@/utils/formatters';
 
 export type EventDetailTab =
   | 'summary'
@@ -32,7 +33,9 @@ const EventDetailHeaderTabs: React.FC<EventDetailHeaderTabsProps> = ({ event, ac
         <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-5">
           <div className="min-w-0">
             <div className="flex items-center gap-3 mb-3 flex-wrap">
-              <span className="text-xs font-bold tracking-widest text-stone-500 uppercase">{event.id}</span>
+              <span className="text-xs font-bold tracking-widest text-stone-500 uppercase">
+                {formatShortId(event.id, 'EV-')}
+              </span>
               <StatusBadge type="event" status={event.status} size="md" />
             </div>
             <h2 className="text-2xl font-display font-bold text-on-surface">{event.title.replace(' - ', ' · ')}</h2>

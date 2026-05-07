@@ -27,9 +27,9 @@ const WeekView: React.FC = () => {
   return (
     <div className="grid" style={{ gridTemplateColumns: '60px repeat(7, 1fr)' }}>
       {/* Header */}
-      <div className="calendar-header bg-stone-50"></div>
+      <div className="calendar-header bg-stone-100 border-r border-b border-outline-variant/40"></div>
       {days.map(day => (
-        <div key={day.toISOString()} className="calendar-header bg-stone-50 p-2 text-center border-b border-outline-variant/10">
+        <div key={day.toISOString()} className="calendar-header bg-stone-100 p-2 text-center border-b border-l border-outline-variant/40">
           <p className="text-[8px] font-bold text-stone-400 uppercase">{format(day, 'eee')}</p>
           <p className="text-sm font-serif-italic text-on-surface">{format(day, 'd')}</p>
         </div>
@@ -41,14 +41,21 @@ const WeekView: React.FC = () => {
       ) : (
         hours.map(hour => (
           <React.Fragment key={hour}>
-            <div className="calendar-cell p-2 text-[10px] font-bold text-stone-400 text-right pr-3">{`${hour.toString().padStart(2, '0')}:00`}</div>
+            <div className="calendar-cell p-2 text-[10px] font-bold text-stone-500 text-right pr-3 border-r border-b border-outline-variant/35 bg-stone-50">{`${hour.toString().padStart(2, '0')}:00`}</div>
             {days.map(day => {
               const hourEvents = getEventsForHour(day, hour);
               return (
-                <div key={day.toISOString() + hour} className="calendar-cell bg-white relative p-1 min-h-[48px]">
-                  {hourEvents.map(event => (
-                    <EventItem key={event.id} event={event} />
-                  ))}
+                <div key={day.toISOString() + hour} className="calendar-cell bg-white p-1 min-h-[48px] border-l border-b border-outline-variant/30">
+                  {hourEvents.length > 0 ? (
+                    <div
+                      className="grid gap-1"
+                      style={{ gridTemplateColumns: `repeat(${Math.min(hourEvents.length, 2)}, minmax(0, 1fr))` }}
+                    >
+                      {hourEvents.map(event => (
+                        <EventItem key={event.id} event={event} />
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
               );
             })}

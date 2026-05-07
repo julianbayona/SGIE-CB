@@ -5,6 +5,7 @@ import eventosApi from '@/api/eventos';
 import catalogosApi from '@/api/catalogos';
 import salonesApi from '@/api/salones';
 import type { ClienteResponse, SalonResponse, CatalogoBasicoResponse } from '@/api/types';
+import ClientFormModal, { type ClientFormValues } from '@/features/clients/components/ClientFormModal';
 
 const labelClass =
   'block text-[10px] font-bold uppercase tracking-[0.15em] text-on-surface-variant mb-2';
@@ -21,6 +22,9 @@ const EventRequestPage: React.FC = () => {
   const [tiposEvento, setTiposEvento] = useState<CatalogoBasicoResponse[]>([]);
   const [tiposComida, setTiposComida] = useState<CatalogoBasicoResponse[]>([]);
   const [clienteEncontrado, setClienteEncontrado] = useState<ClienteResponse | null>(null);
+  const [clienteResultados, setClienteResultados] = useState<ClienteResponse[]>([]);
+  const [searchingCliente, setSearchingCliente] = useState(false);
+  const [isClienteFormOpen, setIsClienteFormOpen] = useState(false);
   const [fechaHoraInicio, setFechaHoraInicio] = useState('');
   const [fechaHoraFin, setFechaHoraFin] = useState('');
   const [numPersonas, setNumPersonas] = useState(0);
@@ -50,13 +54,22 @@ const EventRequestPage: React.FC = () => {
   // Búsqueda de cliente con debounce
   useEffect(() => {
     const q = customerQuery.trim();
-    if (!q) { setClienteEncontrado(null); return; }
+    if (!q) {
+      setClienteEncontrado(null);
+      setClienteResultados([]);
+      setSearchingCliente(false);
+      return;
+    }
+
+    setSearchingCliente(true);
     const timer = setTimeout(async () => {
       try {
         const results = await clientesApi.listar(q);
-        setClienteEncontrado(results[0] ?? null);
+        setClienteResultados(results);
       } catch {
-        setClienteEncontrado(null);
+        setClienteResultados([]);
+      } finally {
+        setSearchingCliente(false);
       }
     }, 400);
     return () => clearTimeout(timer);
@@ -134,6 +147,25 @@ const EventRequestPage: React.FC = () => {
     }
   };
 
+  const handleRegistrarCliente = async (values: ClientFormValues) => {
+    try {
+      const nuevo = await clientesApi.registrar({
+        cedula: values.idNumber,
+        nombreCompleto: values.fullName,
+        telefono: values.phone,
+        correo: values.email,
+        tipoCliente: values.category === 'Socio' ? 'SOCIO' : 'NO_SOCIO',
+      });
+
+      setClienteEncontrado(nuevo);
+      setClienteResultados([]);
+      setCustomerQuery(`${nuevo.nombreCompleto} - ${nuevo.cedula}`);
+      setIsClienteFormOpen(false);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Error al registrar cliente.');
+    }
+  };
+
   return (
     <section className="space-y-8 pb-36">
       <div>
@@ -170,7 +202,10 @@ const EventRequestPage: React.FC = () => {
                     placeholder="Buscar por nombre, cédula o teléfono"
                     type="text"
                     value={customerQuery}
-                    onChange={(e) => setCustomerQuery(e.target.value)}
+                    onChange={(e) => {
+                      setClienteEncontrado(null);
+                      setCustomerQuery(e.target.value);
+                    }}
                   />
                 </div>
               </div>
@@ -186,20 +221,67 @@ const EventRequestPage: React.FC = () => {
                       </span>
                     </div>
                   </div>
-                  <button className="text-on-surface-variant hover:text-primary-gold transition-colors" type="button" onClick={() => setClienteEncontrado(null)}>
+                  <button
+                    className="text-on-surface-variant hover:text-primary-gold transition-colors"
+                    type="button"
+                    onClick={() => {
+                      setClienteEncontrado(null);
+                      setCustomerQuery('');
+                    }}
+                  >
                     <span className="material-symbols-outlined">close</span>
                   </button>
                 </div>
               ) : (
-                <button
-                  type="button"
-                  className="flex items-center gap-2 text-primary-gold font-bold text-sm hover:underline transition-all group"
-                >
-                  <span className="material-symbols-outlined text-lg group-hover:scale-110 transition-transform">
-                    add_circle
-                  </span>
-                  Registrar nuevo cliente
-                </button>
+                <div className="space-y-3">
+                  {searchingCliente ? (
+                    <p className="text-sm text-on-surface-variant">Buscando coincidencias...</p>
+                  ) : null}
+
+                  {customerQuery.trim() && clienteResultados.length > 0 ? (
+                    <div className="max-w-2xl rounded-md border border-border bg-surface-container-lowest overflow-hidden">
+                      {clienteResultados.slice(0, 7).map((cliente) => (
+                        <button
+                          key={cliente.id}
+                          type="button"
+                          onClick={() => {
+                            setClienteEncontrado(cliente);
+                            setClienteResultados([]);
+                            setCustomerQuery(`${cliente.nombreCompleto} - ${cliente.cedula}`);
+                          }}
+                          className="w-full px-4 py-3 text-left hover:bg-gold-bg/60 border-b border-border last:border-b-0 transition-colors"
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-semibold text-on-surface">{cliente.nombreCompleto}</p>
+                              <p className="text-xs text-on-surface-variant">
+                                CC {cliente.cedula} · {cliente.telefono} · {cliente.correo || 'Sin correo'}
+                              </p>
+                            </div>
+                            <span className="text-[10px] uppercase tracking-widest font-bold px-2 py-0.5 bg-primary-gold text-white rounded-full">
+                              {cliente.tipoCliente === 'SOCIO' ? 'Socio' : 'No Socio'}
+                            </span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  {customerQuery.trim() && !searchingCliente && clienteResultados.length === 0 ? (
+                    <p className="text-sm text-on-surface-variant">No se encontraron coincidencias.</p>
+                  ) : null}
+
+                  <button
+                    type="button"
+                    onClick={() => setIsClienteFormOpen(true)}
+                    className="flex items-center gap-2 text-primary-gold font-bold text-sm hover:underline transition-all group"
+                  >
+                    <span className="material-symbols-outlined text-lg group-hover:scale-110 transition-transform">
+                      add_circle
+                    </span>
+                    Registrar nuevo cliente
+                  </button>
+                </div>
               )}
             </div>
           </section>
@@ -345,6 +427,15 @@ const EventRequestPage: React.FC = () => {
           </button>
         </div>
       </footer>
+
+      <ClientFormModal
+        isOpen={isClienteFormOpen}
+        mode="create"
+        initialClient={null}
+        idNumbersInUse={clienteResultados.map((cliente) => cliente.cedula)}
+        onCancel={() => setIsClienteFormOpen(false)}
+        onSubmit={handleRegistrarCliente}
+      />
     </section>
   );
 };

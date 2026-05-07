@@ -17,6 +17,7 @@ import type {
   EstadoCotizacion,
   PlatoMomentoResponse,
 } from '@/api/types';
+import { formatShortId } from '@/utils/formatters';
 
 interface ItemLocal {
   localId: string;
@@ -137,7 +138,7 @@ const EventMenuPage: React.FC = () => {
                   return {
                     localId: uid(),
                     platoId: item.platoId,
-                    platoNombre: plato?.nombre ?? item.platoId,
+                    platoNombre: plato?.nombre ?? formatShortId(item.platoId, 'PLA-'),
                     precioBase: plato?.precioBase ?? 0,
                     cantidad: item.cantidad,
                     excepciones: item.excepciones ?? '',
@@ -371,7 +372,7 @@ const EventMenuPage: React.FC = () => {
     };
   }, [cliente, eventId, evento, salon, tipoEvento]);
 
-  const momentoNombre = (id: string) => momentos.find((momento) => momento.id === id)?.nombre ?? id;
+  const momentoNombre = (id: string) => momentos.find((momento) => momento.id === id)?.nombre ?? formatShortId(id, 'MOM-');
 
   if (loading) {
     return (

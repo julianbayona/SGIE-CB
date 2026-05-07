@@ -1,6 +1,7 @@
 import React from 'react';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import type { QuoteRecord } from '@/features/quotes/types';
+import { formatShortId } from '@/utils/formatters';
 
 interface QuoteTableRowProps {
   quote: QuoteRecord;
@@ -12,13 +13,13 @@ const QuoteTableRow: React.FC<QuoteTableRowProps> = ({ quote }) => {
   return (
     <tr className="hover:bg-stone-50/70 transition-colors">
       <td className="px-6 py-4">
-        <p className="text-sm font-bold text-text1">#{quote.id}</p>
+        <p className="text-sm font-bold text-text1">{formatShortId(quote.id, 'COT-')}</p>
         <p className="text-xs text-text3">Cotización</p>
       </td>
 
       <td className="px-6 py-4">
         <p className="text-sm font-bold text-text1">{quote.eventName}</p>
-        <p className="text-xs text-text3">{quote.eventMeta}</p>
+        <p className="text-xs text-text3">{formatShortId(quote.eventMeta, 'EV-')}</p>
       </td>
 
       <td className="px-6 py-4">

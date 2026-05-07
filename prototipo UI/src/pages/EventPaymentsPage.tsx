@@ -8,6 +8,7 @@ import catalogosApi from '@/api/catalogos';
 import cotizacionesApi from '@/api/cotizaciones';
 import pagosApi from '@/api/pagos';
 import type { EventoResponse, ClienteResponse, SalonResponse, CatalogoBasicoResponse } from '@/api/types';
+import { formatShortId } from '@/utils/formatters';
 
 interface PaymentRecord {
   id: string;
@@ -114,7 +115,7 @@ const EventPaymentsPage: React.FC = () => {
               concept: anticipo.observaciones ?? 'Anticipo',
               method: anticipo.metodoPago,
               amount: Number(anticipo.valor),
-              registeredBy: anticipo.usuarioId.slice(0, 8),
+              registeredBy: formatShortId(anticipo.usuarioId, 'USR-'),
             }))
           );
         } catch {
@@ -218,7 +219,7 @@ const EventPaymentsPage: React.FC = () => {
           concept: anticipo.observaciones ?? newConcept.trim(),
           method: anticipo.metodoPago,
           amount: Number(anticipo.valor),
-          registeredBy: anticipo.usuarioId.slice(0, 8),
+          registeredBy: formatShortId(anticipo.usuarioId, 'USR-'),
         },
       ]);
 
@@ -274,7 +275,7 @@ const EventPaymentsPage: React.FC = () => {
           <div>
             <p className="text-xs uppercase tracking-wider text-stone-500 font-bold">Anticipos y pagos</p>
             <h3 className="text-xl font-display font-bold text-on-surface mt-1">
-              {event.id} - {event.title.replace(' - ', ' - ')}
+              {formatShortId(event.id, 'EV-')} - {event.title.replace(' - ', ' - ')}
             </h3>
           </div>
           <span

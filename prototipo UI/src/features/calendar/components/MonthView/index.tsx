@@ -16,13 +16,13 @@ const MonthView: React.FC = () => {
   return (
     <div className="grid grid-cols-7">
       {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map((day) => (
-        <div key={day} className="bg-stone-50 p-2 text-center border-b border-r border-outline-variant/10">
-          <p className="text-[8px] font-bold text-stone-400 uppercase">{day}</p>
+        <div key={day} className="bg-stone-100 p-2 text-center border-b border-r border-outline-variant/40">
+          <p className="text-[8px] font-bold text-stone-500 uppercase">{day}</p>
         </div>
       ))}
 
       {Array.from({ length: startingDayIndex }).map((_, index) => (
-        <div key={`empty-${index}`} className="calendar-cell-month bg-stone-50/30 border-r border-b border-outline-variant/10 min-h-[120px]"></div>
+        <div key={`empty-${index}`} className="calendar-cell-month bg-stone-50/70 border-r border-b border-outline-variant/30 min-h-[120px]"></div>
       ))}
 
       {daysInMonth.map((day) => {
@@ -30,7 +30,7 @@ const MonthView: React.FC = () => {
         const dayEvents = events.filter((event) => format(event.start, 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd'));
 
         return (
-          <div key={day.toString()} className={`p-2 border-r border-b border-outline-variant/10 min-h-[120px] ${isCurrentDay ? 'bg-primary-gold/[0.03]' : ''}`}>
+          <div key={day.toString()} className={`p-2 border-r border-b border-outline-variant/30 min-h-[120px] ${isCurrentDay ? 'bg-primary-gold/[0.05]' : 'bg-white'}`}>
             <p className={`text-[10px] font-bold ${isCurrentDay ? 'text-primary-gold' : 'text-on-surface-variant'}`}>
               {format(day, 'd')}
             </p>

@@ -8,6 +8,7 @@ import catalogosApi from '@/api/catalogos';
 import cotizacionesApi from '@/api/cotizaciones';
 import type { QuoteRecord, QuoteStatus, QuotesTab } from '@/features/quotes/types';
 import type { EstadoCotizacion } from '@/api/types';
+import { formatShortId } from '@/utils/formatters';
 
 const estadoMap: Record<EstadoCotizacion, QuoteStatus> = {
   BORRADOR: 'Borrador',
@@ -21,11 +22,14 @@ const estadoMap: Record<EstadoCotizacion, QuoteStatus> = {
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value);
 
+const PAGE_SIZE = 7;
+
 const QuotesPage: React.FC = () => {
   const [quotes, setQuotes] = useState<QuoteRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<QuotesTab>('Recientes');
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     let cancelled = false;
@@ -56,12 +60,12 @@ const QuotesPage: React.FC = () => {
             const cliente = clientesMap.get(evento.clienteId);
             const tipoEvento = tiposEventoMap.get(evento.tipoEventoId);
             return cotizaciones.map((cotizacion) => ({
-              id: cotizacion.id.slice(0, 8).toUpperCase(),
+              id: cotizacion.id,
               eventName: `${tipoEvento?.nombre ?? 'Evento'} - ${new Date(evento.fechaHoraInicio).toLocaleDateString('es-CO')}`,
               eventMeta: evento.id,
               customerName: cliente?.nombreCompleto ?? 'Cliente desconocido',
               customerType: cliente?.tipoCliente === 'SOCIO' ? 'Socio' : 'No Socio',
-              createdAt: cotizacion.vigente ? 'Vigente' : 'Historica',
+              createdAt: cotizacion.vigente ? 'Vigente' : `Historica ${formatShortId(cotizacion.reservaId, 'RES-')}`,
               totalValue: formatCurrency(Number(cotizacion.valorTotal)),
               status: estadoMap[cotizacion.estado],
             }));
@@ -88,6 +92,17 @@ const QuotesPage: React.FC = () => {
     return quotes;
   }, [activeTab, quotes]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab]);
+
+  const totalPages = Math.ceil(visibleQuotes.length / PAGE_SIZE);
+  const safeCurrentPage = Math.min(currentPage, totalPages || 1);
+  const pageStart = (safeCurrentPage - 1) * PAGE_SIZE;
+  const paginatedQuotes = visibleQuotes.slice(pageStart, pageStart + PAGE_SIZE);
+  const from = visibleQuotes.length === 0 ? 0 : pageStart + 1;
+  const to = Math.min(pageStart + PAGE_SIZE, visibleQuotes.length);
+
   return (
     <section className="space-y-6">
       <QuotesHeader activeTab={activeTab} onTabChange={setActiveTab} />
@@ -108,9 +123,16 @@ const QuotesPage: React.FC = () => {
             <p>No hay cotizaciones registradas.</p>
           </div>
         ) : (
-          <QuotesTable quotes={visibleQuotes} />
+          <QuotesTable quotes={paginatedQuotes} />
         )}
-        <QuotesTablePagination from={1} to={visibleQuotes.length} total={visibleQuotes.length} />
+        <QuotesTablePagination
+          from={from}
+          to={to}
+          total={visibleQuotes.length}
+          currentPage={safeCurrentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       </div>
     </section>
   );

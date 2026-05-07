@@ -1,6 +1,7 @@
 import eventosApi from '@/api/eventos';
 import type { EventoResponse, EstadoEvento } from '@/api/types';
 import type { Event, EventStatus } from '@/features/calendar/types';
+import { formatShortId } from '@/utils/formatters';
 
 /** Mapea el enum del backend al label que usa el frontend. */
 const estadoMap: Record<EstadoEvento, EventStatus> = {
@@ -16,11 +17,11 @@ function toCalendarEvent(evento: EventoResponse): Event {
   const reservaVigente = evento.reservas.find((r) => r.vigente);
   return {
     id: evento.id,
-    title: `Evento ${evento.id.slice(0, 8)}`,
+    title: formatShortId(evento.id, 'EV-'),
     start: new Date(evento.fechaHoraInicio),
     end: new Date(evento.fechaHoraFin),
     status: estadoMap[evento.estado] ?? 'Pendiente',
-    salon: reservaVigente?.salonId ?? 'Sin salón',
+    salon: reservaVigente?.salonId ? formatShortId(reservaVigente.salonId, 'SAL-') : 'Sin salón',
   };
 }
 

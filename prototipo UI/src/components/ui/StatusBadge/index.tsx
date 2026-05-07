@@ -2,34 +2,37 @@ import React from 'react';
 import type { EventStatus } from '@/features/events/types';
 import type { QuoteStatus } from '@/features/quotes/types';
 
-type StatusBadgeTone = 'neutral' | 'blue' | 'amber' | 'green' | 'red' | 'gray';
+type StatusBadgeTone = 'neutral' | 'cyan' | 'amber' | 'emerald' | 'red' | 'slate' | 'violet' | 'indigo' | 'orange';
 
 const toneClasses: Record<StatusBadgeTone, string> = {
-  neutral: 'bg-stone-100 text-stone-700 border-stone-200',
-  blue: 'bg-blue-bg text-blue-text border-blue-border',
-  amber: 'bg-gold-bg text-gold-d border-gold/25',
-  green: 'bg-green-bg text-green-text border-green-border',
-  red: 'bg-red-bg text-red-text border-red-border',
-  gray: 'bg-stone-100 text-stone-500 border-stone-200',
+  neutral: 'bg-stone-200 text-stone-800 border-stone-400',
+  cyan: 'bg-cyan-100 text-cyan-900 border-cyan-400',
+  amber: 'bg-amber-100 text-amber-900 border-amber-400',
+  emerald: 'bg-emerald-100 text-emerald-900 border-emerald-400',
+  red: 'bg-rose-100 text-rose-900 border-rose-400',
+  slate: 'bg-slate-200 text-slate-700 border-slate-400',
+  violet: 'bg-violet-100 text-violet-900 border-violet-400',
+  indigo: 'bg-indigo-100 text-indigo-900 border-indigo-400',
+  orange: 'bg-orange-100 text-orange-900 border-orange-400',
 };
 
 const eventStatusTone: Record<EventStatus, StatusBadgeTone> = {
   Pendiente: 'amber',
-  'Esperando selección de menú': 'blue',
-  'Cotización enviada': 'blue',
-  'Cotización aprobada': 'amber',
-  'Pendiente anticipo': 'red',
-  Confirmado: 'green',
-  Cancelado: 'gray',
+  'Esperando selección de menú': 'violet',
+  'Cotización enviada': 'cyan',
+  'Cotización aprobada': 'indigo',
+  'Pendiente anticipo': 'orange',
+  Confirmado: 'emerald',
+  Cancelado: 'slate',
 };
 
 const quoteStatusTone: Record<QuoteStatus, StatusBadgeTone> = {
-  Borrador: 'gray',
+  Borrador: 'slate',
   Generada: 'neutral',
-  Enviada: 'blue',
-  Aceptada: 'green',
+  Enviada: 'cyan',
+  Aceptada: 'emerald',
   Rechazada: 'red',
-  Desactualizada: 'amber',
+  Desactualizada: 'orange',
 };
 
 interface StatusBadgeProps {
@@ -54,10 +57,11 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
     type === 'event'
       ? eventStatusTone[status as EventStatus]
       : quoteStatusTone[status as QuoteStatus];
+  const safeTone = tone ?? 'neutral';
 
   return (
     <span
-      className={`inline-flex items-center rounded-full border font-bold leading-none ${sizeClasses[size]} ${toneClasses[tone]} ${className}`}
+      className={`inline-flex items-center rounded-full border font-bold leading-none ${sizeClasses[size]} ${toneClasses[safeTone]} ${className}`}
     >
       {status}
     </span>
