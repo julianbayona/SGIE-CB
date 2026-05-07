@@ -13,12 +13,13 @@ import java.util.UUID;
 public class SalonJpaEntity {
 
     @Id
+    @Column(name = "id_salon", nullable = false)
     private UUID id;
 
     @Column(nullable = false, unique = true, length = 120)
     private String nombre;
 
-    @Column(nullable = false)
+    @Column(name = "capacidad_max", nullable = false)
     private int capacidad;
 
     @Column(length = 255)

@@ -12,7 +12,7 @@ import ClientFormModal, { type ClientFormValues } from '@/features/clients/compo
 
 const labelClass = 'text-[0.68rem] font-black uppercase tracking-[0.22em] text-stone-500';
 const inputClass =
-  'w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-sm text-stone-900 shadow-sm outline-none transition focus:border-amber-700 focus:ring-4 focus:ring-amber-900/10';
+  'w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-sm text-stone-900 shadow-sm outline-none transition focus:border-[#A8841C] focus:ring-4 focus:ring-[#A8841C]/15';
 const selectClass = `${inputClass} appearance-none`;
 
 function toLocalDateTime(value: string) {
@@ -209,19 +209,19 @@ function EventRequestPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f1e7] text-stone-950">
+    <div className="min-h-screen bg-[#f3eee6] text-stone-950">
       <div className="mx-auto flex max-w-7xl flex-col gap-8 px-6 py-8">
-        <section className="overflow-hidden rounded-[2rem] border border-amber-900/15 bg-[linear-gradient(135deg,#fff8ed_0%,#f2d9aa_48%,#d6a94f_100%)] text-stone-950 shadow-2xl shadow-amber-900/10">
+        <section className="overflow-hidden rounded-[2rem] border border-stone-300/80 bg-[linear-gradient(135deg,#fbf8f1_0%,#e4d6c2_52%,#A8841C_100%)] text-stone-950 shadow-2xl shadow-stone-900/10">
           <div className="grid gap-8 p-8 lg:grid-cols-[1.35fr_0.65fr] lg:p-10">
             <div className="space-y-5">
-              <span className="inline-flex rounded-full border border-amber-900/20 bg-white/55 px-4 py-2 text-xs font-black uppercase tracking-[0.24em] text-amber-900 shadow-sm">
+              <span className="inline-flex rounded-full border border-stone-900/15 bg-white/65 px-4 py-2 text-xs font-black uppercase tracking-[0.24em] text-stone-700 shadow-sm">
                 Nueva solicitud de evento
               </span>
               <div className="max-w-3xl space-y-3">
                 <h1 className="font-serif text-4xl font-black leading-tight md:text-5xl">
                   Construye la reserva paso a paso.
                 </h1>
-                <p className="max-w-2xl text-base font-medium leading-7 text-stone-700">
+                <p className="max-w-2xl text-base font-semibold leading-7 text-stone-700">
                   Selecciona el cliente, define el horario real del evento y reserva el salon
                   disponible. El sistema prepara el evento para continuar con menu, montaje y
                   cotizacion.
@@ -229,14 +229,14 @@ function EventRequestPage() {
               </div>
             </div>
 
-            <div className="grid gap-3 rounded-[1.5rem] border border-amber-900/15 bg-white/55 p-4 shadow-xl shadow-amber-900/10 backdrop-blur">
+            <div className="grid gap-3 rounded-[1.5rem] border border-stone-900/15 bg-white/60 p-4 shadow-xl shadow-stone-900/10 backdrop-blur">
               {[
                 ['01', 'Cliente', clienteEncontrado ? 'Seleccionado' : 'Pendiente'],
                 ['02', 'Evento', hasValidDates && tipoEventoId && tipoComidaId ? 'Completo' : 'Pendiente'],
                 ['03', 'Salon', selectedVenue ? 'Reservado' : 'Pendiente'],
               ].map(([number, title, state]) => (
-                <div key={number} className="flex items-center gap-3 rounded-2xl border border-amber-900/10 bg-white/70 p-3">
-                  <span className="grid size-10 place-items-center rounded-full bg-amber-700 text-sm font-black text-white shadow-sm">
+                <div key={number} className="flex items-center gap-3 rounded-2xl border border-stone-900/10 bg-white/75 p-3">
+                  <span className="grid size-10 place-items-center rounded-full bg-[#A8841C] text-sm font-black text-white shadow-sm">
                     {number}
                   </span>
                   <div>
@@ -300,7 +300,7 @@ function EventRequestPage() {
                             setCustomerQuery(cliente.nombreCompleto);
                             setClienteResultados([]);
                           }}
-                          className="flex w-full items-center justify-between rounded-2xl border border-stone-200 bg-white px-4 py-3 text-left shadow-sm transition hover:border-amber-700 hover:bg-amber-50"
+                          className="flex w-full items-center justify-between rounded-2xl border border-stone-200 bg-white px-4 py-3 text-left shadow-sm transition hover:border-[#A8841C] hover:bg-[#f6efd5]"
                         >
                           <span>
                             <span className="block text-sm font-black text-stone-900">
@@ -319,10 +319,10 @@ function EventRequestPage() {
                   </div>
                 </div>
 
-                <div className="flex flex-col justify-between rounded-3xl border border-amber-900/15 bg-gradient-to-br from-amber-50 to-white p-5 text-stone-950 shadow-inner">
+                <div className="flex flex-col justify-between rounded-3xl border border-stone-300 bg-gradient-to-br from-[#faf6ee] to-white p-5 text-stone-950 shadow-inner">
                   {clienteEncontrado ? (
                     <div className="space-y-3">
-                      <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-800">
+                      <p className="text-xs font-black uppercase tracking-[0.2em] text-[#A8841C]">
                         Cliente seleccionado
                       </p>
                       <div>
@@ -333,7 +333,7 @@ function EventRequestPage() {
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-800">
+                      <p className="text-xs font-black uppercase tracking-[0.2em] text-[#A8841C]">
                         Sin cliente
                       </p>
                       <p className="text-sm font-medium leading-6 text-stone-600">
@@ -344,7 +344,7 @@ function EventRequestPage() {
                   <Button
                     type="button"
                     variant="secondary"
-                    className="mt-6 border-amber-800/20 bg-amber-700 text-white hover:bg-amber-800"
+                    className="mt-6 border-[#A8841C]/25 bg-[#A8841C] text-white hover:bg-[#8f7118]"
                     onClick={() => setIsClienteFormOpen(true)}
                   >
                     Registrar nuevo cliente
@@ -448,8 +448,8 @@ function EventRequestPage() {
                       onClick={() => setSelectedVenueId(salon.id)}
                       className={`rounded-3xl border p-5 text-left shadow-sm transition ${
                         selected
-                          ? 'border-amber-700 bg-amber-50 ring-4 ring-amber-900/10'
-                          : 'border-stone-200 bg-white hover:border-amber-700 hover:bg-stone-50'
+                          ? 'border-[#A8841C] bg-[#f6efd5] ring-4 ring-[#A8841C]/15'
+                          : 'border-stone-200 bg-white hover:border-[#A8841C] hover:bg-stone-50'
                       }`}
                     >
                       <div className="flex items-start justify-between gap-3">
@@ -461,13 +461,13 @@ function EventRequestPage() {
                         </div>
                         <span
                           className={`rounded-full px-3 py-1 text-xs font-black ${
-                            selected ? 'bg-amber-800 text-white' : 'bg-stone-100 text-stone-600'
+                            selected ? 'bg-[#A8841C] text-white' : 'bg-stone-100 text-stone-600'
                           }`}
                         >
                           {selected ? 'Elegido' : 'Elegir'}
                         </span>
                       </div>
-                      <div className="mt-5 rounded-2xl border border-amber-900/10 bg-amber-100 px-4 py-3 text-sm font-black text-amber-950">
+                      <div className="mt-5 rounded-2xl border border-stone-300 bg-[#f4ead8] px-4 py-3 text-sm font-black text-stone-800">
                         Capacidad maxima: {salon.capacidad} personas
                       </div>
                     </button>
@@ -478,9 +478,9 @@ function EventRequestPage() {
           </main>
 
           <aside className="xl:sticky xl:top-6 xl:self-start">
-            <Card className="overflow-hidden border-amber-900/15 bg-[#fffaf1] text-stone-950 shadow-2xl shadow-amber-900/10">
-              <div className="border-b border-amber-900/10 bg-gradient-to-br from-white to-amber-50 p-6">
-                <p className="text-xs font-black uppercase tracking-[0.24em] text-amber-800">
+            <Card className="overflow-hidden border-stone-300 bg-[#fbf8f2] text-stone-950 shadow-2xl shadow-stone-900/10">
+              <div className="border-b border-stone-200 bg-gradient-to-br from-white to-[#f4ead8] p-6">
+                <p className="text-xs font-black uppercase tracking-[0.24em] text-[#A8841C]">
                   Resumen vivo
                 </p>
                 <h2 className="mt-2 font-serif text-3xl font-black">Solicitud</h2>
@@ -502,11 +502,11 @@ function EventRequestPage() {
                 <SummaryItem label="Tipo de comida" value={selectedTipoComida?.nombre || 'Pendiente'} muted={!selectedTipoComida} />
                 <SummaryItem label="Salon" value={selectedVenue?.nombre || 'Pendiente'} muted={!selectedVenue} />
 
-                <div className="rounded-3xl border border-amber-900/15 bg-amber-100 p-4">
-                  <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-900">
+                <div className="rounded-3xl border border-stone-300 bg-[#f4ead8] p-4">
+                  <p className="text-xs font-black uppercase tracking-[0.2em] text-[#A8841C]">
                     Siguiente despues de crear
                   </p>
-                  <p className="mt-2 text-sm font-semibold leading-6 text-amber-950">
+                  <p className="mt-2 text-sm font-semibold leading-6 text-stone-800">
                     El evento queda en Pendiente y podras continuar con menu, montaje y cotizacion.
                   </p>
                 </div>
@@ -556,7 +556,7 @@ type SummaryItemProps = {
 
 function SummaryItem({ label, value, muted }: SummaryItemProps) {
   return (
-    <div className="rounded-2xl border border-amber-900/10 bg-white p-4 shadow-sm">
+    <div className="rounded-2xl border border-[#A8841C]/15 bg-white p-4 shadow-sm">
       <p className="text-[0.65rem] font-black uppercase tracking-[0.2em] text-stone-500">{label}</p>
       <p className={`mt-2 text-sm font-black ${muted ? 'text-stone-400' : 'text-stone-950'}`}>{value}</p>
     </div>
