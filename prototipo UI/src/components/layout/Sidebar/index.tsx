@@ -11,7 +11,7 @@ const navItems = [
 
 const Sidebar: React.FC = () => {
   return (
-    <aside className="fixed left-0 top-0 h-full w-64 bg-neutral-800 text-white flex flex-col z-40 border-r border-stone-200/20">
+    <aside className="fixed left-0 top-0 h-full w-64 bg-black text-white flex flex-col z-40 border-r border-white/10">
       <div className="px-4 py-5">
         <div className="text-2xl font-display text-primary-gold leading-none">CB</div>
         <p className="text-[10px] text-stone-400 font-semibold uppercase tracking-widest mt-1">SGIE</p>
@@ -29,8 +29,8 @@ const Sidebar: React.FC = () => {
             className={({ isActive }) =>
               `flex items-center gap-3 px-4 py-3 rounded font-medium tracking-wide transition-colors duration-200 ${
                 isActive
-                  ? 'text-yellow-500 bg-stone-700/40 font-bold border-r-4 border-yellow-600'
-                  : 'text-stone-400 hover:text-stone-200 hover:bg-stone-800'
+                  ? 'text-yellow-500 bg-white/10 font-bold border-r-4 border-yellow-600'
+                  : 'text-stone-400 hover:text-white hover:bg-white/5'
               }`
             }
           >
@@ -40,9 +40,9 @@ const Sidebar: React.FC = () => {
         ))}
       </nav>
 
-      <div className="p-4 border-t border-stone-700/30">
+      <div className="p-4 border-t border-white/10">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-stone-700 flex items-center justify-center text-xs text-yellow-500 font-bold">
+          <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs text-yellow-500 font-bold">
             JD
           </div>
           <div className="overflow-hidden">
