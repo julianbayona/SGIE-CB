@@ -1,21 +1,48 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import catalogosApi from '@/api/catalogos';
 import clientesApi from '@/api/clientes';
 import eventosApi from '@/api/eventos';
-import catalogosApi from '@/api/catalogos';
 import salonesApi from '@/api/salones';
-import type { ClienteResponse, SalonResponse, CatalogoBasicoResponse } from '@/api/types';
+import type { CatalogoBasicoResponse, ClienteResponse, SalonResponse } from '@/api/types';
 import ClientFormModal, { type ClientFormValues } from '@/features/clients/components/ClientFormModal';
 
-const labelClass =
-  'block text-[10px] font-bold uppercase tracking-[0.15em] text-on-surface-variant mb-2';
-
+const labelClass = 'text-[0.68rem] font-black uppercase tracking-[0.22em] text-stone-500';
 const inputClass =
-  'w-full bg-surface-container-lowest border border-outline-variant/30 px-4 py-2.5 text-sm rounded-md shadow-sm focus:border-primary-gold focus:ring-1 focus:ring-primary-gold/20';
+  'w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-sm text-stone-900 shadow-sm outline-none transition focus:border-amber-700 focus:ring-4 focus:ring-amber-900/10';
+const selectClass = `${inputClass} appearance-none`;
 
-const EventRequestPage: React.FC = () => {
+function toLocalDateTime(value: string) {
+  return value ? `${value}:00` : '';
+}
+
+function formatDateTime(value: string) {
+  if (!value) return 'Sin definir';
+  return new Intl.DateTimeFormat('es-CO', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date(value));
+}
+
+function getDurationLabel(start: string, end: string) {
+  if (!start || !end) return 'Define inicio y fin';
+
+  const minutes = Math.round((new Date(end).getTime() - new Date(start).getTime()) / 60000);
+  if (minutes <= 0) return 'Horario invalido';
+
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+
+  if (hours === 0) return `${rest} min`;
+  if (rest === 0) return `${hours} h`;
+  return `${hours} h ${rest} min`;
+}
+
+function EventRequestPage() {
   const navigate = useNavigate();
-
   const [customerQuery, setCustomerQuery] = useState('');
   const [selectedVenueId, setSelectedVenueId] = useState('');
   const [salones, setSalones] = useState<SalonResponse[]>([]);
@@ -27,66 +54,89 @@ const EventRequestPage: React.FC = () => {
   const [isClienteFormOpen, setIsClienteFormOpen] = useState(false);
   const [fechaHoraInicio, setFechaHoraInicio] = useState('');
   const [fechaHoraFin, setFechaHoraFin] = useState('');
-  const [numPersonas, setNumPersonas] = useState(0);
+  const [numPersonas, setNumPersonas] = useState('80');
   const [tipoEventoId, setTipoEventoId] = useState('');
   const [tipoComidaId, setTipoComidaId] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Carga catálogos y salones al montar
   useEffect(() => {
     Promise.all([
+      salonesApi.listar(),
       catalogosApi.tiposEvento.listar(),
       catalogosApi.tiposComida.listar(),
-      salonesApi.listar(),
-    ]).then(([te, tc, sl]) => {
-      setTiposEvento(te.filter((t) => t.activo));
-      setTiposComida(tc.filter((t) => t.activo));
-      setSalones(sl.filter((s) => s.activo));
-      if (te.length > 0) setTipoEventoId(te[0]!.id);
-      if (tc.length > 0) setTipoComidaId(tc[0]!.id);
-      if (sl.length > 0) setSelectedVenueId(sl[0]!.id);
-    }).catch(() => {
-      // Si el backend no está disponible, continúa con listas vacías
-    });
+    ])
+      .then(([salonesPage, tiposEventoData, tiposComidaData]) => {
+        const salonesActivos = salonesPage.filter((salon) => salon.activo);
+        const eventosActivos = tiposEventoData.filter((tipo) => tipo.activo);
+        const comidasActivas = tiposComidaData.filter((tipo) => tipo.activo);
+        setSalones(salonesActivos);
+        setTiposEvento(eventosActivos);
+        setTiposComida(comidasActivas);
+        setTipoEventoId(eventosActivos[0]?.id ?? '');
+        setTipoComidaId(comidasActivas[0]?.id ?? '');
+        setSelectedVenueId(salonesActivos[0]?.id ?? '');
+      })
+      .catch(() => setError('No fue posible cargar los catalogos iniciales.'));
   }, []);
 
-  // Búsqueda de cliente con debounce
   useEffect(() => {
-    const q = customerQuery.trim();
-    if (!q) {
-      setClienteEncontrado(null);
+    const query = customerQuery.trim();
+    if (query.length < 3) {
       setClienteResultados([]);
-      setSearchingCliente(false);
       return;
     }
 
+    let active = true;
     setSearchingCliente(true);
-    const timer = setTimeout(async () => {
-      try {
-        const results = await clientesApi.listar(q);
-        setClienteResultados(results);
-      } catch {
-        setClienteResultados([]);
-      } finally {
-        setSearchingCliente(false);
-      }
-    }, 400);
-    return () => clearTimeout(timer);
+    const timeout = window.setTimeout(() => {
+      clientesApi
+        .listar(query)
+        .then((clientes: ClienteResponse[]) => {
+          if (!active) return;
+          setClienteResultados(clientes);
+        })
+        .catch(() => {
+          if (!active) return;
+          setClienteResultados([]);
+        })
+        .finally(() => {
+          if (active) setSearchingCliente(false);
+        });
+    }, 300);
+
+    return () => {
+      active = false;
+      window.clearTimeout(timeout);
+    };
   }, [customerQuery]);
 
-  const selectedVenue = salones.find((s) => s.id === selectedVenueId);
+  const selectedVenue = useMemo(
+    () => salones.find((salon) => salon.id === selectedVenueId),
+    [salones, selectedVenueId],
+  );
 
-  const toLocalDateTime = (value: string) => (value.length === 16 ? `${value}:00` : value);
+  const selectedTipoEvento = useMemo(
+    () => tiposEvento.find((tipo) => tipo.id === tipoEventoId),
+    [tiposEvento, tipoEventoId],
+  );
+
+  const selectedTipoComida = useMemo(
+    () => tiposComida.find((tipo) => tipo.id === tipoComidaId),
+    [tiposComida, tipoComidaId],
+  );
+
+  const hasValidDates = Boolean(
+    fechaHoraInicio && fechaHoraFin && new Date(fechaHoraFin) > new Date(fechaHoraInicio),
+  );
+  const canCreate = Boolean(
+    clienteEncontrado && selectedVenueId && tipoEventoId && tipoComidaId && hasValidDates,
+  );
+  const durationLabel = getDurationLabel(fechaHoraInicio, fechaHoraFin);
 
   const consultarDisponibilidad = async () => {
     if (!fechaHoraInicio || !fechaHoraFin) {
-      setError('Selecciona fecha/hora de inicio y fecha/hora fin para consultar disponibilidad.');
-      return;
-    }
-
-    if (new Date(fechaHoraFin) <= new Date(fechaHoraInicio)) {
-      setError('La fecha/hora fin debe ser posterior a la fecha/hora de inicio.');
+      setError('Define fecha y hora de inicio y fin para consultar disponibilidad.');
       return;
     }
 
@@ -95,34 +145,29 @@ const EventRequestPage: React.FC = () => {
       const disponibles = await salonesApi.consultarDisponibilidad({
         fechaHoraInicio: toLocalDateTime(fechaHoraInicio),
         fechaHoraFin: toLocalDateTime(fechaHoraFin),
-        capacidadMinima: numPersonas || undefined,
+        capacidadMinima: Number(numPersonas) || undefined,
       });
-      const activos = disponibles.filter((s) => s.activo);
-      setSalones(activos);
-      setSelectedVenueId(activos[0]?.id ?? '');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error consultando disponibilidad.');
+      setSalones(disponibles.filter((salon) => salon.activo));
+      if (selectedVenueId && !disponibles.some((salon) => salon.id === selectedVenueId)) {
+        setSelectedVenueId('');
+      }
+    } catch {
+      setError('No fue posible consultar disponibilidad de salones.');
     }
   };
 
   const handleCrearEvento = async () => {
-    if (!clienteEncontrado || !fechaHoraInicio || !fechaHoraFin || !selectedVenueId || !tipoEventoId || !tipoComidaId) {
-      setError('Completa todos los campos obligatorios antes de continuar.');
+    if (!clienteEncontrado || !selectedVenueId || !tipoEventoId || !tipoComidaId) return;
+    if (!hasValidDates) {
+      setError('La fecha final debe ser posterior a la fecha inicial.');
       return;
     }
-
-    if (new Date(fechaHoraFin) <= new Date(fechaHoraInicio)) {
-      setError('La fecha/hora fin debe ser posterior a la fecha/hora de inicio.');
-      return;
-    }
-
-    const inicio = toLocalDateTime(fechaHoraInicio);
-    const fin = toLocalDateTime(fechaHoraFin);
 
     try {
       setSaving(true);
       setError(null);
-
+      const inicio = toLocalDateTime(fechaHoraInicio);
+      const fin = toLocalDateTime(fechaHoraFin);
       const evento = await eventosApi.crear({
         clienteId: clienteEncontrado.id,
         tipoEventoId,
@@ -130,18 +175,15 @@ const EventRequestPage: React.FC = () => {
         fechaHoraInicio: inicio,
         fechaHoraFin: fin,
       });
-
-      // Crear reserva de salón
       await eventosApi.crearReserva(evento.id, {
         salonId: selectedVenueId,
-        numInvitados: numPersonas || 1,
+        numInvitados: Number(numPersonas) || 1,
         fechaHoraInicio: inicio,
         fechaHoraFin: fin,
       });
-
       navigate(`/events/${evento.id}/menu`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al crear el evento.');
+    } catch {
+      setError('No fue posible crear la solicitud de evento.');
     } finally {
       setSaving(false);
     }
@@ -149,284 +191,348 @@ const EventRequestPage: React.FC = () => {
 
   const handleRegistrarCliente = async (values: ClientFormValues) => {
     try {
-      const nuevo = await clientesApi.registrar({
+      setError(null);
+      const nuevoCliente = await clientesApi.registrar({
         cedula: values.idNumber,
         nombreCompleto: values.fullName,
         telefono: values.phone,
         correo: values.email,
         tipoCliente: values.category === 'Socio' ? 'SOCIO' : 'NO_SOCIO',
       });
-
-      setClienteEncontrado(nuevo);
+      setClienteEncontrado(nuevoCliente);
+      setCustomerQuery(nuevoCliente.nombreCompleto);
       setClienteResultados([]);
-      setCustomerQuery(`${nuevo.nombreCompleto} - ${nuevo.cedula}`);
       setIsClienteFormOpen(false);
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Error al registrar cliente.');
+    } catch {
+      setError('No fue posible registrar el cliente.');
     }
   };
 
   return (
-    <section className="space-y-8 pb-36">
-      <div>
-        <p className="text-primary-gold tracking-widest text-xs uppercase mb-2">Solicitud de evento</p>
-        <h1 className="text-2xl font-display font-bold text-on-surface">Crear solicitud de evento</h1>
-        <p className="text-sm text-on-surface-variant mt-1">
-          Registra cliente, horario y salón antes de completar menú, montaje y cotización.
-        </p>
-      </div>
-
-      {error && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6">
-        <div className="space-y-6">
-          <section className="bg-surface-container-low p-6 rounded-lg border border-border">
-            <div className="flex items-baseline gap-4 mb-5">
-              <h2 className="text-lg font-display font-bold text-on-surface">Cliente</h2>
-              <div className="flex-1 h-px bg-stone-200"></div>
+    <div className="min-h-screen bg-[#f8f1e7] text-stone-950">
+      <div className="mx-auto flex max-w-7xl flex-col gap-8 px-6 py-8">
+        <section className="overflow-hidden rounded-[2rem] border border-amber-900/15 bg-[linear-gradient(135deg,#fff8ed_0%,#f2d9aa_48%,#d6a94f_100%)] text-stone-950 shadow-2xl shadow-amber-900/10">
+          <div className="grid gap-8 p-8 lg:grid-cols-[1.35fr_0.65fr] lg:p-10">
+            <div className="space-y-5">
+              <span className="inline-flex rounded-full border border-amber-900/20 bg-white/55 px-4 py-2 text-xs font-black uppercase tracking-[0.24em] text-amber-900 shadow-sm">
+                Nueva solicitud de evento
+              </span>
+              <div className="max-w-3xl space-y-3">
+                <h1 className="font-serif text-4xl font-black leading-tight md:text-5xl">
+                  Construye la reserva paso a paso.
+                </h1>
+                <p className="max-w-2xl text-base font-medium leading-7 text-stone-700">
+                  Selecciona el cliente, define el horario real del evento y reserva el salon
+                  disponible. El sistema prepara el evento para continuar con menu, montaje y
+                  cotizacion.
+                </p>
+              </div>
             </div>
 
-            <div className="space-y-5">
-              <div className="w-full max-w-2xl">
-                <label className={labelClass}>Búsqueda de socio / cliente</label>
-                <div className="relative">
-                  <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary-gold text-sm">
-                    person_search
+            <div className="grid gap-3 rounded-[1.5rem] border border-amber-900/15 bg-white/55 p-4 shadow-xl shadow-amber-900/10 backdrop-blur">
+              {[
+                ['01', 'Cliente', clienteEncontrado ? 'Seleccionado' : 'Pendiente'],
+                ['02', 'Evento', hasValidDates && tipoEventoId && tipoComidaId ? 'Completo' : 'Pendiente'],
+                ['03', 'Salon', selectedVenue ? 'Reservado' : 'Pendiente'],
+              ].map(([number, title, state]) => (
+                <div key={number} className="flex items-center gap-3 rounded-2xl border border-amber-900/10 bg-white/70 p-3">
+                  <span className="grid size-10 place-items-center rounded-full bg-amber-700 text-sm font-black text-white shadow-sm">
+                    {number}
                   </span>
-                  <input
-                    className={`${inputClass} pl-10`}
-                    placeholder="Buscar por nombre, cédula o teléfono"
-                    type="text"
-                    value={customerQuery}
-                    onChange={(e) => {
-                      setClienteEncontrado(null);
-                      setCustomerQuery(e.target.value);
-                    }}
-                  />
+                  <div>
+                    <p className="text-sm font-black text-stone-950">{title}</p>
+                    <p className="text-xs font-semibold text-stone-600">{state}</p>
+                  </div>
                 </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {error && (
+          <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-700">
+            {error}
+          </div>
+        )}
+
+        <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_360px]">
+          <main className="space-y-6">
+            <Card className="overflow-hidden border-stone-200 bg-white shadow-xl shadow-stone-900/5">
+              <div className="border-b border-stone-200 bg-stone-50/80 px-6 py-5">
+                <p className={labelClass}>Paso 1</p>
+                <h2 className="mt-1 font-serif text-2xl font-black text-stone-950">Cliente principal</h2>
+                <p className="mt-1 text-sm text-stone-500">
+                  Busca por cedula, nombre o telefono. Si no existe, registralo sin salir del flujo.
+                </p>
               </div>
 
-              {clienteEncontrado ? (
-                <div className="flex items-center justify-between p-4 bg-primary-gold/10 border border-primary-gold/30 rounded-md">
-                  <div className="flex items-center gap-3">
-                    <span className="material-symbols-outlined text-primary-gold">person</span>
-                    <div>
-                      <p className="font-semibold text-on-surface">{clienteEncontrado.nombreCompleto}</p>
-                      <span className="text-[10px] uppercase tracking-widest font-bold px-2 py-0.5 bg-primary-gold text-white rounded-full">
-                        {clienteEncontrado.tipoCliente === 'SOCIO' ? 'Socio' : 'No Socio'}
-                      </span>
-                    </div>
-                  </div>
-                  <button
-                    className="text-on-surface-variant hover:text-primary-gold transition-colors"
-                    type="button"
-                    onClick={() => {
-                      setClienteEncontrado(null);
-                      setCustomerQuery('');
-                    }}
-                  >
-                    <span className="material-symbols-outlined">close</span>
-                  </button>
-                </div>
-              ) : (
+              <div className="grid gap-5 p-6 lg:grid-cols-[minmax(0,1fr)_260px]">
                 <div className="space-y-3">
-                  {searchingCliente ? (
-                    <p className="text-sm text-on-surface-variant">Buscando coincidencias...</p>
-                  ) : null}
+                  <label className={labelClass}>Busqueda de cliente</label>
+                  <input
+                    className={inputClass}
+                    placeholder="Ejemplo: 3053984938, Paola Castro..."
+                    value={customerQuery}
+                    onChange={(event) => {
+                      setCustomerQuery(event.target.value);
+                      setClienteEncontrado(null);
+                    }}
+                  />
 
-                  {customerQuery.trim() && clienteResultados.length > 0 ? (
-                    <div className="max-w-2xl rounded-md border border-border bg-surface-container-lowest overflow-hidden">
-                      {clienteResultados.slice(0, 7).map((cliente) => (
+                  <div className="min-h-28 rounded-2xl border border-dashed border-stone-300 bg-stone-50 p-3">
+                    {searchingCliente && (
+                      <p className="px-2 py-3 text-sm font-semibold text-stone-500">Buscando coincidencias...</p>
+                    )}
+
+                    {!searchingCliente && clienteResultados.length === 0 && !clienteEncontrado && (
+                      <p className="px-2 py-3 text-sm text-stone-500">
+                        Escribe al menos 3 caracteres para ver resultados.
+                      </p>
+                    )}
+
+                    <div className="space-y-2">
+                      {clienteResultados.map((cliente) => (
                         <button
                           key={cliente.id}
                           type="button"
                           onClick={() => {
                             setClienteEncontrado(cliente);
+                            setCustomerQuery(cliente.nombreCompleto);
                             setClienteResultados([]);
-                            setCustomerQuery(`${cliente.nombreCompleto} - ${cliente.cedula}`);
                           }}
-                          className="w-full px-4 py-3 text-left hover:bg-gold-bg/60 border-b border-border last:border-b-0 transition-colors"
+                          className="flex w-full items-center justify-between rounded-2xl border border-stone-200 bg-white px-4 py-3 text-left shadow-sm transition hover:border-amber-700 hover:bg-amber-50"
                         >
-                          <div className="flex items-center justify-between gap-3">
-                            <div>
-                              <p className="text-sm font-semibold text-on-surface">{cliente.nombreCompleto}</p>
-                              <p className="text-xs text-on-surface-variant">
-                                CC {cliente.cedula} · {cliente.telefono} · {cliente.correo || 'Sin correo'}
-                              </p>
-                            </div>
-                            <span className="text-[10px] uppercase tracking-widest font-bold px-2 py-0.5 bg-primary-gold text-white rounded-full">
-                              {cliente.tipoCliente === 'SOCIO' ? 'Socio' : 'No Socio'}
+                          <span>
+                            <span className="block text-sm font-black text-stone-900">
+                              {cliente.nombreCompleto}
                             </span>
-                          </div>
+                            <span className="text-xs text-stone-500">
+                              {cliente.cedula} · {cliente.telefono}
+                            </span>
+                          </span>
+                          <span className="rounded-full bg-stone-100 px-3 py-1 text-xs font-black text-stone-600">
+                            Elegir
+                          </span>
                         </button>
                       ))}
                     </div>
-                  ) : null}
-
-                  {customerQuery.trim() && !searchingCliente && clienteResultados.length === 0 ? (
-                    <p className="text-sm text-on-surface-variant">No se encontraron coincidencias.</p>
-                  ) : null}
-
-                  <button
-                    type="button"
-                    onClick={() => setIsClienteFormOpen(true)}
-                    className="flex items-center gap-2 text-primary-gold font-bold text-sm hover:underline transition-all group"
-                  >
-                    <span className="material-symbols-outlined text-lg group-hover:scale-110 transition-transform">
-                      add_circle
-                    </span>
-                    Registrar nuevo cliente
-                  </button>
+                  </div>
                 </div>
-              )}
-            </div>
-          </section>
 
-          <section className="bg-surface-container-low p-6 rounded-lg border border-border">
-            <div className="flex items-baseline gap-4 mb-5">
-              <h2 className="text-lg font-display font-bold text-on-surface">Detalles del evento</h2>
-              <div className="flex-1 h-px bg-stone-200"></div>
-            </div>
+                <div className="flex flex-col justify-between rounded-3xl border border-amber-900/15 bg-gradient-to-br from-amber-50 to-white p-5 text-stone-950 shadow-inner">
+                  {clienteEncontrado ? (
+                    <div className="space-y-3">
+                      <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-800">
+                        Cliente seleccionado
+                      </p>
+                      <div>
+                        <p className="font-serif text-2xl font-black">{clienteEncontrado.nombreCompleto}</p>
+                        <p className="mt-2 text-sm font-semibold text-stone-600">{clienteEncontrado.telefono}</p>
+                        <p className="text-sm font-semibold text-stone-600">{clienteEncontrado.correo || 'Sin correo'}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-800">
+                        Sin cliente
+                      </p>
+                      <p className="text-sm font-medium leading-6 text-stone-600">
+                        La solicitud necesita un cliente para guardar trazabilidad del evento.
+                      </p>
+                    </div>
+                  )}
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="mt-6 border-amber-800/20 bg-amber-700 text-white hover:bg-amber-800"
+                    onClick={() => setIsClienteFormOpen(true)}
+                  >
+                    Registrar nuevo cliente
+                  </Button>
+                </div>
+              </div>
+            </Card>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-5">
-              <div>
-                <label className={labelClass}>Fecha y hora inicio</label>
-                <input className={inputClass} type="datetime-local" value={fechaHoraInicio} onChange={(e) => setFechaHoraInicio(e.target.value)} />
+            <Card className="overflow-hidden border-stone-200 bg-white shadow-xl shadow-stone-900/5">
+              <div className="border-b border-stone-200 bg-stone-50/80 px-6 py-5">
+                <p className={labelClass}>Paso 2</p>
+                <h2 className="mt-1 font-serif text-2xl font-black text-stone-950">Datos del evento</h2>
+                <p className="mt-1 text-sm text-stone-500">
+                  Usa fecha y hora de inicio y fin. Esto permite eventos que cruzan medianoche.
+                </p>
               </div>
 
-              <div>
-                <label className={labelClass}>Fecha y hora fin</label>
-                <input className={inputClass} type="datetime-local" value={fechaHoraFin} onChange={(e) => setFechaHoraFin(e.target.value)} />
+              <div className="grid gap-5 p-6 md:grid-cols-2">
+                <div className="space-y-2">
+                  <label className={labelClass}>Inicio</label>
+                  <input
+                    type="datetime-local"
+                    className={inputClass}
+                    value={fechaHoraInicio}
+                    onChange={(event) => setFechaHoraInicio(event.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className={labelClass}>Fin</label>
+                  <input
+                    type="datetime-local"
+                    className={inputClass}
+                    value={fechaHoraFin}
+                    onChange={(event) => setFechaHoraFin(event.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className={labelClass}>Numero de invitados</label>
+                  <input
+                    type="number"
+                    min="1"
+                    className={inputClass}
+                    value={numPersonas}
+                    onChange={(event) => setNumPersonas(event.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className={labelClass}>Tipo de evento</label>
+                  <select
+                    className={selectClass}
+                    value={tipoEventoId}
+                    onChange={(event) => setTipoEventoId(event.target.value)}
+                  >
+                    <option value="">Seleccionar tipo</option>
+                    {tiposEvento.map((tipo) => (
+                      <option key={tipo.id} value={tipo.id}>
+                        {tipo.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className={labelClass}>Tipo de comida</label>
+                  <select
+                    className={selectClass}
+                    value={tipoComidaId}
+                    onChange={(event) => setTipoComidaId(event.target.value)}
+                  >
+                    <option value="">Seleccionar tipo</option>
+                    {tiposComida.map((tipo) => (
+                      <option key={tipo.id} value={tipo.id}>
+                        {tipo.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="overflow-hidden border-stone-200 bg-white shadow-xl shadow-stone-900/5">
+              <div className="flex flex-col gap-4 border-b border-stone-200 bg-stone-50/80 px-6 py-5 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className={labelClass}>Paso 3</p>
+                  <h2 className="mt-1 font-serif text-2xl font-black text-stone-950">Salon disponible</h2>
+                  <p className="mt-1 text-sm text-stone-500">
+                    Consulta disponibilidad y elige el espacio principal del evento.
+                  </p>
+                </div>
+                <Button type="button" variant="secondary" onClick={consultarDisponibilidad}>
+                  Consultar disponibilidad
+                </Button>
               </div>
 
-              <div>
-                <label className={labelClass}>Número de personas</label>
-                <input className={inputClass} placeholder="0" type="number" min={1} value={numPersonas || ''} onChange={(e) => setNumPersonas(Number(e.target.value))} />
-              </div>
-
-              <div>
-                <label className={labelClass}>Tipo de evento</label>
-                <select className={inputClass} value={tipoEventoId} onChange={(e) => setTipoEventoId(e.target.value)}>
-                  {tiposEvento.length === 0 && <option value="">Cargando…</option>}
-                  {tiposEvento.map((t) => (
-                    <option key={t.id} value={t.id}>{t.nombre}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className={labelClass}>Tipo de comida</label>
-                <select className={inputClass} value={tipoComidaId} onChange={(e) => setTipoComidaId(e.target.value)}>
-                  {tiposComida.length === 0 && <option value="">Cargando…</option>}
-                  {tiposComida.map((t) => (
-                    <option key={t.id} value={t.id}>{t.nombre}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </section>
-
-          <section className="bg-surface-container-low p-6 rounded-lg border border-border">
-            <div className="flex items-baseline gap-4 mb-5">
-              <h2 className="text-lg font-display font-bold text-on-surface">Selección de salón</h2>
-              <div className="flex-1 h-px bg-stone-200"></div>
-              <button
-                type="button"
-                onClick={consultarDisponibilidad}
-                className="text-xs font-bold text-primary-gold hover:underline"
-              >
-                Consultar disponibilidad
-              </button>
-            </div>
-
-            {salones.length === 0 ? (
-              <p className="text-sm text-on-surface-variant">Cargando salones…</p>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="grid gap-4 p-6 md:grid-cols-2 xl:grid-cols-3">
                 {salones.map((salon) => {
-                  const isSelected = selectedVenueId === salon.id;
+                  const selected = selectedVenueId === salon.id;
                   return (
                     <button
                       key={salon.id}
                       type="button"
                       onClick={() => setSelectedVenueId(salon.id)}
-                      className={`relative p-4 text-left rounded-lg border transition-colors ${
-                        isSelected
-                          ? 'bg-gold-bg border-gold shadow-sm'
-                          : 'bg-surface-container-lowest border-border hover:border-gold/50'
+                      className={`rounded-3xl border p-5 text-left shadow-sm transition ${
+                        selected
+                          ? 'border-amber-700 bg-amber-50 ring-4 ring-amber-900/10'
+                          : 'border-stone-200 bg-white hover:border-amber-700 hover:bg-stone-50'
                       }`}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <h3 className="text-sm font-bold text-on-surface">{salon.nombre}</h3>
-                          <p className="text-xs text-on-surface-variant mt-1">Hasta {salon.capacidad} personas</p>
-                          {salon.descripcion && (
-                            <p className="text-xs text-on-surface-variant mt-2 leading-snug">{salon.descripcion}</p>
-                          )}
+                          <p className="font-serif text-xl font-black text-stone-950">{salon.nombre}</p>
+                          <p className="mt-2 line-clamp-2 text-sm leading-6 text-stone-500">
+                            {salon.descripcion || 'Sin descripcion registrada.'}
+                          </p>
                         </div>
-                        {isSelected ? (
-                          <span className="material-symbols-outlined text-primary-gold">check_circle</span>
-                        ) : null}
-                      </div>
-                      <div className="mt-3">
-                        <span className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[10px] font-bold bg-green-bg text-green-text">
-                          <span className="w-1.5 h-1.5 rounded-full bg-green"></span>
-                          Disponible
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-black ${
+                            selected ? 'bg-amber-800 text-white' : 'bg-stone-100 text-stone-600'
+                          }`}
+                        >
+                          {selected ? 'Elegido' : 'Elegir'}
                         </span>
+                      </div>
+                      <div className="mt-5 rounded-2xl border border-amber-900/10 bg-amber-100 px-4 py-3 text-sm font-black text-amber-950">
+                        Capacidad maxima: {salon.capacidad} personas
                       </div>
                     </button>
                   );
                 })}
               </div>
-            )}
-          </section>
-        </div>
+            </Card>
+          </main>
 
-        <aside className="bg-surface-container-lowest border border-border rounded-lg p-5 h-fit sticky top-24 space-y-4">
-          <h3 className="font-display font-bold text-lg text-on-surface">Resumen de solicitud</h3>
-          <div className="space-y-3 text-sm">
-            <div>
-              <p className="text-xs uppercase tracking-wider text-text3 font-bold">Cliente</p>
-              <p className="font-semibold text-text1">{clienteEncontrado?.nombreCompleto ?? 'Sin cliente seleccionado'}</p>
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-wider text-text3 font-bold">Salón</p>
-              <p className="font-semibold text-text1">{selectedVenue?.nombre ?? 'Sin salón'}</p>
-              <p className="text-xs text-text3">{selectedVenue ? `Hasta ${selectedVenue.capacidad} personas` : ''}</p>
-            </div>
-          </div>
-        </aside>
+          <aside className="xl:sticky xl:top-6 xl:self-start">
+            <Card className="overflow-hidden border-amber-900/15 bg-[#fffaf1] text-stone-950 shadow-2xl shadow-amber-900/10">
+              <div className="border-b border-amber-900/10 bg-gradient-to-br from-white to-amber-50 p-6">
+                <p className="text-xs font-black uppercase tracking-[0.24em] text-amber-800">
+                  Resumen vivo
+                </p>
+                <h2 className="mt-2 font-serif text-3xl font-black">Solicitud</h2>
+                <p className="mt-2 text-sm font-medium leading-6 text-stone-600">
+                  Revisa los datos clave antes de crear el evento.
+                </p>
+              </div>
+
+              <div className="space-y-4 p-6">
+                <SummaryItem
+                  label="Cliente"
+                  value={clienteEncontrado?.nombreCompleto || 'Pendiente'}
+                  muted={!clienteEncontrado}
+                />
+                <SummaryItem label="Inicio" value={formatDateTime(fechaHoraInicio)} muted={!fechaHoraInicio} />
+                <SummaryItem label="Fin" value={formatDateTime(fechaHoraFin)} muted={!fechaHoraFin} />
+                <SummaryItem label="Duracion" value={durationLabel} muted={!hasValidDates} />
+                <SummaryItem label="Tipo de evento" value={selectedTipoEvento?.nombre || 'Pendiente'} muted={!selectedTipoEvento} />
+                <SummaryItem label="Tipo de comida" value={selectedTipoComida?.nombre || 'Pendiente'} muted={!selectedTipoComida} />
+                <SummaryItem label="Salon" value={selectedVenue?.nombre || 'Pendiente'} muted={!selectedVenue} />
+
+                <div className="rounded-3xl border border-amber-900/15 bg-amber-100 p-4">
+                  <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-900">
+                    Siguiente despues de crear
+                  </p>
+                  <p className="mt-2 text-sm font-semibold leading-6 text-amber-950">
+                    El evento queda en Pendiente y podras continuar con menu, montaje y cotizacion.
+                  </p>
+                </div>
+              </div>
+            </Card>
+          </aside>
+        </div>
       </div>
 
-      <footer className="fixed bottom-0 right-0 w-[calc(100%-16rem)] bg-white/90 backdrop-blur-md border-t border-outline-variant/30 py-4 px-8 flex items-center justify-between z-30">
-        <button
-          type="button"
-          onClick={() => navigate('/events')}
-          className="text-sm font-bold text-on-surface hover:bg-hover bg-[#f5f2ed] border border-outline-variant px-5 py-2.5 rounded-md transition-all flex items-center gap-2 active:scale-95"
-        >
-          <span className="material-symbols-outlined text-xl">close</span>
-          Cancelar
-        </button>
-
-        <div className="flex items-center gap-4">
-          <p className="text-xs text-on-surface-variant max-w-[260px] text-right leading-tight">
-            Se creará el evento en estado Pendiente para continuar con menú y cotización.
+      <div className="sticky bottom-0 z-20 border-t border-stone-200 bg-white/90 px-6 py-4 shadow-2xl shadow-stone-900/10 backdrop-blur">
+        <div className="mx-auto flex max-w-7xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm font-semibold text-stone-500">
+            {canCreate
+              ? 'Todo listo para crear la solicitud.'
+              : 'Completa cliente, horario, tipo de evento, tipo de comida y salon.'}
           </p>
-          <button
-            type="button"
-            onClick={handleCrearEvento}
-            disabled={saving}
-            className="bg-primary-gold text-white px-6 py-3 rounded-md font-bold flex items-center gap-3 hover:bg-primary transition-all shadow-sm active:scale-95 disabled:opacity-50"
-          >
-            {saving ? 'Creando…' : 'Crear evento y continuar'}
-            <span className="material-symbols-outlined">chevron_right</span>
-          </button>
+          <div className="flex justify-end gap-3">
+            <Button type="button" variant="ghost" onClick={() => navigate('/events')}>
+              Salir
+            </Button>
+            <Button type="button" onClick={handleCrearEvento} disabled={saving || !canCreate}>
+              {saving ? 'Creando...' : 'Crear evento y continuar'}
+            </Button>
+          </div>
         </div>
-      </footer>
+      </div>
 
       <ClientFormModal
         isOpen={isClienteFormOpen}
@@ -436,8 +542,23 @@ const EventRequestPage: React.FC = () => {
         onCancel={() => setIsClienteFormOpen(false)}
         onSubmit={handleRegistrarCliente}
       />
-    </section>
+    </div>
   );
-};
+}
 
 export default EventRequestPage;
+
+type SummaryItemProps = {
+  label: string;
+  value: string;
+  muted?: boolean;
+};
+
+function SummaryItem({ label, value, muted }: SummaryItemProps) {
+  return (
+    <div className="rounded-2xl border border-amber-900/10 bg-white p-4 shadow-sm">
+      <p className="text-[0.65rem] font-black uppercase tracking-[0.2em] text-stone-500">{label}</p>
+      <p className={`mt-2 text-sm font-black ${muted ? 'text-stone-400' : 'text-stone-950'}`}>{value}</p>
+    </div>
+  );
+}

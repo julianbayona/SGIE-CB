@@ -34,7 +34,7 @@ const eventService = {
     const eventos = await eventosApi.listar();
     return eventos
       .map(toCalendarEvent)
-      .filter((e) => e.start >= startDate && e.start <= endDate);
+      .filter((e) => e.end > startDate && e.start <= endDate);
   },
 
   /** Expone el evento crudo del backend para módulos que lo necesiten. */
