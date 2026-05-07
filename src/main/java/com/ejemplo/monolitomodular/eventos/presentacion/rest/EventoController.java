@@ -1,11 +1,13 @@
 package com.ejemplo.monolitomodular.eventos.presentacion.rest;
 
 import com.ejemplo.monolitomodular.auth.infraestructura.seguridad.UsuarioAutenticado;
+import com.ejemplo.monolitomodular.eventos.aplicacion.dto.CancelarEventoCommand;
 import com.ejemplo.monolitomodular.eventos.aplicacion.dto.CrearEventoCommand;
 import com.ejemplo.monolitomodular.eventos.aplicacion.dto.CrearReservaSalonCommand;
 import com.ejemplo.monolitomodular.eventos.aplicacion.dto.EventoView;
 import com.ejemplo.monolitomodular.eventos.aplicacion.dto.ModificarReservaSalonCommand;
 import com.ejemplo.monolitomodular.eventos.aplicacion.dto.ReservaSalonView;
+import com.ejemplo.monolitomodular.eventos.aplicacion.puerto.entrada.CancelarEventoUseCase;
 import com.ejemplo.monolitomodular.eventos.aplicacion.puerto.entrada.ConfirmarEventoUseCase;
 import com.ejemplo.monolitomodular.eventos.aplicacion.puerto.entrada.ConsultarEventoUseCase;
 import com.ejemplo.monolitomodular.eventos.aplicacion.puerto.entrada.CrearEventoUseCase;
@@ -15,6 +17,7 @@ import com.ejemplo.monolitomodular.eventos.presentacion.rest.dto.CrearEventoRequ
 import com.ejemplo.monolitomodular.eventos.presentacion.rest.dto.CrearReservaSalonRequest;
 import com.ejemplo.monolitomodular.eventos.presentacion.rest.dto.EventoResponse;
 import com.ejemplo.monolitomodular.eventos.presentacion.rest.dto.ModificarReservaSalonRequest;
+import com.ejemplo.monolitomodular.eventos.presentacion.rest.dto.CancelarEventoRequest;
 import com.ejemplo.monolitomodular.eventos.presentacion.rest.dto.ReservaSalonResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -41,19 +44,22 @@ public class EventoController {
     private final CrearReservaSalonUseCase crearReservaSalonUseCase;
     private final ModificarReservaSalonUseCase modificarReservaSalonUseCase;
     private final ConfirmarEventoUseCase confirmarEventoUseCase;
+    private final CancelarEventoUseCase cancelarEventoUseCase;
 
     public EventoController(
             CrearEventoUseCase crearEventoUseCase,
             ConsultarEventoUseCase consultarEventoUseCase,
             CrearReservaSalonUseCase crearReservaSalonUseCase,
             ModificarReservaSalonUseCase modificarReservaSalonUseCase,
-            ConfirmarEventoUseCase confirmarEventoUseCase
+            ConfirmarEventoUseCase confirmarEventoUseCase,
+            CancelarEventoUseCase cancelarEventoUseCase
     ) {
         this.crearEventoUseCase = crearEventoUseCase;
         this.consultarEventoUseCase = consultarEventoUseCase;
         this.crearReservaSalonUseCase = crearReservaSalonUseCase;
         this.modificarReservaSalonUseCase = modificarReservaSalonUseCase;
         this.confirmarEventoUseCase = confirmarEventoUseCase;
+        this.cancelarEventoUseCase = cancelarEventoUseCase;
     }
 
     @PostMapping
@@ -134,6 +140,19 @@ public class EventoController {
             @PathVariable UUID eventoId
     ) {
         return toResponse(confirmarEventoUseCase.confirmar(eventoId, usuario.id()));
+    }
+
+    @PostMapping("/{eventoId}/cancelar")
+    public EventoResponse cancelar(
+            @AuthenticationPrincipal UsuarioAutenticado usuario,
+            @PathVariable UUID eventoId,
+            @Valid @RequestBody CancelarEventoRequest request
+    ) {
+        return toResponse(cancelarEventoUseCase.cancelar(new CancelarEventoCommand(
+                eventoId,
+                usuario.id(),
+                request.motivo()
+        )));
     }
 
     private EventoResponse toResponse(EventoView evento) {

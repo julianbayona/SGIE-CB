@@ -88,6 +88,24 @@ public class RecordatorioAnticipo {
         );
     }
 
+    public RecordatorioAnticipo cancelar() {
+        if (estado == EstadoRecordatorioAnticipo.CANCELADO) {
+            return this;
+        }
+        if (estado != EstadoRecordatorioAnticipo.PENDIENTE && estado != EstadoRecordatorioAnticipo.NOTIFICACION_CREADA) {
+            return this;
+        }
+        return new RecordatorioAnticipo(
+                id,
+                eventoId,
+                usuarioId,
+                fechaRecordatorio,
+                EstadoRecordatorioAnticipo.CANCELADO,
+                notificacionId,
+                false
+        );
+    }
+
     private static LocalDate validarFechaFutura(LocalDate fechaRecordatorio) {
         LocalDate fecha = Objects.requireNonNull(fechaRecordatorio, "La fecha del recordatorio es obligatoria");
         if (fecha.isBefore(LocalDate.now())) {

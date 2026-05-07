@@ -69,4 +69,20 @@ public interface SpringDataCotizacionJpaRepository extends JpaRepository<Cotizac
                and c.vigente = true
             """)
     int desactualizarActivasPorReservaId(UUID reservaId, LocalDateTime updatedAt);
+
+    @Modifying
+    @Query("""
+            update CotizacionJpaEntity c
+               set c.estado = com.ejemplo.monolitomodular.cotizaciones.dominio.modelo.EstadoCotizacion.DESACTUALIZADA,
+                   c.vigente = false,
+                   c.updatedAt = :updatedAt
+             where c.vigente = true
+               and exists (
+                   select 1
+                   from ReservaSalonJpaEntity r
+                   where r.id = c.reservaId
+                     and r.eventoId = :eventoId
+               )
+            """)
+    int desactualizarActivasPorEventoId(UUID eventoId, LocalDateTime updatedAt);
 }

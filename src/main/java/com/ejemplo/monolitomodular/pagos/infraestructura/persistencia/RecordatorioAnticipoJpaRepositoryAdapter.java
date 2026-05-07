@@ -64,6 +64,19 @@ public class RecordatorioAnticipoJpaRepositoryAdapter implements RecordatorioAnt
                 .toList();
     }
 
+    @Override
+    public List<RecordatorioAnticipo> buscarCancelablesPorEventoId(UUID eventoId) {
+        return repository.findByEventoIdAndEstadoIn(
+                        eventoId,
+                        List.of(
+                                EstadoRecordatorioAnticipo.PENDIENTE,
+                                EstadoRecordatorioAnticipo.NOTIFICACION_CREADA
+                        )
+                ).stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
     private RecordatorioAnticipo toDomain(RecordatorioAnticipoJpaEntity entity) {
         return RecordatorioAnticipo.reconstruir(
                 entity.getId(),

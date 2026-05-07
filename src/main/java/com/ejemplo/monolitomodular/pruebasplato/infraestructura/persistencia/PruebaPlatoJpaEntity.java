@@ -69,4 +69,8 @@ public class PruebaPlatoJpaEntity {
     public EstadoPruebaPlato getEstado() {
         return estado;
     }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
 }

@@ -14,4 +14,8 @@ public interface NotificacionRepository {
     List<Notificacion> buscarPendientes(LocalDateTime fechaReferencia, int limite);
 
     boolean existePorEventoYTipoDesde(UUID eventoId, TipoNotificacion tipo, LocalDateTime fechaDesde);
+
+    default List<Notificacion> buscarCancelablesPorEventoYTipo(UUID eventoId, TipoNotificacion tipo) {
+        return List.of();
+    }
 }

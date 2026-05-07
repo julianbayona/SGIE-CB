@@ -17,4 +17,6 @@ public interface SpringDataRecordatorioAnticipoJpaRepository extends JpaReposito
             LocalDate fechaReferencia,
             Pageable pageable
     );
+
+    List<RecordatorioAnticipoJpaEntity> findByEventoIdAndEstadoIn(UUID eventoId, List<EstadoRecordatorioAnticipo> estados);
 }

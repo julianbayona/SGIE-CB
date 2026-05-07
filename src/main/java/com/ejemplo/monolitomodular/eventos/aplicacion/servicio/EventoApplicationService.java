@@ -1,15 +1,20 @@
 package com.ejemplo.monolitomodular.eventos.aplicacion.servicio;
 
-import com.ejemplo.monolitomodular.clientes.dominio.puerto.salida.ClienteRepository;
 import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.TipoComidaRepository;
 import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.TipoEventoRepository;
+import com.ejemplo.monolitomodular.calendario.dominio.modelo.EventoCalendar;
+import com.ejemplo.monolitomodular.calendario.dominio.modelo.TipoOperacionCalendar;
+import com.ejemplo.monolitomodular.calendario.dominio.puerto.salida.EventoCalendarRepository;
+import com.ejemplo.monolitomodular.clientes.dominio.puerto.salida.ClienteRepository;
 import com.ejemplo.monolitomodular.cotizaciones.dominio.puerto.salida.CotizacionRepository;
+import com.ejemplo.monolitomodular.eventos.aplicacion.dto.CancelarEventoCommand;
 import com.ejemplo.monolitomodular.eventos.aplicacion.evento.EventoConfirmadoEvent;
 import com.ejemplo.monolitomodular.eventos.aplicacion.dto.CrearEventoCommand;
 import com.ejemplo.monolitomodular.eventos.aplicacion.dto.CrearReservaSalonCommand;
 import com.ejemplo.monolitomodular.eventos.aplicacion.dto.EventoView;
 import com.ejemplo.monolitomodular.eventos.aplicacion.dto.ModificarReservaSalonCommand;
 import com.ejemplo.monolitomodular.eventos.aplicacion.dto.ReservaSalonView;
+import com.ejemplo.monolitomodular.eventos.aplicacion.puerto.entrada.CancelarEventoUseCase;
 import com.ejemplo.monolitomodular.eventos.aplicacion.puerto.entrada.ConfirmarEventoUseCase;
 import com.ejemplo.monolitomodular.eventos.aplicacion.puerto.entrada.ConsultarEventoUseCase;
 import com.ejemplo.monolitomodular.eventos.aplicacion.puerto.entrada.CrearEventoUseCase;
@@ -21,13 +26,24 @@ import com.ejemplo.monolitomodular.eventos.dominio.modelo.ReservaSalon;
 import com.ejemplo.monolitomodular.eventos.dominio.puerto.salida.EventoRepository;
 import com.ejemplo.monolitomodular.eventos.dominio.puerto.salida.HistorialEstadoEventoRepository;
 import com.ejemplo.monolitomodular.eventos.dominio.puerto.salida.ReservaSalonRepository;
+import com.ejemplo.monolitomodular.notificaciones.dominio.modelo.Notificacion;
+import com.ejemplo.monolitomodular.notificaciones.dominio.modelo.TipoNotificacion;
+import com.ejemplo.monolitomodular.notificaciones.dominio.puerto.salida.NotificacionRepository;
+import com.ejemplo.monolitomodular.pagos.dominio.modelo.RecordatorioAnticipo;
+import com.ejemplo.monolitomodular.pagos.dominio.puerto.salida.RecordatorioAnticipoRepository;
+import com.ejemplo.monolitomodular.pruebasplato.dominio.modelo.PruebaPlato;
+import com.ejemplo.monolitomodular.pruebasplato.dominio.puerto.salida.PruebaPlatoRepository;
 import com.ejemplo.monolitomodular.salones.dominio.puerto.salida.SalonRepository;
 import com.ejemplo.monolitomodular.shared.dominio.excepcion.DomainException;
+import com.ejemplo.monolitomodular.usuarios.dominio.modelo.RolUsuario;
+import com.ejemplo.monolitomodular.usuarios.dominio.modelo.Usuario;
 import com.ejemplo.monolitomodular.usuarios.dominio.puerto.salida.UsuarioRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -38,7 +54,8 @@ public class EventoApplicationService implements
         ConsultarEventoUseCase,
         CrearReservaSalonUseCase,
         ModificarReservaSalonUseCase,
-        ConfirmarEventoUseCase {
+        ConfirmarEventoUseCase,
+        CancelarEventoUseCase {
 
     private final ClienteRepository clienteRepository;
     private final TipoEventoRepository tipoEventoRepository;
@@ -49,7 +66,44 @@ public class EventoApplicationService implements
     private final ReservaSalonRepository reservaSalonRepository;
     private final HistorialEstadoEventoRepository historialEstadoEventoRepository;
     private final CotizacionRepository cotizacionRepository;
+    private final PruebaPlatoRepository pruebaPlatoRepository;
+    private final RecordatorioAnticipoRepository recordatorioAnticipoRepository;
+    private final NotificacionRepository notificacionRepository;
+    private final EventoCalendarRepository eventoCalendarRepository;
     private final ApplicationEventPublisher eventPublisher;
+
+    @Autowired
+    public EventoApplicationService(
+            ClienteRepository clienteRepository,
+            TipoEventoRepository tipoEventoRepository,
+            TipoComidaRepository tipoComidaRepository,
+            UsuarioRepository usuarioRepository,
+            SalonRepository salonRepository,
+            EventoRepository eventoRepository,
+            ReservaSalonRepository reservaSalonRepository,
+            HistorialEstadoEventoRepository historialEstadoEventoRepository,
+            CotizacionRepository cotizacionRepository,
+            PruebaPlatoRepository pruebaPlatoRepository,
+            RecordatorioAnticipoRepository recordatorioAnticipoRepository,
+            NotificacionRepository notificacionRepository,
+            EventoCalendarRepository eventoCalendarRepository,
+            ApplicationEventPublisher eventPublisher
+    ) {
+        this.clienteRepository = clienteRepository;
+        this.tipoEventoRepository = tipoEventoRepository;
+        this.tipoComidaRepository = tipoComidaRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.salonRepository = salonRepository;
+        this.eventoRepository = eventoRepository;
+        this.reservaSalonRepository = reservaSalonRepository;
+        this.historialEstadoEventoRepository = historialEstadoEventoRepository;
+        this.cotizacionRepository = cotizacionRepository;
+        this.pruebaPlatoRepository = pruebaPlatoRepository;
+        this.recordatorioAnticipoRepository = recordatorioAnticipoRepository;
+        this.notificacionRepository = notificacionRepository;
+        this.eventoCalendarRepository = eventoCalendarRepository;
+        this.eventPublisher = eventPublisher;
+    }
 
     public EventoApplicationService(
             ClienteRepository clienteRepository,
@@ -63,16 +117,22 @@ public class EventoApplicationService implements
             CotizacionRepository cotizacionRepository,
             ApplicationEventPublisher eventPublisher
     ) {
-        this.clienteRepository = clienteRepository;
-        this.tipoEventoRepository = tipoEventoRepository;
-        this.tipoComidaRepository = tipoComidaRepository;
-        this.usuarioRepository = usuarioRepository;
-        this.salonRepository = salonRepository;
-        this.eventoRepository = eventoRepository;
-        this.reservaSalonRepository = reservaSalonRepository;
-        this.historialEstadoEventoRepository = historialEstadoEventoRepository;
-        this.cotizacionRepository = cotizacionRepository;
-        this.eventPublisher = eventPublisher;
+        this(
+                clienteRepository,
+                tipoEventoRepository,
+                tipoComidaRepository,
+                usuarioRepository,
+                salonRepository,
+                eventoRepository,
+                reservaSalonRepository,
+                historialEstadoEventoRepository,
+                cotizacionRepository,
+                new NoOpPruebaPlatoRepository(),
+                new NoOpRecordatorioAnticipoRepository(),
+                new NoOpNotificacionRepository(),
+                new NoOpEventoCalendarRepository(),
+                eventPublisher
+        );
     }
 
     @Override
@@ -224,6 +284,37 @@ public class EventoApplicationService implements
         return toView(confirmado, reservaSalonRepository.listarPorEvento(eventoId));
     }
 
+    @Override
+    @Transactional
+    public EventoView cancelar(CancelarEventoCommand command) {
+        Usuario usuario = usuarioRepository.buscarPorId(command.usuarioId())
+                .orElseThrow(() -> new DomainException("Usuario no encontrado"));
+        if (usuario.getRol() != RolUsuario.ADMINISTRADOR) {
+            throw new DomainException("Solo un administrador puede cancelar eventos");
+        }
+        String motivo = validarMotivoCancelacion(command.motivo());
+
+        Evento evento = eventoRepository.buscarPorId(command.eventoId())
+                .orElseThrow(() -> new DomainException("Evento no encontrado"));
+        Evento cancelado = evento.cancelar();
+
+        eventoRepository.guardar(cancelado);
+        historialEstadoEventoRepository.guardar(HistorialEstadoEvento.registrarCambioConMotivo(
+                evento.getId(),
+                usuario.getId(),
+                evento.getEstado(),
+                cancelado.getEstado(),
+                motivo
+        ));
+
+        cotizacionRepository.desactualizarActivasPorEventoId(evento.getId());
+        cancelarPruebasPlato(evento.getId());
+        cancelarRecordatoriosAnticipo(evento.getId());
+        cancelarSincronizacionesCalendar(evento.getId());
+
+        return toView(cancelado, reservaSalonRepository.listarPorEvento(evento.getId()));
+    }
+
     private void validarEventoConfirmable(Evento evento) {
         if (cotizacionRepository.buscarAceptadaVigentePorEventoId(evento.getId()).isEmpty()) {
             throw new DomainException("El evento debe tener una cotizacion aceptada vigente para confirmarse");
@@ -252,6 +343,57 @@ public class EventoApplicationService implements
         }
     }
 
+    private String validarMotivoCancelacion(String motivo) {
+        if (motivo == null || motivo.isBlank()) {
+            throw new DomainException("El motivo de cancelacion es obligatorio");
+        }
+        String valor = motivo.trim();
+        if (valor.length() > 500) {
+            throw new DomainException("El motivo de cancelacion no puede superar 500 caracteres");
+        }
+        return valor;
+    }
+
+    private void cancelarPruebasPlato(UUID eventoId) {
+        pruebaPlatoRepository.buscarProgramadasPorEventoId(eventoId).stream()
+                .map(prueba -> prueba.cancelar())
+                .forEach(pruebaPlatoRepository::guardar);
+        cancelarNotificacionesPendientes(eventoId, TipoNotificacion.PRUEBA_PLATO_CLIENTE);
+        cancelarNotificacionesPendientes(eventoId, TipoNotificacion.PRUEBA_PLATO_PERSONAL);
+    }
+
+    private void cancelarRecordatoriosAnticipo(UUID eventoId) {
+        recordatorioAnticipoRepository.buscarCancelablesPorEventoId(eventoId).stream()
+                .map(recordatorio -> recordatorio.cancelar())
+                .forEach(recordatorioAnticipoRepository::guardar);
+        cancelarNotificacionesPendientes(eventoId, TipoNotificacion.RECORDATORIO_ANTICIPO);
+    }
+
+    private void cancelarNotificacionesPendientes(UUID eventoId, TipoNotificacion tipo) {
+        notificacionRepository.buscarCancelablesPorEventoYTipo(eventoId, tipo).stream()
+                .map(Notificacion::cancelar)
+                .forEach(notificacionRepository::guardar);
+    }
+
+    private void cancelarSincronizacionesCalendar(UUID eventoId) {
+        List<EventoCalendar> sincronizados = eventoCalendarRepository.buscarSincronizadosCancelablesPorEventoId(eventoId);
+        eventoCalendarRepository.cancelarPendientesPorEventoId(eventoId);
+
+        Set<String> googleEventIdsCancelados = new HashSet<>();
+        sincronizados.stream()
+                .filter(eventoCalendar -> eventoCalendar.getGoogleEventId() != null)
+                .filter(eventoCalendar -> googleEventIdsCancelados.add(eventoCalendar.getGoogleEventId()))
+                .map(eventoCalendar -> EventoCalendar.pendienteConGoogleEventId(
+                        eventoCalendar.getOrigenTipo(),
+                        eventoCalendar.getOrigenId(),
+                        eventoCalendar.getEventoId(),
+                        TipoOperacionCalendar.CANCELAR,
+                        eventoCalendar.getGoogleEventId(),
+                        "{}"
+                ))
+                .forEach(eventoCalendarRepository::guardar);
+    }
+
     private EventoView toView(Evento evento, List<ReservaSalon> reservas) {
         return new EventoView(
                 evento.getId(),
@@ -278,5 +420,72 @@ public class EventoApplicationService implements
                 reserva.getVersion(),
                 reserva.isVigente()
         );
+    }
+
+    private static class NoOpPruebaPlatoRepository implements PruebaPlatoRepository {
+
+        @Override
+        public PruebaPlato guardar(PruebaPlato pruebaPlato) {
+            return pruebaPlato;
+        }
+    }
+
+    private static class NoOpRecordatorioAnticipoRepository implements RecordatorioAnticipoRepository {
+
+        @Override
+        public RecordatorioAnticipo guardar(RecordatorioAnticipo recordatorio) {
+            return recordatorio;
+        }
+
+        @Override
+        public java.util.Optional<RecordatorioAnticipo> buscarPorId(UUID id) {
+            return java.util.Optional.empty();
+        }
+
+        @Override
+        public boolean existePendientePorEventoYFecha(UUID eventoId, java.time.LocalDate fechaRecordatorio) {
+            return false;
+        }
+
+        @Override
+        public List<RecordatorioAnticipo> buscarPendientesHasta(java.time.LocalDate fechaReferencia, int limite) {
+            return List.of();
+        }
+    }
+
+    private static class NoOpNotificacionRepository implements NotificacionRepository {
+
+        @Override
+        public Notificacion guardar(Notificacion notificacion) {
+            return notificacion;
+        }
+
+        @Override
+        public List<Notificacion> buscarPendientes(java.time.LocalDateTime fechaReferencia, int limite) {
+            return List.of();
+        }
+
+        @Override
+        public boolean existePorEventoYTipoDesde(UUID eventoId, TipoNotificacion tipo, java.time.LocalDateTime fechaDesde) {
+            return false;
+        }
+    }
+
+    private static class NoOpEventoCalendarRepository implements EventoCalendarRepository {
+
+        @Override
+        public EventoCalendar guardar(EventoCalendar eventoCalendar) {
+            return eventoCalendar;
+        }
+
+        @Override
+        public java.util.Optional<EventoCalendar> buscarPorId(UUID id) {
+            return java.util.Optional.empty();
+        }
+
+        @Override
+        public List<EventoCalendar> buscarPendientes(int limite) {
+            return List.of();
+        }
     }
 }

@@ -85,6 +85,11 @@ public class CotizacionJpaRepositoryAdapter implements CotizacionRepository {
         cotizacionRepository.desactualizarActivasPorReservaId(reservaId, LocalDateTime.now());
     }
 
+    @Override
+    public void desactualizarActivasPorEventoId(UUID eventoId) {
+        cotizacionRepository.desactualizarActivasPorEventoId(eventoId, LocalDateTime.now());
+    }
+
     private Cotizacion toDomain(CotizacionJpaEntity entity) {
         List<CotizacionItem> items = itemRepository.findByCotizacionId(entity.getId()).stream()
                 .map(this::toDomain)

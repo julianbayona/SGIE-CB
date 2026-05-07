@@ -5,6 +5,10 @@ import com.ejemplo.monolitomodular.pruebasplato.dominio.puerto.salida.PruebaPlat
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
+import com.ejemplo.monolitomodular.pruebasplato.dominio.modelo.EstadoPruebaPlato;
 
 @Repository
 public class PruebaPlatoJpaRepositoryAdapter implements PruebaPlatoRepository {
@@ -18,14 +22,24 @@ public class PruebaPlatoJpaRepositoryAdapter implements PruebaPlatoRepository {
     @Override
     public PruebaPlato guardar(PruebaPlato pruebaPlato) {
         LocalDateTime now = LocalDateTime.now();
+        LocalDateTime createdAt = repository.findById(pruebaPlato.getId())
+                .map(PruebaPlatoJpaEntity::getCreatedAt)
+                .orElse(now);
         return toDomain(repository.save(new PruebaPlatoJpaEntity(
                 pruebaPlato.getId(),
                 pruebaPlato.getEventoId(),
                 pruebaPlato.getFechaRealizacion(),
                 pruebaPlato.getEstado(),
-                now,
+                createdAt,
                 now
         )));
+    }
+
+    @Override
+    public List<PruebaPlato> buscarProgramadasPorEventoId(UUID eventoId) {
+        return repository.findByEventoIdAndEstado(eventoId, EstadoPruebaPlato.PROGRAMADA).stream()
+                .map(this::toDomain)
+                .toList();
     }
 
     private PruebaPlato toDomain(PruebaPlatoJpaEntity entity) {
