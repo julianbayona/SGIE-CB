@@ -152,7 +152,7 @@ const EventSummaryPage: React.FC = () => {
 
   return (
     <section className="space-y-8 pb-28">
-      <EventDetailHeaderTabs event={event} activeTab="summary" />
+      <EventDetailHeaderTabs event={event} activeTab="summary" onEventCancelled={setEvento} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         <div className="bg-surface-container-lowest p-5 rounded-lg shadow-sm border border-border">

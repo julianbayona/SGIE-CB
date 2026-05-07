@@ -6,6 +6,7 @@ import clientesApi from '@/api/clientes';
 import salonesApi from '@/api/salones';
 import catalogosApi from '@/api/catalogos';
 import cotizacionesApi from '@/api/cotizaciones';
+import { estadoEventoToEventStatus } from '@/features/events/utils/eventStatus';
 import pagosApi from '@/api/pagos';
 import type { EventoResponse, ClienteResponse, SalonResponse, CatalogoBasicoResponse } from '@/api/types';
 import { formatShortId } from '@/utils/formatters';
@@ -166,7 +167,7 @@ const EventPaymentsPage: React.FC = () => {
       title: `${tipoEvento?.nombre || 'Evento'} - ${cliente?.nombreCompleto || 'Cliente'}`,
       dateLabel: inicio.toLocaleDateString('es-CO'),
       timeLabel: inicio.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
-      status: 'Pendiente' as const,
+      status: estadoEventoToEventStatus(evento.estado),
       customerName: cliente?.nombreCompleto || 'Cargando...',
       customerPhone: cliente?.telefono || '',
       eventType: tipoEvento?.nombre || 'Cargando...',
@@ -256,7 +257,7 @@ const EventPaymentsPage: React.FC = () => {
 
   return (
     <section className="space-y-8 pb-24">
-      <EventDetailHeaderTabs event={event} activeTab="pagos" />
+      <EventDetailHeaderTabs event={event} activeTab="pagos" onEventCancelled={setEvento} />
 
       {error ? (
         <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">

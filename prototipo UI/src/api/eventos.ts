@@ -4,6 +4,7 @@ import type {
   CrearEventoRequest,
   CrearReservaSalonRequest,
   ModificarReservaSalonRequest,
+  CancelarEventoRequest,
 } from './types';
 
 const eventosApi = {
@@ -42,6 +43,13 @@ const eventosApi = {
   /** Confirma un evento (transición de estado). */
   confirmar(eventoId: string): Promise<EventoResponse> {
     return apiClient.post<EventoResponse>(`/eventos/${eventoId}/confirmar`).then((r) => r.data);
+  },
+
+  /** Cancela un evento con motivo obligatorio. */
+  cancelar(eventoId: string, data: CancelarEventoRequest): Promise<EventoResponse> {
+    return apiClient
+      .post<EventoResponse>(`/eventos/${eventoId}/cancelar`, data)
+      .then((r) => r.data);
   },
 };
 

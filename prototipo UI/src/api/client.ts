@@ -2,7 +2,7 @@ import axios, { AxiosError } from 'axios';
 
 const apiBaseHost =
   (import.meta as ImportMeta & { env?: Record<string, string | undefined> }).env?.VITE_API_BASE_URL ??
-  'https://sgie-cb-production.up.railway.app';
+  'http://localhost:8080';
 
 export const API_BASE_URL = `${apiBaseHost}/api`;
 

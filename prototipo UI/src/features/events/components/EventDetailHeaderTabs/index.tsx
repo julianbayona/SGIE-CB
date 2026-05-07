@@ -1,8 +1,12 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import type { EventSummaryData } from '@/features/events/data/eventSummary';
 import { formatShortId } from '@/utils/formatters';
+import eventosApi from '@/api/eventos';
+import type { EventoResponse } from '@/api/types';
+import { useAuth } from '@/contexts/AuthContext';
+import CancelEventModal from '@/features/events/components/CancelEventModal';
 
 export type EventDetailTab =
   | 'summary'
@@ -15,6 +19,7 @@ export type EventDetailTab =
 interface EventDetailHeaderTabsProps {
   event: EventSummaryData;
   activeTab: EventDetailTab;
+  onEventCancelled?: (evento: EventoResponse) => void;
 }
 
 const tabs: Array<{ key: EventDetailTab; label: string; getPath: (eventId: string) => string }> = [
@@ -26,7 +31,50 @@ const tabs: Array<{ key: EventDetailTab; label: string; getPath: (eventId: strin
   { key: 'pagos', label: 'Pagos', getPath: (eventId) => `/events/${eventId}/pagos` },
 ];
 
-const EventDetailHeaderTabs: React.FC<EventDetailHeaderTabsProps> = ({ event, activeTab }) => {
+const EventDetailHeaderTabs: React.FC<EventDetailHeaderTabsProps> = ({
+  event,
+  activeTab,
+  onEventCancelled,
+}) => {
+  const navigate = useNavigate();
+  const { hasRole } = useAuth();
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
+  const [cancelling, setCancelling] = useState(false);
+
+  const isCancelled = event.status === 'Cancelado';
+  const isAdmin = hasRole('ADMINISTRADOR');
+  const canCancel = isAdmin && !isCancelled;
+
+  const openCancelModal = () => {
+    if (!canCancel) return;
+    setCancelError(null);
+    setCancelModalOpen(true);
+  };
+
+  const closeCancelModal = () => {
+    if (cancelling) return;
+    setCancelModalOpen(false);
+    setCancelError(null);
+  };
+
+  const handleCancel = async (motivo: string) => {
+    try {
+      setCancelling(true);
+      setCancelError(null);
+      const actualizado = await eventosApi.cancelar(event.id, { motivo });
+      setCancelModalOpen(false);
+      onEventCancelled?.(actualizado);
+      if (activeTab !== 'summary') {
+        navigate(`/events/${event.id}`, { replace: true });
+      }
+    } catch (err) {
+      setCancelError(err instanceof Error ? err.message : 'No fue posible cancelar el evento.');
+    } finally {
+      setCancelling(false);
+    }
+  };
+
   return (
     <>
       <section className="bg-surface-container-lowest border border-border rounded-lg p-5 shadow-sm">
@@ -72,7 +120,10 @@ const EventDetailHeaderTabs: React.FC<EventDetailHeaderTabsProps> = ({ event, ac
             </button>
             <button
               type="button"
-              className="border border-red-border bg-red-bg text-red-text px-3 py-2 rounded-md flex items-center gap-2 text-sm font-semibold hover:bg-red-bg/80 transition-colors"
+              onClick={openCancelModal}
+              disabled={!canCancel}
+              title={!isAdmin ? 'Solo un administrador puede cancelar eventos' : undefined}
+              className="border border-red-border bg-red-bg text-red-text px-3 py-2 rounded-md flex items-center gap-2 text-sm font-semibold hover:bg-red-bg/80 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
             >
               <span className="material-symbols-outlined text-lg">cancel</span>
               Cancelar
@@ -100,6 +151,15 @@ const EventDetailHeaderTabs: React.FC<EventDetailHeaderTabsProps> = ({ event, ac
           );
         })}
       </nav>
+
+      <CancelEventModal
+        open={cancelModalOpen}
+        eventTitle={event.title.replace(' - ', ' / ')}
+        submitting={cancelling}
+        error={cancelError}
+        onClose={closeCancelModal}
+        onConfirm={handleCancel}
+      />
     </>
   );
 };

@@ -6,6 +6,7 @@ import clientesApi from '@/api/clientes';
 import salonesApi from '@/api/salones';
 import catalogosApi from '@/api/catalogos';
 import pagosApi from '@/api/pagos';
+import { estadoEventoToEventStatus } from '@/features/events/utils/eventStatus';
 import pruebasPlatoApi from '@/api/pruebasPlato';
 import type { EventoResponse, ClienteResponse, SalonResponse, CatalogoBasicoResponse } from '@/api/types';
 
@@ -172,7 +173,7 @@ const EventAgendaPage: React.FC = () => {
       title: `${tipoEvento?.nombre || 'Evento'} - ${cliente?.nombreCompleto || 'Cliente'}`,
       dateLabel: inicio.toLocaleDateString('es-CO'),
       timeLabel: inicio.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
-      status: 'Pendiente' as const,
+      status: estadoEventoToEventStatus(evento.estado),
       customerName: cliente?.nombreCompleto || 'Cargando...',
       customerPhone: cliente?.telefono || '',
       eventType: tipoEvento?.nombre || 'Cargando...',
@@ -297,7 +298,7 @@ const EventAgendaPage: React.FC = () => {
 
   return (
     <section className="space-y-8 pb-24">
-      <EventDetailHeaderTabs event={event} activeTab="agenda" />
+      <EventDetailHeaderTabs event={event} activeTab="agenda" onEventCancelled={setEvento} />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-surface-container-lowest border border-border rounded-xl p-5 shadow-sm">

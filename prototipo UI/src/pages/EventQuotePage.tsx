@@ -7,6 +7,7 @@ import cotizacionesApi from '@/api/cotizaciones';
 import clientesApi from '@/api/clientes';
 import salonesApi from '@/api/salones';
 import catalogosApi from '@/api/catalogos';
+import { estadoEventoToEventStatus } from '@/features/events/utils/eventStatus';
 import type {
   EventoResponse,
   CotizacionResponse,
@@ -320,7 +321,7 @@ const EventQuotePage: React.FC = () => {
       title: `${tipoEvento?.nombre || 'Evento'} - ${cliente?.nombreCompleto || 'Cliente'}`,
       dateLabel: inicio.toLocaleDateString('es-CO'),
       timeLabel: inicio.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
-      status: 'Pendiente' as const,
+      status: estadoEventoToEventStatus(evento.estado),
       customerName: cliente?.nombreCompleto || 'Cargando...',
       customerPhone: cliente?.telefono || '',
       eventType: tipoEvento?.nombre || 'Cargando...',
@@ -352,7 +353,7 @@ const EventQuotePage: React.FC = () => {
   if (!cotizacion) {
     return (
       <section className="space-y-8 pb-28">
-        <EventDetailHeaderTabs event={event} activeTab="cotizacion" />
+        <EventDetailHeaderTabs event={event} activeTab="cotizacion" onEventCancelled={setEvento} />
 
         {error && (
           <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
@@ -393,7 +394,7 @@ const EventQuotePage: React.FC = () => {
 
   return (
     <section className="space-y-8 pb-28">
-      <EventDetailHeaderTabs event={event} activeTab="cotizacion" />
+      <EventDetailHeaderTabs event={event} activeTab="cotizacion" onEventCancelled={setEvento} />
 
       {error && (
         <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>

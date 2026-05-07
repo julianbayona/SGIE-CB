@@ -6,6 +6,7 @@ import montajesApi from '@/api/montajes';
 import catalogosApi from '@/api/catalogos';
 import clientesApi from '@/api/clientes';
 import salonesApi from '@/api/salones';
+import { estadoEventoToEventStatus } from '@/features/events/utils/eventStatus';
 import cotizacionesApi from '@/api/cotizaciones';
 import type {
   EventoResponse,
@@ -347,7 +348,7 @@ const EventMontagePage: React.FC = () => {
       title: `${tipoEvento?.nombre || 'Evento'} - ${cliente?.nombreCompleto || 'Cliente'}`,
       dateLabel: inicio.toLocaleDateString('es-CO'),
       timeLabel: inicio.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
-      status: 'Pendiente' as const,
+      status: estadoEventoToEventStatus(evento.estado),
       customerName: cliente?.nombreCompleto || 'Cargando...',
       customerPhone: cliente?.telefono || '',
       eventType: tipoEvento?.nombre || 'Cargando...',
@@ -419,7 +420,7 @@ const EventMontagePage: React.FC = () => {
 
   return (
     <section className="space-y-10 pb-32">
-      <EventDetailHeaderTabs event={event} activeTab="montaje" />
+      <EventDetailHeaderTabs event={event} activeTab="montaje" onEventCancelled={setEvento} />
 
       <div className="gap-6 lg:flex lg:items-start">
         <div className="mb-24 flex-1 space-y-6">

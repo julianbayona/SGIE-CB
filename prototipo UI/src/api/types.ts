@@ -120,6 +120,10 @@ export interface ModificarReservaSalonRequest {
 
 export interface ConfirmarEventoRequest {}
 
+export interface CancelarEventoRequest {
+  motivo: string;
+}
+
 export interface PruebaPlatoRequest {
   fechaRealizacion: string;
 }
