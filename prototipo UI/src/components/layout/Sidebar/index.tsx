@@ -6,6 +6,7 @@ const navItems = [
   { to: '/events', icon: 'event_available', label: 'Eventos' },
   { to: '/clients', icon: 'group', label: 'Clientes' },
   { to: '/quotes', icon: 'description', label: 'Cotizaciones' },
+  { to: '/reports', icon: 'monitoring', label: 'Reportes' },
   { to: '/catalogs', icon: 'settings', label: 'Catálogos' },
 ];
 

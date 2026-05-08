@@ -108,6 +108,19 @@ public class Evento {
         return cambiarEstado(EstadoEvento.CONFIRMADO);
     }
 
+    public Evento marcarPendienteAnticipo() {
+        if (estado == EstadoEvento.CANCELADO) {
+            throw new DomainException("No se puede marcar pendiente de anticipo para un evento cancelado");
+        }
+        if (estado == EstadoEvento.COTIZACION_APROBADA) {
+            return cambiarEstado(EstadoEvento.PENDIENTE_ANTICIPO);
+        }
+        if (estado == EstadoEvento.PENDIENTE_ANTICIPO || estado == EstadoEvento.CONFIRMADO) {
+            return this;
+        }
+        throw new DomainException("Solo un evento con cotizacion aprobada puede pasar a pendiente de anticipo");
+    }
+
     public Evento cancelar() {
         if (estado == EstadoEvento.CANCELADO) {
             throw new DomainException("El evento ya se encuentra cancelado");

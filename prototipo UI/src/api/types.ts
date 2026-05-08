@@ -501,3 +501,76 @@ export interface EventoCalendarResponse {
   intentos: number;
   mensajeError: string | null;
 }
+
+// -------------------------------------------------------------
+// Reportes
+// -------------------------------------------------------------
+
+export interface EstadoEventoResumenResponse {
+  estado: EstadoEvento;
+  total: number;
+}
+
+export interface ResumenEventosResponse {
+  desde: string;
+  hasta: string;
+  totalEventos: number;
+  confirmados: number;
+  cancelados: number;
+  porcentajeConfirmados: number;
+  porcentajeCancelados: number;
+  estados: EstadoEventoResumenResponse[];
+}
+
+export interface EventosMensualesResponse {
+  anio: number;
+  mes: number;
+  confirmados: number;
+  cancelados: number;
+  total: number;
+}
+
+export interface ReporteFinancieroEventoResponse {
+  eventoId: string;
+  cliente: string;
+  fechaHoraInicio: string;
+  estado: EstadoEvento;
+  cotizacionId: string | null;
+  valorTotal: number;
+  totalPagado: number;
+  saldoPendiente: number;
+  pagadoTotalmente: boolean;
+}
+
+export interface AnticipoPeriodoResponse {
+  anticipoId: string;
+  eventoId: string;
+  cliente: string;
+  cotizacionId: string;
+  valor: number;
+  metodoPago: string;
+  fechaPago: string;
+}
+
+export interface AnticiposPorMetodoResponse {
+  metodoPago: string;
+  cantidad: number;
+  total: number;
+}
+
+export interface ReporteAnticiposResponse {
+  desde: string;
+  hasta: string;
+  cantidad: number;
+  totalRecaudado: number;
+  porMetodo: AnticiposPorMetodoResponse[];
+  anticipos: AnticipoPeriodoResponse[];
+}
+
+export interface DemandaSalonResponse {
+  salonId: string;
+  salon: string;
+  totalReservas: number;
+  totalEventos: number;
+  totalInvitados: number;
+}

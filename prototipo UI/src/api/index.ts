@@ -7,4 +7,5 @@ export { default as catalogosApi } from './catalogos';
 export { default as menusApi } from './menus';
 export { default as montajesApi } from './montajes';
 export { default as pagosApi } from './pagos';
+export { default as reportesApi } from './reportes';
 export type * from './types';
