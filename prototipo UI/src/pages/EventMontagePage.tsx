@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import EventCancelledNotice from '@/features/events/components/EventCancelledNotice';
 import EventDetailHeaderTabs from '@/features/events/components/EventDetailHeaderTabs';
 import eventosApi from '@/api/eventos';
 import montajesApi from '@/api/montajes';
@@ -81,6 +82,7 @@ const EventMontagePage: React.FC = () => {
   ]);
 
   const [additionalItems, setAdditionalItems] = useState<AdditionalItem[]>([]);
+  const isCancelled = evento?.estado === 'CANCELADO';
 
   useEffect(() => {
     if (!eventId) return;
@@ -223,18 +225,21 @@ const EventMontagePage: React.FC = () => {
   }, [eventId]);
 
   const updateInfrastructureSelection = (itemId: string, checked: boolean) => {
+    if (isCancelled) return;
     setInfrastructure((prev) =>
       prev.map((item) => (item.id === itemId ? { ...item, selected: checked } : item))
     );
   };
 
   const updateAdditionalSelection = (itemId: string, checked: boolean) => {
+    if (isCancelled) return;
     setAdditionalItems((prev) =>
       prev.map((item) => (item.id === itemId ? { ...item, selected: checked } : item))
     );
   };
 
   const updateAdditionalQuantity = (itemId: string, quantity: number) => {
+    if (isCancelled) return;
     setAdditionalItems((prev) =>
       prev.map((item) => {
         if (item.id !== itemId || item.billingType !== 'UNIDAD') {
@@ -249,6 +254,11 @@ const EventMontagePage: React.FC = () => {
   const handleGuardarMontaje = async () => {
     if (!evento) {
       setError('No hay evento cargado');
+      return;
+    }
+
+    if (isCancelled) {
+      setError('No se puede modificar el montaje de un evento cancelado.');
       return;
     }
 
@@ -422,8 +432,12 @@ const EventMontagePage: React.FC = () => {
     <section className="space-y-7 pb-32">
       <EventDetailHeaderTabs event={event} activeTab="montaje" onEventCancelled={setEvento} />
 
+      {isCancelled && (
+        <EventCancelledNotice detail="El montaje queda disponible solo para consulta historica. No se pueden cambiar mesas, textiles, infraestructura o adicionales." />
+      )}
+
       <div className="gap-6 lg:flex lg:items-start">
-        <div className="mb-24 flex-1 space-y-6">
+        <div className={`mb-24 flex-1 space-y-6 ${isCancelled ? 'opacity-75' : ''}`}>
           {error && (
             <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
           )}
@@ -465,7 +479,7 @@ const EventMontagePage: React.FC = () => {
                     className="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-[#A8841C] focus:ring-2 focus:ring-[#A8841C]/15"
                     value={tableType}
                     onChange={(eventTarget) => setTableType(eventTarget.target.value)}
-                    disabled={tiposMesa.length === 0}
+                    disabled={isCancelled || tiposMesa.length === 0}
                   >
                     {tiposMesa.length === 0 && <option value="">Cargando...</option>}
                     {tiposMesa.map((tipo) => (
@@ -482,7 +496,7 @@ const EventMontagePage: React.FC = () => {
                     className="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-[#A8841C] focus:ring-2 focus:ring-[#A8841C]/15"
                     value={chairType}
                     onChange={(eventTarget) => setChairType(eventTarget.target.value)}
-                    disabled={tiposSilla.length === 0}
+                    disabled={isCancelled || tiposSilla.length === 0}
                   >
                     {tiposSilla.length === 0 && <option value="">Cargando...</option>}
                     {tiposSilla.map((tipo) => (
@@ -501,6 +515,7 @@ const EventMontagePage: React.FC = () => {
                     min={1}
                     value={peoplePerTable}
                     onChange={(eventTarget) => setPeoplePerTable(Number(eventTarget.target.value) || 0)}
+                    disabled={isCancelled}
                   />
                 </div>
 
@@ -512,6 +527,7 @@ const EventMontagePage: React.FC = () => {
                     min={1}
                     value={tableCount}
                     onChange={(eventTarget) => setTableCount(Number(eventTarget.target.value) || 0)}
+                    disabled={isCancelled}
                   />
                 </div>
 
@@ -521,6 +537,7 @@ const EventMontagePage: React.FC = () => {
                     className="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-[#A8841C] focus:ring-2 focus:ring-[#A8841C]/15"
                     value={dinnerware ? 'true' : 'false'}
                     onChange={(eventTarget) => setDinnerware(eventTarget.target.value === 'true')}
+                    disabled={isCancelled}
                   >
                     <option value="true">Sí</option>
                     <option value="false">No</option>
@@ -533,6 +550,7 @@ const EventMontagePage: React.FC = () => {
                     className="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-[#A8841C] focus:ring-2 focus:ring-[#A8841C]/15"
                     value={fajonEnabled ? 'true' : 'false'}
                     onChange={(eventTarget) => setFajonEnabled(eventTarget.target.value === 'true')}
+                    disabled={isCancelled}
                   >
                     <option value="true">Sí</option>
                     <option value="false">No</option>
@@ -548,7 +566,7 @@ const EventMontagePage: React.FC = () => {
                         className="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-[#A8841C] focus:ring-2 focus:ring-[#A8841C]/15"
                         value={clothType}
                         onChange={(eventTarget) => setClothType(eventTarget.target.value)}
-                        disabled={manteles.length === 0}
+                        disabled={isCancelled || manteles.length === 0}
                       >
                         {manteles.length === 0 && <option value="">Cargando...</option>}
                         {manteles.map((mantel) => (
@@ -568,7 +586,7 @@ const EventMontagePage: React.FC = () => {
                         className="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-[#A8841C] focus:ring-2 focus:ring-[#A8841C]/15"
                         value={topClothType}
                         onChange={(eventTarget) => setTopClothType(eventTarget.target.value)}
-                        disabled={sobremanteles.length === 0}
+                        disabled={isCancelled || sobremanteles.length === 0}
                       >
                         {sobremanteles.length === 0 && <option value="">Cargando...</option>}
                         {sobremanteles.map((sobremantel) => (
@@ -607,6 +625,7 @@ const EventMontagePage: React.FC = () => {
                             type="checkbox"
                             checked={item.selected}
                             onChange={(eventTarget) => updateInfrastructureSelection(item.id, eventTarget.target.checked)}
+                            disabled={isCancelled}
                           />
                         </td>
                       </tr>
@@ -647,6 +666,7 @@ const EventMontagePage: React.FC = () => {
                               onChange={(eventTarget) =>
                                 updateAdditionalQuantity(item.id, Number(eventTarget.target.value))
                               }
+                              disabled={isCancelled}
                             />
                           ) : (
                             <span className="text-sm text-on-surface-variant">1 servicio</span>
@@ -661,6 +681,7 @@ const EventMontagePage: React.FC = () => {
                             type="checkbox"
                             checked={item.selected}
                             onChange={(eventTarget) => updateAdditionalSelection(item.id, eventTarget.target.checked)}
+                            disabled={isCancelled}
                           />
                         </td>
                       </tr>
@@ -774,9 +795,9 @@ const EventMontagePage: React.FC = () => {
             className="flex-1 rounded-xl bg-[#A8841C] px-8 py-2.5 text-sm font-black text-white shadow-sm transition-colors hover:bg-[#8f7118] disabled:opacity-50 sm:flex-none"
             type="button"
             onClick={handleGuardarMontaje}
-            disabled={saving || !evento}
+            disabled={isCancelled || saving || !evento}
           >
-            {saving ? 'Guardando...' : 'Guardar montaje'}
+            {isCancelled ? 'Evento cancelado' : saving ? 'Guardando...' : 'Guardar montaje'}
           </button>
         </div>
       </footer>

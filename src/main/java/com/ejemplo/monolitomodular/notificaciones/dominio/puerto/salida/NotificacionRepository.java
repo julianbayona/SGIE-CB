@@ -22,4 +22,8 @@ public interface NotificacionRepository {
     default List<Notificacion> buscarCancelablesPorEventoYTipo(UUID eventoId, TipoNotificacion tipo) {
         return List.of();
     }
+
+    default List<Notificacion> buscarCancelablesPorEventoId(UUID eventoId) {
+        return List.of();
+    }
 }

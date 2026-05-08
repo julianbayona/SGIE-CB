@@ -23,7 +23,7 @@ const ClientsTable: React.FC<ClientsTableProps> = ({ clients, onEditClient }) =>
       </thead>
       <tbody className="divide-y divide-stone-100">
         {clients.map((client) => (
-          <ClientTableRow key={client.idNumber} client={client} onEditClient={onEditClient} />
+          <ClientTableRow key={client.id} client={client} onEditClient={onEditClient} />
         ))}
       </tbody>
     </table>

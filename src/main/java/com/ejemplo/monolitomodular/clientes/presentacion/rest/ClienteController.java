@@ -1,8 +1,10 @@
 package com.ejemplo.monolitomodular.clientes.presentacion.rest;
 
 import com.ejemplo.monolitomodular.auth.infraestructura.seguridad.UsuarioAutenticado;
+import com.ejemplo.monolitomodular.clientes.aplicacion.dto.ActualizarClienteCommand;
 import com.ejemplo.monolitomodular.clientes.aplicacion.dto.ClienteView;
 import com.ejemplo.monolitomodular.clientes.aplicacion.dto.RegistrarClienteCommand;
+import com.ejemplo.monolitomodular.clientes.aplicacion.puerto.entrada.ActualizarClienteUseCase;
 import com.ejemplo.monolitomodular.clientes.aplicacion.puerto.entrada.ConsultarClienteUseCase;
 import com.ejemplo.monolitomodular.clientes.aplicacion.puerto.entrada.RegistrarClienteUseCase;
 import com.ejemplo.monolitomodular.clientes.presentacion.rest.dto.ClienteResponse;
@@ -14,6 +16,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -30,13 +33,16 @@ import java.util.UUID;
 public class ClienteController {
 
     private final RegistrarClienteUseCase registrarClienteUseCase;
+    private final ActualizarClienteUseCase actualizarClienteUseCase;
     private final ConsultarClienteUseCase consultarClienteUseCase;
 
     public ClienteController(
             RegistrarClienteUseCase registrarClienteUseCase,
+            ActualizarClienteUseCase actualizarClienteUseCase,
             ConsultarClienteUseCase consultarClienteUseCase
     ) {
         this.registrarClienteUseCase = registrarClienteUseCase;
+        this.actualizarClienteUseCase = actualizarClienteUseCase;
         this.consultarClienteUseCase = consultarClienteUseCase;
     }
 
@@ -62,6 +68,21 @@ public class ClienteController {
                 .toUri();
 
         return ResponseEntity.created(location).body(toResponse(cliente));
+    }
+
+    @PutMapping("/{id}")
+    public ClienteResponse actualizar(
+            @PathVariable UUID id,
+            @Valid @RequestBody RegistrarClienteRequest request
+    ) {
+        return toResponse(actualizarClienteUseCase.ejecutar(new ActualizarClienteCommand(
+                id,
+                request.cedula(),
+                request.nombreCompleto(),
+                request.telefono(),
+                request.correo(),
+                request.tipoCliente()
+        )));
     }
 
     @GetMapping("/{id}")

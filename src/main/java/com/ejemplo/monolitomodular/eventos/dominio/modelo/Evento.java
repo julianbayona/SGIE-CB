@@ -138,6 +138,12 @@ public class Evento {
         return cambiarEstado(EstadoEvento.PENDIENTE);
     }
 
+    public void validarOperable() {
+        if (estado == EstadoEvento.CANCELADO) {
+            throw new DomainException("No se puede operar un evento cancelado");
+        }
+    }
+
     private Evento cambiarEstado(EstadoEvento nuevoEstado) {
         return new Evento(
                 id,

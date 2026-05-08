@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import EventCancelledNotice from '@/features/events/components/EventCancelledNotice';
 import EventDetailHeaderTabs from '@/features/events/components/EventDetailHeaderTabs';
 import eventosApi from '@/api/eventos';
 import clientesApi from '@/api/clientes';
@@ -47,6 +48,7 @@ const EventPaymentsPage: React.FC = () => {
   const [newDate, setNewDate] = useState('');
   const [newMethod, setNewMethod] = useState('TRANSFERENCIA');
   const [newConcept, setNewConcept] = useState('Anticipo');
+  const isCancelled = evento?.estado === 'CANCELADO';
 
   useEffect(() => {
     if (!eventId) {
@@ -188,6 +190,11 @@ const EventPaymentsPage: React.FC = () => {
   const paymentHistory = useMemo(() => [...payments].reverse(), [payments]);
 
   const registerPayment = async () => {
+    if (isCancelled) {
+      setError('No se pueden registrar pagos en un evento cancelado.');
+      return;
+    }
+
     if (!cotizacionId || newAmount <= 0 || !newDate || !newConcept.trim()) {
       return;
     }
@@ -258,6 +265,10 @@ const EventPaymentsPage: React.FC = () => {
   return (
     <section className="space-y-8 pb-24">
       <EventDetailHeaderTabs event={event} activeTab="pagos" onEventCancelled={setEvento} />
+
+      {isCancelled && (
+        <EventCancelledNotice detail="Los pagos quedan disponibles solo para consulta. No se pueden registrar nuevos anticipos o abonos en un evento cancelado." />
+      )}
 
       {error ? (
         <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -331,6 +342,7 @@ const EventPaymentsPage: React.FC = () => {
                 type="text"
                 value={newConcept}
                 onChange={(eventTarget) => setNewConcept(eventTarget.target.value)}
+                disabled={isCancelled}
               />
             </div>
 
@@ -340,6 +352,7 @@ const EventPaymentsPage: React.FC = () => {
                 className="w-full bg-surface-container-low border border-outline-variant/40 rounded-md px-3 py-2.5 text-sm"
                 value={newMethod}
                 onChange={(eventTarget) => setNewMethod(eventTarget.target.value)}
+                disabled={isCancelled}
               >
                 <option value="TRANSFERENCIA">Transferencia</option>
                 <option value="EFECTIVO">Efectivo</option>
@@ -356,6 +369,7 @@ const EventPaymentsPage: React.FC = () => {
                 min={0}
                 value={newAmount}
                 onChange={(eventTarget) => setNewAmount(Math.max(0, Number(eventTarget.target.value) || 0))}
+                disabled={isCancelled}
               />
               <p className="text-xs text-on-surface-variant mt-2">
                 Maximo permitido: {formatCurrency(pendingAmount)}
@@ -369,6 +383,7 @@ const EventPaymentsPage: React.FC = () => {
                 type="date"
                 value={newDate}
                 onChange={(eventTarget) => setNewDate(eventTarget.target.value)}
+                disabled={isCancelled}
               />
             </div>
           </div>
@@ -376,10 +391,10 @@ const EventPaymentsPage: React.FC = () => {
           <button
             type="button"
             className="bg-primary-gold text-white px-5 py-2.5 rounded-md text-sm font-bold hover:bg-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            disabled={saving || !cotizacionId || newAmount <= 0 || !newDate || pendingAmount <= 0 || !newConcept.trim()}
+            disabled={isCancelled || saving || !cotizacionId || newAmount <= 0 || !newDate || pendingAmount <= 0 || !newConcept.trim()}
             onClick={registerPayment}
           >
-            {saving ? 'Registrando...' : 'Registrar pago'}
+            {isCancelled ? 'Evento cancelado' : saving ? 'Registrando...' : 'Registrar pago'}
           </button>
         </section>
 

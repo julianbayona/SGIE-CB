@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import EventCancelledNotice from '@/features/events/components/EventCancelledNotice';
 import EventDetailHeaderTabs from '@/features/events/components/EventDetailHeaderTabs';
 import eventosApi from '@/api/eventos';
 import clientesApi from '@/api/clientes';
@@ -124,6 +125,7 @@ const EventAgendaPage: React.FC = () => {
   const [newChannel, setNewChannel] = useState<ReminderChannel>('whatsapp');
   const [newNotes, setNewNotes] = useState('');
   const [filterCategory, setFilterCategory] = useState<'todos' | AgendaCategory>('todos');
+  const isCancelled = evento?.estado === 'CANCELADO';
 
   const cargarMonitoreo = async (currentEventId: string) => {
     const [notificacionesData, calendarData] = await Promise.all([
@@ -306,6 +308,11 @@ const EventAgendaPage: React.FC = () => {
   };
 
   const createEntry = async () => {
+    if (isCancelled) {
+      setError('No se pueden crear agendamientos para un evento cancelado.');
+      return;
+    }
+
     if (!newMilestone.trim() || !newScheduledAt) {
       return;
     }
@@ -353,6 +360,7 @@ const EventAgendaPage: React.FC = () => {
   };
 
   const updateStatus = (id: string, status: AgendaStatus) => {
+    if (isCancelled) return;
     setEntries((prev) =>
       prev.map((entry) => {
         if (entry.id !== id) {
@@ -390,6 +398,10 @@ const EventAgendaPage: React.FC = () => {
   return (
     <section className="space-y-8 pb-24">
       <EventDetailHeaderTabs event={event} activeTab="agenda" onEventCancelled={setEvento} />
+
+      {isCancelled && (
+        <EventCancelledNotice detail="La agenda queda disponible para monitoreo. No se pueden crear nuevas pruebas de plato ni recordatorios de anticipo para un evento cancelado." />
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-surface-container-lowest border border-border rounded-xl p-5 shadow-sm">
@@ -596,6 +608,7 @@ const EventAgendaPage: React.FC = () => {
                           className={`text-xs font-bold rounded-full px-2.5 py-1 border-none ${statusPillClass[entry.status]}`}
                           value={entry.status}
                           onChange={(eventTarget) => updateStatus(entry.id, eventTarget.target.value as AgendaStatus)}
+                          disabled={isCancelled}
                         >
                           <option value="programado">{statusLabel.programado}</option>
                           <option value="enviado">{statusLabel.enviado}</option>
@@ -614,6 +627,11 @@ const EventAgendaPage: React.FC = () => {
 
         <aside className="bg-surface-container-lowest border border-border rounded-xl p-6 shadow-sm space-y-5">
           <h4 className="text-xl font-display font-bold text-on-surface">Nuevo agendamiento</h4>
+          {isCancelled ? (
+            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+              El evento esta cancelado. Este formulario queda bloqueado.
+            </div>
+          ) : null}
 
           <div>
             <label className="block text-xs font-bold text-neutral-700 mb-2">Tipo</label>
@@ -625,6 +643,7 @@ const EventAgendaPage: React.FC = () => {
                 setNewCategory(nextCategory);
                 resetMilestoneByCategory(nextCategory);
               }}
+              disabled={isCancelled}
             >
               <option value="degustacion">Prueba de plato</option>
               <option value="anticipo">Recordatorio de anticipo</option>
@@ -638,6 +657,7 @@ const EventAgendaPage: React.FC = () => {
               type="text"
               value={newMilestone}
               onChange={(eventTarget) => setNewMilestone(eventTarget.target.value)}
+              disabled={isCancelled}
             />
           </div>
 
@@ -648,6 +668,7 @@ const EventAgendaPage: React.FC = () => {
               type="datetime-local"
               value={newScheduledAt}
               onChange={(eventTarget) => setNewScheduledAt(eventTarget.target.value)}
+              disabled={isCancelled}
             />
           </div>
 
@@ -657,6 +678,7 @@ const EventAgendaPage: React.FC = () => {
               className="w-full bg-surface-container-low border border-outline-variant/40 rounded-md px-3 py-2.5 text-sm"
               value={newChannel}
               onChange={(eventTarget) => setNewChannel(eventTarget.target.value as ReminderChannel)}
+              disabled={isCancelled}
             >
               <option value="whatsapp">WhatsApp</option>
               <option value="email">Email</option>
@@ -672,16 +694,17 @@ const EventAgendaPage: React.FC = () => {
               value={newNotes}
               placeholder="Detalle opcional para el equipo..."
               onChange={(eventTarget) => setNewNotes(eventTarget.target.value)}
+              disabled={isCancelled}
             ></textarea>
           </div>
 
           <button
             type="button"
             className="w-full bg-[#191C1D] text-white px-6 py-3 rounded-md text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
-            disabled={saving || !newMilestone.trim() || !newScheduledAt}
+            disabled={isCancelled || saving || !newMilestone.trim() || !newScheduledAt}
             onClick={createEntry}
           >
-            {saving ? 'Agendando...' : 'Agendar recordatorio'}
+            {isCancelled ? 'Evento cancelado' : saving ? 'Agendando...' : 'Agendar recordatorio'}
           </button>
         </aside>
       </div>

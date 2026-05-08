@@ -13,6 +13,7 @@ import type {
   EventoResponse,
   SalonResponse,
 } from '@/api/types';
+import EventCancelledNotice from '@/features/events/components/EventCancelledNotice';
 import EventDetailHeaderTabs from '@/features/events/components/EventDetailHeaderTabs';
 
 const estadoLabels: Record<EstadoEvento, string> = {
@@ -150,6 +151,7 @@ const EventSummaryPage: React.FC = () => {
   }, [cliente, evento, eventId, salon, tipoEvento, valorTotal]);
 
   const currentStepIndex = evento ? lifecycleSteps.indexOf(evento.estado) : -1;
+  const isCancelled = evento?.estado === 'CANCELADO';
 
   if (loading) {
     return (
@@ -174,6 +176,10 @@ const EventSummaryPage: React.FC = () => {
   return (
     <section className="space-y-7 pb-28">
       <EventDetailHeaderTabs event={event} activeTab="summary" onEventCancelled={setEvento} />
+
+      {isCancelled && (
+        <EventCancelledNotice detail="Este evento queda disponible solo para consulta historica. Las acciones operativas estan bloqueadas." />
+      )}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         <SummaryCard
@@ -220,10 +226,11 @@ const EventSummaryPage: React.FC = () => {
           <button
             type="button"
             onClick={() => navigate(`/events/${event.id}/pagos`)}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#A8841C] px-4 py-3 text-sm font-black text-white shadow-sm transition-colors hover:bg-[#8f7118]"
+            disabled={isCancelled}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#A8841C] px-4 py-3 text-sm font-black text-white shadow-sm transition-colors hover:bg-[#8f7118] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <span className="material-symbols-outlined text-lg">payments</span>
-            Registrar anticipo
+            {isCancelled ? 'Evento cancelado' : 'Registrar anticipo'}
           </button>
         </div>
 

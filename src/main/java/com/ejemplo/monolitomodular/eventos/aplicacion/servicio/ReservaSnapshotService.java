@@ -54,6 +54,7 @@ public class ReservaSnapshotService {
             boolean copiarMontaje,
             boolean copiarMenu
     ) {
+        validarReservaOperable(reservaActual);
         ReservaSalon nuevaVersion = reservaActual.crearNuevaVersion(
                 reservaActual.getSalonId(),
                 reservaActual.getNumInvitados(),
@@ -78,6 +79,12 @@ public class ReservaSnapshotService {
         }
 
         return guardada;
+    }
+
+    public void validarReservaOperable(ReservaSalon reservaActual) {
+        Evento evento = eventoRepository.buscarPorId(reservaActual.getEventoId())
+                .orElseThrow(() -> new DomainException("Evento asociado a la reserva no encontrado"));
+        evento.validarOperable();
     }
 
     private void volverEventoAPendienteSiAplica(ReservaSalon reservaActual, UUID usuarioId) {

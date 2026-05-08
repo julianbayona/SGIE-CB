@@ -61,6 +61,7 @@ public class PagoApplicationService implements RegistrarAnticipoUseCase, Consult
                 .orElseThrow(() -> new DomainException("Reserva asociada a la cotizacion no encontrada"));
         Evento evento = eventoRepository.buscarPorId(reserva.getEventoId())
                 .orElseThrow(() -> new DomainException("Evento asociado a la cotizacion no encontrado"));
+        evento.validarOperable();
 
         BigDecimal totalActual = anticipoRepository.totalPorEventoId(evento.getId());
         Anticipo anticipo = Anticipo.nuevo(

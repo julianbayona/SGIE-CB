@@ -6,17 +6,19 @@ import ClientFormModal, { type ClientFormValues } from '@/features/clients/compo
 import type { Client, ClientsTab } from '@/features/clients/types';
 import clientesApi from '@/api/clientes';
 import type { ClienteResponse } from '@/api/types';
+import { formatShortId } from '@/utils/formatters';
 
 /** Convierte la respuesta del backend al tipo que usa el frontend. */
 function toClient(c: ClienteResponse): Client {
   return {
+    id: c.id,
     idNumber: c.cedula,
     fullName: c.nombreCompleto,
     phone: c.telefono,
     email: c.correo,
     category: c.tipoCliente === 'SOCIO' ? 'Socio' : 'No Socio',
     status: c.activo ? 'Activo' : 'Suspendido',
-    registeredAt: c.id, // se usa el id como referencia interna; la fecha no viene en el DTO
+    registeredAt: formatShortId(c.id, 'CLI-'),
   };
 }
 
@@ -55,20 +57,17 @@ const ClientsPage: React.FC = () => {
   }, [searchQuery]);
 
   const editingClient = useMemo(
-    () => clients.find((c) => c.idNumber === editingClientId) ?? null,
+    () => clients.find((c) => c.id === editingClientId) ?? null,
     [clients, editingClientId]
   );
 
   const idNumbersInUse = useMemo(
     () =>
       clients
-        .filter((c) => c.idNumber !== editingClientId)
+        .filter((c) => c.id !== editingClientId)
         .map((c) => c.idNumber.replace(/[^\d]/g, '')),
     [clients, editingClientId]
   );
-
-  const formattedToday = new Intl.DateTimeFormat('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date());
-  void formattedToday; // usado en saveClient para nuevos registros locales
 
   const openCreateForm = () => {
     setEditingClientId(null);
@@ -76,7 +75,7 @@ const ClientsPage: React.FC = () => {
   };
 
   const openEditForm = (client: Client) => {
-    setEditingClientId(client.idNumber);
+    setEditingClientId(client.id);
     setIsFormOpen(true);
   };
 
@@ -88,21 +87,14 @@ const ClientsPage: React.FC = () => {
   const saveClient = async (values: ClientFormValues) => {
     try {
       if (editingClientId) {
-        // El backend no expone PUT /clientes/{id} aún; actualizamos localmente
-        setClients((prev) =>
-          prev.map((c) =>
-            c.idNumber !== editingClientId
-              ? c
-              : {
-                  ...c,
-                  idNumber: values.idNumber,
-                  fullName: values.fullName,
-                  category: values.category,
-                  phone: values.phone,
-                  email: values.email,
-                }
-          )
-        );
+        const actualizado = await clientesApi.actualizar(editingClientId, {
+          cedula: values.idNumber,
+          nombreCompleto: values.fullName,
+          telefono: values.phone,
+          correo: values.email,
+          tipoCliente: values.category === 'Socio' ? 'SOCIO' : 'NO_SOCIO',
+        });
+        setClients((prev) => prev.map((c) => (c.id === editingClientId ? toClient(actualizado) : c)));
         closeForm();
         return;
       }

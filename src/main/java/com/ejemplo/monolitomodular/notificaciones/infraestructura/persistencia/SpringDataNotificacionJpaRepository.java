@@ -35,5 +35,10 @@ public interface SpringDataNotificacionJpaRepository extends JpaRepository<Notif
             List<com.ejemplo.monolitomodular.notificaciones.dominio.modelo.EstadoNotificacion> estados
     );
 
+    List<NotificacionJpaEntity> findByEventoIdAndEstadoIn(
+            UUID eventoId,
+            List<com.ejemplo.monolitomodular.notificaciones.dominio.modelo.EstadoNotificacion> estados
+    );
+
     List<NotificacionJpaEntity> findByEventoIdOrderByFechaProgramadaDesc(UUID eventoId);
 }

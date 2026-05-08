@@ -70,6 +70,7 @@ public class MontajeApplicationService implements ConfigurarMontajeUseCase, Cons
     @Transactional
     public MontajeView ejecutar(ConfigurarMontajeCommand command) {
         ReservaSalon reserva = obtenerReservaVigente(command.reservaRaizId());
+        reservaSnapshotService.validarReservaOperable(reserva);
         usuarioRepository.buscarPorId(command.usuarioId())
                 .orElseThrow(() -> new DomainException("Usuario no encontrado"));
         ReservaSalon reservaDestino = obtenerReservaDestino(reserva, command.usuarioId());

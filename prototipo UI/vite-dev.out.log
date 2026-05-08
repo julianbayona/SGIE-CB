@@ -24,3 +24,16 @@ Port 5173 is in use, trying another one...
 [2m10:56:17 a. m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/calendar/components/WeekView/index.tsx, /src/index.css[22m
 [2m10:56:31 a. m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/calendar/components/WeekView/index.tsx, /src/index.css[22m
 [2m10:57:00 a. m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/calendar/components/WeekView/index.tsx, /src/index.css[22m
+[2m11:20:39 a. m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/EventMenuPage.tsx, /src/index.css[22m
+[2m11:21:10 a. m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/EventMontagePage.tsx, /src/index.css[22m
+[2m11:21:34 a. m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/EventAgendaPage.tsx, /src/index.css[22m
+[2m11:22:25 a. m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/EventQuotePage.tsx, /src/index.css[22m
+[2m11:22:41 a. m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/EventQuotePage.tsx, /src/index.css[22m
+[2m11:22:54 a. m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/EventQuotePage.tsx, /src/index.css[22m
+[2m11:23:12 a. m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/EventQuotePage.tsx, /src/index.css[22m
+[2m11:23:28 a. m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/EventPaymentsPage.tsx, /src/index.css[22m
+[2m11:25:44 a. m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/EventSummaryPage.tsx, /src/index.css[22m
+[2m11:34:56 a. m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/index.css, /src/pages/ClientsPage.tsx, /src/pages/QuotesPage.tsx, /src/pages/EventAgendaPage.tsx, /src/pages/EventQuotePage.tsx, /src/pages/EventRequestPage.tsx, /src/pages/EventsPage.tsx, /src/pages/EventMenuPage.tsx, /src/pages/EventSummaryPage.tsx, /src/pages/EventPaymentsPage.tsx, /src/pages/EventMontagePage.tsx[22m
+[2m11:35:14 a. m.[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/features/clients/types/index.ts[22m
+[2m11:36:12 a. m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/ClientsPage.tsx, /src/index.css[22m
+[2m11:36:24 a. m.[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/clients/components/ClientsTable/index.tsx, /src/index.css[22m

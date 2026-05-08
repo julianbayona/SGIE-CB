@@ -18,6 +18,11 @@ const clientesApi = {
   registrar(data: RegistrarClienteRequest): Promise<ClienteResponse> {
     return apiClient.post<ClienteResponse>('/clientes', data).then((r) => r.data);
   },
+
+  /** Actualiza los datos operativos de un cliente existente. */
+  actualizar(id: string, data: RegistrarClienteRequest): Promise<ClienteResponse> {
+    return apiClient.put<ClienteResponse>(`/clientes/${id}`, data).then((r) => r.data);
+  },
 };
 
 export default clientesApi;

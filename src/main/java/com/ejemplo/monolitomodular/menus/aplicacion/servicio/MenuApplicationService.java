@@ -55,6 +55,7 @@ public class MenuApplicationService implements ConfigurarMenuUseCase, ConsultarM
     @Transactional
     public MenuView ejecutar(ConfigurarMenuCommand command) {
         ReservaSalon reserva = obtenerReservaVigente(command.reservaRaizId());
+        reservaSnapshotService.validarReservaOperable(reserva);
         usuarioRepository.buscarPorId(command.usuarioId())
                 .orElseThrow(() -> new DomainException("Usuario no encontrado"));
         ReservaSalon reservaDestino = obtenerReservaDestino(reserva, command.usuarioId());

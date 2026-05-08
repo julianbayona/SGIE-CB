@@ -75,6 +75,16 @@ public class NotificacionJpaRepositoryAdapter implements NotificacionRepository 
                 .toList();
     }
 
+    @Override
+    public List<Notificacion> buscarCancelablesPorEventoId(UUID eventoId) {
+        return notificacionRepository.findByEventoIdAndEstadoIn(
+                        eventoId,
+                        List.of(EstadoNotificacion.PENDIENTE, EstadoNotificacion.ERROR)
+                ).stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
     private Notificacion toDomain(NotificacionJpaEntity entity) {
         List<NotificacionDestinatario> destinatarios = destinatarioRepository.findByNotificacionId(entity.getId()).stream()
                 .map(this::toDomain)

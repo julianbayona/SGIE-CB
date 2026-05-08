@@ -7,6 +7,7 @@ import cotizacionesApi from '@/api/cotizaciones';
 import eventosApi from '@/api/eventos';
 import menusApi from '@/api/menus';
 import salonesApi from '@/api/salones';
+import EventCancelledNotice from '@/features/events/components/EventCancelledNotice';
 import EventDetailHeaderTabs from '@/features/events/components/EventDetailHeaderTabs';
 import { estadoEventoToEventStatus } from '@/features/events/utils/eventStatus';
 import type {
@@ -72,6 +73,7 @@ const EventMenuPage: React.FC = () => {
   const [addExcepciones, setAddExcepciones] = useState('');
 
   const guests = evento?.reservas.find((reserva) => reserva.vigente)?.numInvitados ?? 0;
+  const isCancelled = evento?.estado === 'CANCELADO';
 
   useEffect(() => {
     if (!eventId) return;
@@ -222,6 +224,7 @@ const EventMenuPage: React.FC = () => {
   }, [addMomentoId, addPlatoId, platosDisponiblesParaMomento]);
 
   const agregarItem = () => {
+    if (isCancelled) return;
     if (!addMomentoId || !addPlatoId) return;
 
     const plato = platosDisponiblesParaMomento.find((candidate) => candidate.id === addPlatoId);
@@ -255,6 +258,7 @@ const EventMenuPage: React.FC = () => {
   };
 
   const quitarItem = (momentoId: string, localId: string) => {
+    if (isCancelled) return;
     setSelecciones((prev) =>
       prev
         .map((seleccion) =>
@@ -267,6 +271,7 @@ const EventMenuPage: React.FC = () => {
   };
 
   const actualizarCantidad = (momentoId: string, localId: string, cantidad: number) => {
+    if (isCancelled) return;
     setSelecciones((prev) =>
       prev.map((seleccion) =>
         seleccion.tipoMomentoId === momentoId
@@ -282,6 +287,7 @@ const EventMenuPage: React.FC = () => {
   };
 
   const actualizarExcepciones = (momentoId: string, localId: string, excepciones: string) => {
+    if (isCancelled) return;
     setSelecciones((prev) =>
       prev.map((seleccion) =>
         seleccion.tipoMomentoId === momentoId
@@ -298,6 +304,10 @@ const EventMenuPage: React.FC = () => {
 
   const handleGuardarMenu = async () => {
     if (!evento) return;
+    if (isCancelled) {
+      setError('No se puede modificar el menu de un evento cancelado.');
+      return;
+    }
 
     const reserva = evento.reservas.find((item) => item.vigente);
     if (!reserva) {
@@ -409,8 +419,12 @@ const EventMenuPage: React.FC = () => {
     <section className="space-y-7 pb-32">
       <EventDetailHeaderTabs event={event} activeTab="menu" onEventCancelled={setEvento} />
 
+      {isCancelled && (
+        <EventCancelledNotice detail="El menu queda disponible solo para consulta historica. No se pueden agregar, quitar o guardar platos en un evento cancelado." />
+      )}
+
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
-        <main className="space-y-6">
+        <main className={`space-y-6 ${isCancelled ? 'opacity-75' : ''}`}>
           {error && (
             <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-700">
               {error}
@@ -479,6 +493,7 @@ const EventMenuPage: React.FC = () => {
                         key={momento.id}
                         type="button"
                         onClick={() => setAddMomentoId(momento.id)}
+                        disabled={isCancelled}
                         className={`rounded-2xl border px-4 py-3 text-left transition ${
                           selected
                             ? 'border-[#A8841C] bg-[#f6efd5] ring-4 ring-[#A8841C]/10'
@@ -511,6 +526,7 @@ const EventMenuPage: React.FC = () => {
                             key={plato.id}
                             type="button"
                             onClick={() => setAddPlatoId(plato.id)}
+                            disabled={isCancelled}
                             className={`rounded-2xl border p-4 text-left transition ${
                               selected
                                 ? 'border-[#A8841C] bg-white ring-4 ring-[#A8841C]/10'
@@ -544,6 +560,7 @@ const EventMenuPage: React.FC = () => {
                         min={1}
                         value={addCantidad}
                         onChange={(eventTarget) => setAddCantidad(Number(eventTarget.target.value) || 1)}
+                        disabled={isCancelled}
                       />
                     </div>
                     <div>
@@ -554,13 +571,14 @@ const EventMenuPage: React.FC = () => {
                         value={addExcepciones}
                         placeholder="Ej: sin cebolla, vegetariano, sin gluten"
                         onChange={(eventTarget) => setAddExcepciones(eventTarget.target.value)}
+                        disabled={isCancelled}
                       />
                     </div>
                     <button
                       className="self-end rounded-xl bg-[#A8841C] px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-[#8f7118] disabled:opacity-50"
                       type="button"
                       onClick={agregarItem}
-                      disabled={!addMomentoId || !addPlatoId || platosDisponiblesParaMomento.length === 0}
+                      disabled={isCancelled || !addMomentoId || !addPlatoId || platosDisponiblesParaMomento.length === 0}
                     >
                       Agregar
                     </button>
@@ -623,6 +641,7 @@ const EventMenuPage: React.FC = () => {
                               className="self-start text-sm font-black text-red-700 hover:text-red-800"
                               type="button"
                               onClick={() => quitarItem(seleccion.tipoMomentoId, item.localId)}
+                              disabled={isCancelled}
                             >
                               Quitar
                             </button>
@@ -643,6 +662,7 @@ const EventMenuPage: React.FC = () => {
                                     Number(eventTarget.target.value),
                                   )
                                 }
+                                disabled={isCancelled}
                               />
                             </div>
                             <div>
@@ -659,6 +679,7 @@ const EventMenuPage: React.FC = () => {
                                     eventTarget.target.value,
                                   )
                                 }
+                                disabled={isCancelled}
                               />
                             </div>
                             <div>
@@ -687,6 +708,7 @@ const EventMenuPage: React.FC = () => {
               value={notasGenerales}
               placeholder="Ej: menu infantil, personas vegetarianas, alergias"
               onChange={(eventTarget) => setNotasGenerales(eventTarget.target.value)}
+              disabled={isCancelled}
             />
           </section>
         </main>
@@ -720,9 +742,9 @@ const EventMenuPage: React.FC = () => {
           className="w-full rounded-xl bg-[#A8841C] px-8 py-2.5 text-sm font-black text-white shadow-sm transition-colors hover:bg-[#8f7118] disabled:opacity-50 sm:w-auto"
           type="button"
           onClick={handleGuardarMenu}
-          disabled={saving || totalItems === 0}
+          disabled={isCancelled || saving || totalItems === 0}
         >
-          {saving ? 'Guardando...' : 'Guardar menu'}
+          {isCancelled ? 'Evento cancelado' : saving ? 'Guardando...' : 'Guardar menu'}
         </button>
       </footer>
     </section>

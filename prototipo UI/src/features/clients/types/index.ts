@@ -2,6 +2,7 @@ export type ClientCategory = 'Socio' | 'No Socio';
 export type ClientStatus = 'Activo' | 'Suspendido';
 
 export interface Client {
+  id: string;
   idNumber: string;
   fullName: string;
   phone: string;

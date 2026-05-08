@@ -175,6 +175,7 @@ public class EventoApplicationService implements
     public EventoView ejecutar(UUID eventoId, CrearReservaSalonCommand command) {
         Evento evento = eventoRepository.buscarPorId(eventoId)
                 .orElseThrow(() -> new DomainException("Evento no encontrado"));
+        evento.validarOperable();
 
         usuarioRepository.buscarPorId(command.usuarioId())
                 .orElseThrow(() -> new DomainException("Usuario no encontrado"));
@@ -209,6 +210,7 @@ public class EventoApplicationService implements
 
         Evento evento = eventoRepository.buscarPorId(reservaActual.getEventoId())
                 .orElseThrow(() -> new DomainException("Evento no encontrado"));
+        evento.validarOperable();
 
         usuarioRepository.buscarPorId(command.usuarioId())
                 .orElseThrow(() -> new DomainException("Usuario no encontrado"));
@@ -263,6 +265,7 @@ public class EventoApplicationService implements
                 .orElseThrow(() -> new DomainException("Usuario no encontrado"));
         Evento evento = eventoRepository.buscarPorId(eventoId)
                 .orElseThrow(() -> new DomainException("Evento no encontrado"));
+        evento.validarOperable();
         validarEventoConfirmable(evento);
 
         Evento confirmado = evento.confirmar();
@@ -310,6 +313,7 @@ public class EventoApplicationService implements
         cotizacionRepository.desactualizarActivasPorEventoId(evento.getId());
         cancelarPruebasPlato(evento.getId());
         cancelarRecordatoriosAnticipo(evento.getId());
+        cancelarNotificacionesPendientes(evento.getId());
         cancelarSincronizacionesCalendar(evento.getId());
 
         return toView(cancelado, reservaSalonRepository.listarPorEvento(evento.getId()));
@@ -371,6 +375,12 @@ public class EventoApplicationService implements
 
     private void cancelarNotificacionesPendientes(UUID eventoId, TipoNotificacion tipo) {
         notificacionRepository.buscarCancelablesPorEventoYTipo(eventoId, tipo).stream()
+                .map(Notificacion::cancelar)
+                .forEach(notificacionRepository::guardar);
+    }
+
+    private void cancelarNotificacionesPendientes(UUID eventoId) {
+        notificacionRepository.buscarCancelablesPorEventoId(eventoId).stream()
                 .map(Notificacion::cancelar)
                 .forEach(notificacionRepository::guardar);
     }
