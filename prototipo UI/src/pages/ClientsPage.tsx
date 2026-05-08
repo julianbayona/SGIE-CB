@@ -6,6 +6,7 @@ import ClientFormModal, { type ClientFormValues } from '@/features/clients/compo
 import type { Client, ClientsTab } from '@/features/clients/types';
 import clientesApi from '@/api/clientes';
 import type { ClienteResponse } from '@/api/types';
+import { useToast } from '@/components/ui/ToastProvider';
 import { formatShortId } from '@/utils/formatters';
 
 /** Convierte la respuesta del backend al tipo que usa el frontend. */
@@ -25,6 +26,7 @@ function toClient(c: ClienteResponse): Client {
 const PAGE_SIZE = 7;
 
 const ClientsPage: React.FC = () => {
+  const toast = useToast();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -95,6 +97,7 @@ const ClientsPage: React.FC = () => {
           tipoCliente: values.category === 'Socio' ? 'SOCIO' : 'NO_SOCIO',
         });
         setClients((prev) => prev.map((c) => (c.id === editingClientId ? toClient(actualizado) : c)));
+        toast.success('Cliente actualizado', `${actualizado.nombreCompleto} quedo actualizado correctamente.`);
         closeForm();
         return;
       }
@@ -108,9 +111,10 @@ const ClientsPage: React.FC = () => {
       });
 
       setClients((prev) => [toClient(nuevo), ...prev]);
+      toast.success('Cliente creado', `${nuevo.nombreCompleto} quedo registrado en el sistema.`);
       closeForm();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Error al guardar el cliente.');
+      toast.error('No fue posible guardar el cliente', err instanceof Error ? err.message : undefined);
     }
   };
 

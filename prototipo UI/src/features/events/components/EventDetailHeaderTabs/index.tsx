@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import eventosApi from '@/api/eventos';
 import type { EventoResponse } from '@/api/types';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { useToast } from '@/components/ui/ToastProvider';
 import { useAuth } from '@/contexts/AuthContext';
 import CancelEventModal from '@/features/events/components/CancelEventModal';
 import type { EventSummaryData } from '@/features/events/data/eventSummary';
@@ -42,6 +43,7 @@ const EventDetailHeaderTabs: React.FC<EventDetailHeaderTabsProps> = ({
 }) => {
   const navigate = useNavigate();
   const { hasRole } = useAuth();
+  const toast = useToast();
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
@@ -69,11 +71,14 @@ const EventDetailHeaderTabs: React.FC<EventDetailHeaderTabsProps> = ({
       const actualizado = await eventosApi.cancelar(event.id, { motivo });
       setCancelModalOpen(false);
       onEventCancelled?.(actualizado);
+      toast.success('Evento cancelado', 'El evento quedo bloqueado para nuevas operaciones.');
       if (activeTab !== 'summary') {
         navigate(`/events/${event.id}`, { replace: true });
       }
     } catch (err) {
-      setCancelError(err instanceof Error ? err.message : 'No fue posible cancelar el evento.');
+      const message = err instanceof Error ? err.message : 'No fue posible cancelar el evento.';
+      setCancelError(message);
+      toast.error('No fue posible cancelar el evento', message);
     } finally {
       setCancelling(false);
     }

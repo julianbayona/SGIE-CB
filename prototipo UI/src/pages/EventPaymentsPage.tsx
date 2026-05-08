@@ -7,6 +7,7 @@ import clientesApi from '@/api/clientes';
 import salonesApi from '@/api/salones';
 import catalogosApi from '@/api/catalogos';
 import cotizacionesApi from '@/api/cotizaciones';
+import { useToast } from '@/components/ui/ToastProvider';
 import { estadoEventoToEventStatus } from '@/features/events/utils/eventStatus';
 import pagosApi from '@/api/pagos';
 import type { EventoResponse, ClienteResponse, SalonResponse, CatalogoBasicoResponse } from '@/api/types';
@@ -31,6 +32,7 @@ const formatCurrency = (value: number): string => {
 
 const EventPaymentsPage: React.FC = () => {
   const { eventId } = useParams();
+  const toast = useToast();
 
   const [evento, setEvento] = useState<EventoResponse | null>(null);
   const [cliente, setCliente] = useState<ClienteResponse | null>(null);
@@ -235,8 +237,11 @@ const EventPaymentsPage: React.FC = () => {
       setNewDate('');
       setNewMethod('TRANSFERENCIA');
       setNewConcept(pendingAmount - safeAmount <= 0 ? 'Abono final' : 'Anticipo');
+      toast.success('Pago registrado', `${formatCurrency(Number(anticipo.valor))} quedo aplicado al evento.`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al registrar el pago.');
+      const message = err instanceof Error ? err.message : 'Error al registrar el pago.';
+      setError(message);
+      toast.error('No fue posible registrar el pago', message);
     } finally {
       setSaving(false);
     }

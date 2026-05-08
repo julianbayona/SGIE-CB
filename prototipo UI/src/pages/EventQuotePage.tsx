@@ -8,6 +8,7 @@ import cotizacionesApi from '@/api/cotizaciones';
 import clientesApi from '@/api/clientes';
 import salonesApi from '@/api/salones';
 import catalogosApi from '@/api/catalogos';
+import { useToast } from '@/components/ui/ToastProvider';
 import { estadoEventoToEventStatus } from '@/features/events/utils/eventStatus';
 import type {
   EventoResponse,
@@ -38,6 +39,7 @@ const formatCurrency = (value: number): string =>
 
 const EventQuotePage: React.FC = () => {
   const { eventId } = useParams();
+  const toast = useToast();
 
   const [evento, setEvento] = useState<EventoResponse | null>(null);
   const [cotizacion, setCotizacion] = useState<CotizacionResponse | null>(null);
@@ -174,8 +176,11 @@ const EventQuotePage: React.FC = () => {
       });
 
       setCotizacion(nuevaCotizacion);
+      toast.success('Borrador generado', 'La cotizacion quedo creada desde menu y montaje.');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al generar borrador');
+      const message = err instanceof Error ? err.message : 'Error al generar borrador';
+      setError(message);
+      toast.error('No fue posible generar el borrador', message);
     } finally {
       setSaving(false);
     }
@@ -204,8 +209,11 @@ const EventQuotePage: React.FC = () => {
 
       const cotizacionActualizada = await cotizacionesApi.generarDocumento(cotizacion.id);
       setCotizacion(cotizacionActualizada);
+      toast.success('Cotizacion generada', 'El documento quedo listo para descargar o enviar.');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al generar la cotización');
+      const message = err instanceof Error ? err.message : 'Error al generar la cotizacion';
+      setError(message);
+      toast.error('No fue posible generar la cotizacion', message);
     } finally {
       setSaving(false);
     }
@@ -243,9 +251,11 @@ const EventQuotePage: React.FC = () => {
 
       const cotizacionActualizada = await cotizacionesApi.enviar(cotizacion.id);
       setCotizacion(cotizacionActualizada);
-      alert('Cotización enviada exitosamente');
+      toast.success('Cotizacion marcada como enviada', 'La cotizacion cambio al estado ENVIADA.');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al enviar cotización');
+      const message = err instanceof Error ? err.message : 'Error al enviar cotizacion';
+      setError(message);
+      toast.error('No fue posible enviar la cotizacion', message);
     } finally {
       setSaving(false);
     }
@@ -263,9 +273,11 @@ const EventQuotePage: React.FC = () => {
       setError(null);
       const cotizacionActualizada = await cotizacionesApi.enviarEmail(cotizacion.id);
       setCotizacion(cotizacionActualizada);
-      alert('Cotizacion enviada por email');
+      toast.success('Email programado', 'La cotizacion quedo registrada para envio por correo.');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al enviar cotizacion por email');
+      const message = err instanceof Error ? err.message : 'Error al enviar cotizacion por email';
+      setError(message);
+      toast.error('No fue posible enviar el email', message);
     } finally {
       setSaving(false);
     }
@@ -297,9 +309,11 @@ const EventQuotePage: React.FC = () => {
       setError(null);
       const cotizacionActualizada = await cotizacionesApi.aceptar(cotizacion.id);
       setCotizacion(cotizacionActualizada);
-      alert('Cotizacion aceptada');
+      toast.success('Cotizacion aceptada', 'El evento ya puede continuar al flujo de confirmacion.');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al aceptar cotizacion');
+      const message = err instanceof Error ? err.message : 'Error al aceptar cotizacion';
+      setError(message);
+      toast.error('No fue posible aceptar la cotizacion', message);
     } finally {
       setSaving(false);
     }
@@ -317,9 +331,11 @@ const EventQuotePage: React.FC = () => {
       setError(null);
       const eventoConfirmado = await eventosApi.confirmar(evento.id);
       setEvento(eventoConfirmado);
-      alert('Evento confirmado');
+      toast.success('Evento confirmado', 'Se dispararon las operaciones de notificacion y Google Calendar.');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al confirmar evento');
+      const message = err instanceof Error ? err.message : 'Error al confirmar evento';
+      setError(message);
+      toast.error('No fue posible confirmar el evento', message);
     } finally {
       setSaving(false);
     }

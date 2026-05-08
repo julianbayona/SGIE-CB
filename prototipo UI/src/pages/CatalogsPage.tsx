@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import catalogosApi from '@/api/catalogos';
 import salonesApi from '@/api/salones';
 import PageTitle from '@/components/ui/PageTitle';
+import { useToast } from '@/components/ui/ToastProvider';
 import type {
   CatalogoBasicoResponse,
   TipoAdicionalResponse,
@@ -103,6 +104,7 @@ const buildPlatoMomentoRows = (
 };
 
 const CatalogsPage: React.FC = () => {
+  const toast = useToast();
   const [activeCatalog, setActiveCatalog] = useState<CatalogKey>('tipo_evento');
   const [rows, setRows] = useState<GenericRow[]>([]);
   const [colors, setColors] = useState<ColorResponse[]>([]);
@@ -244,6 +246,7 @@ const CatalogsPage: React.FC = () => {
     setSaving(true);
 
     try {
+      const wasEditing = Boolean(editingId);
       const basicData = { nombre: formNombre.trim(), descripcion: formDescripcion.trim() || undefined };
       const salonData = {
         nombre: formNombre.trim(),
@@ -305,8 +308,12 @@ const CatalogsPage: React.FC = () => {
 
       await loadCatalog(activeCatalog);
       resetForm();
+      toast.success(
+        wasEditing ? 'Registro actualizado' : 'Registro creado',
+        `${activeTab.label}: la informacion quedo guardada correctamente.`,
+      );
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Error al guardar.');
+      toast.error('No fue posible guardar el registro', err instanceof Error ? err.message : undefined);
     } finally {
       setSaving(false);
     }
@@ -336,8 +343,12 @@ const CatalogsPage: React.FC = () => {
       }
 
       await loadCatalog(activeCatalog);
+      toast.success(
+        activeCatalog === 'plato_momento' ? 'Relacion eliminada' : 'Estado actualizado',
+        `${activeTab.label}: el cambio quedo aplicado correctamente.`,
+      );
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Error al desactivar.');
+      toast.error('No fue posible actualizar el registro', err instanceof Error ? err.message : undefined);
     }
   };
 

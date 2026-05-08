@@ -7,6 +7,7 @@ import cotizacionesApi from '@/api/cotizaciones';
 import eventosApi from '@/api/eventos';
 import menusApi from '@/api/menus';
 import salonesApi from '@/api/salones';
+import { useToast } from '@/components/ui/ToastProvider';
 import EventCancelledNotice from '@/features/events/components/EventCancelledNotice';
 import EventDetailHeaderTabs from '@/features/events/components/EventDetailHeaderTabs';
 import { estadoEventoToEventStatus } from '@/features/events/utils/eventStatus';
@@ -50,6 +51,7 @@ const fieldClass =
 
 const EventMenuPage: React.FC = () => {
   const { eventId } = useParams();
+  const toast = useToast();
 
   const [evento, setEvento] = useState<EventoResponse | null>(null);
   const [cliente, setCliente] = useState<ClienteResponse | null>(null);
@@ -64,7 +66,6 @@ const EventMenuPage: React.FC = () => {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [savedOk, setSavedOk] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [addMomentoId, setAddMomentoId] = useState('');
@@ -330,7 +331,6 @@ const EventMenuPage: React.FC = () => {
 
     try {
       setSaving(true);
-      setSavedOk(false);
       setError(null);
 
       await menusApi.configurar(reserva.reservaRaizId || reserva.id, {
@@ -346,10 +346,11 @@ const EventMenuPage: React.FC = () => {
       });
 
       setQuoteState(null);
-      setSavedOk(true);
-      window.setTimeout(() => setSavedOk(false), 3000);
+      toast.success('Menu guardado', 'La seleccion gastronomica quedo asociada a la reserva vigente.');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al guardar menu');
+      const message = err instanceof Error ? err.message : 'Error al guardar menu';
+      setError(message);
+      toast.error('No fue posible guardar el menu', message);
     } finally {
       setSaving(false);
     }
@@ -428,12 +429,6 @@ const EventMenuPage: React.FC = () => {
           {error && (
             <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-700">
               {error}
-            </div>
-          )}
-
-          {savedOk && (
-            <div className="rounded-2xl border border-green-200 bg-green-50 px-5 py-4 text-sm font-semibold text-green-700">
-              Menu guardado correctamente.
             </div>
           )}
 

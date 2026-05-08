@@ -11,6 +11,7 @@ import { estadoEventoToEventStatus } from '@/features/events/utils/eventStatus';
 import pruebasPlatoApi from '@/api/pruebasPlato';
 import calendarioApi from '@/api/calendario';
 import notificacionesApi from '@/api/notificaciones';
+import { useToast } from '@/components/ui/ToastProvider';
 import type {
   EventoCalendarResponse,
   EventoResponse,
@@ -101,6 +102,7 @@ const sortByScheduledAt = (entries: AgendaEntry[]): AgendaEntry[] => {
 
 const EventAgendaPage: React.FC = () => {
   const { eventId } = useParams();
+  const toast = useToast();
   
   // Estados para datos del API
   const [evento, setEvento] = useState<EventoResponse | null>(null);
@@ -223,8 +225,10 @@ const EventAgendaPage: React.FC = () => {
         prev.map((calendar) => (calendar.id === actualizado.id ? actualizado : calendar))
       );
       setMonitorError(null);
+      toast.success('Reintento programado', 'La operacion de Google Calendar quedo lista para reprocesarse.');
     } catch {
       setMonitorError('No fue posible reintentar la sincronización con Google Calendar.');
+      toast.error('No fue posible reintentar Calendar');
     } finally {
       setRetryingCalendarId(null);
     }
@@ -352,8 +356,16 @@ const EventAgendaPage: React.FC = () => {
       setNewScheduledAt('');
       setNewNotes('');
       await refrescarMonitoreo();
+      toast.success(
+        newCategory === 'degustacion' ? 'Prueba de plato agendada' : 'Recordatorio creado',
+        newCategory === 'degustacion'
+          ? 'Se generaron las operaciones de notificacion y Google Calendar.'
+          : 'El recordatorio quedo programado para la fecha indicada.',
+      );
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al crear agendamiento.');
+      const message = err instanceof Error ? err.message : 'Error al crear agendamiento.';
+      setError(message);
+      toast.error('No fue posible crear el agendamiento', message);
     } finally {
       setSaving(false);
     }

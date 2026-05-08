@@ -7,6 +7,7 @@ import montajesApi from '@/api/montajes';
 import catalogosApi from '@/api/catalogos';
 import clientesApi from '@/api/clientes';
 import salonesApi from '@/api/salones';
+import { useToast } from '@/components/ui/ToastProvider';
 import { estadoEventoToEventStatus } from '@/features/events/utils/eventStatus';
 import cotizacionesApi from '@/api/cotizaciones';
 import type {
@@ -49,6 +50,7 @@ const getTextilColorId = (textil: MantelResponse | SobremantelResponse | undefin
 
 const EventMontagePage: React.FC = () => {
   const { eventId } = useParams();
+  const toast = useToast();
 
   const [evento, setEvento] = useState<EventoResponse | null>(null);
   const [cliente, setCliente] = useState<ClienteResponse | null>(null);
@@ -324,9 +326,11 @@ const EventMontagePage: React.FC = () => {
       });
 
       setQuoteState(null);
-      alert('Montaje guardado exitosamente');
+      toast.success('Montaje guardado', 'La configuracion de mesas, textiles y adicionales quedo actualizada.');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al guardar montaje');
+      const message = err instanceof Error ? err.message : 'Error al guardar montaje';
+      setError(message);
+      toast.error('No fue posible guardar el montaje', message);
     } finally {
       setSaving(false);
     }

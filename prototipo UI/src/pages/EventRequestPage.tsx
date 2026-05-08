@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { useToast } from '@/components/ui/ToastProvider';
 import catalogosApi from '@/api/catalogos';
 import clientesApi from '@/api/clientes';
 import eventosApi from '@/api/eventos';
@@ -43,6 +44,7 @@ function getDurationLabel(start: string, end: string) {
 
 function EventRequestPage() {
   const navigate = useNavigate();
+  const toast = useToast();
   const [customerQuery, setCustomerQuery] = useState('');
   const [selectedVenueId, setSelectedVenueId] = useState('');
   const [salones, setSalones] = useState<SalonResponse[]>([]);
@@ -181,9 +183,12 @@ function EventRequestPage() {
         fechaHoraInicio: inicio,
         fechaHoraFin: fin,
       });
+      toast.success('Evento creado', 'La solicitud quedo creada con su reserva de salon.');
       navigate(`/events/${evento.id}/menu`);
-    } catch {
-      setError('No fue posible crear la solicitud de evento.');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'No fue posible crear la solicitud de evento.';
+      setError(message);
+      toast.error('No fue posible crear el evento', message);
     } finally {
       setSaving(false);
     }
@@ -203,8 +208,11 @@ function EventRequestPage() {
       setCustomerQuery(nuevoCliente.nombreCompleto);
       setClienteResultados([]);
       setIsClienteFormOpen(false);
-    } catch {
-      setError('No fue posible registrar el cliente.');
+      toast.success('Cliente registrado', `${nuevoCliente.nombreCompleto} quedo seleccionado para la solicitud.`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'No fue posible registrar el cliente.';
+      setError(message);
+      toast.error('No fue posible registrar el cliente', message);
     }
   };
 

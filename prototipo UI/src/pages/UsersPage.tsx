@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import usuariosApi, { type UsuarioResponse } from '@/api/usuarios';
 import type { RolUsuario } from '@/api/auth';
 import PageTitle from '@/components/ui/PageTitle';
+import { useToast } from '@/components/ui/ToastProvider';
 import { formatShortId } from '@/utils/formatters';
 
 const roles: RolUsuario[] = ['ADMINISTRADOR', 'GERENTE', 'TESORERO', 'JEFE_MESA'];
@@ -14,6 +15,7 @@ const roleLabels: Record<RolUsuario, string> = {
 };
 
 const UsersPage: React.FC = () => {
+  const toast = useToast();
   const [usuarios, setUsuarios] = useState<UsuarioResponse[]>([]);
   const [nombre, setNombre] = useState('');
   const [contrasena, setContrasena] = useState('');
@@ -57,8 +59,11 @@ const UsersPage: React.FC = () => {
       setNombre('');
       setContrasena('');
       setRol('GERENTE');
+      toast.success('Usuario creado', `${creado.nombre} ya puede ingresar al sistema.`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No fue posible crear el usuario.');
+      const message = err instanceof Error ? err.message : 'No fue posible crear el usuario.';
+      setError(message);
+      toast.error('No fue posible crear el usuario', message);
     } finally {
       setSaving(false);
     }
@@ -71,8 +76,14 @@ const UsersPage: React.FC = () => {
         ? await usuariosApi.desactivar(usuario.id)
         : await usuariosApi.activar(usuario.id);
       setUsuarios((prev) => prev.map((item) => (item.id === actualizado.id ? actualizado : item)));
+      toast.success(
+        actualizado.activo ? 'Usuario activado' : 'Usuario desactivado',
+        `${actualizado.nombre} quedo ${actualizado.activo ? 'activo' : 'inactivo'}.`,
+      );
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No fue posible actualizar el usuario.');
+      const message = err instanceof Error ? err.message : 'No fue posible actualizar el usuario.';
+      setError(message);
+      toast.error('No fue posible actualizar el usuario', message);
     }
   };
 
