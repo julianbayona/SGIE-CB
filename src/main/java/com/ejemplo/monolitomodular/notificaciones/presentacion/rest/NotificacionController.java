@@ -5,6 +5,7 @@ import com.ejemplo.monolitomodular.notificaciones.aplicacion.dto.NotificacionDet
 import com.ejemplo.monolitomodular.notificaciones.aplicacion.puerto.entrada.ListarNotificacionesPorEventoUseCase;
 import com.ejemplo.monolitomodular.notificaciones.presentacion.rest.dto.NotificacionDestinatarioResponse;
 import com.ejemplo.monolitomodular.notificaciones.presentacion.rest.dto.NotificacionResponse;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,6 +16,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/eventos/{eventoId}/notificaciones")
+@PreAuthorize("hasAnyRole('ADMINISTRADOR', 'GERENTE', 'TESORERO')")
 public class NotificacionController {
 
     private final ListarNotificacionesPorEventoUseCase listarNotificacionesPorEventoUseCase;

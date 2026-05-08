@@ -1,5 +1,5 @@
 import React from 'react';
-import { format, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, isToday } from 'date-fns';
 import { useCalendarStore } from '@/store/calendarStore';
 import { useCalendar } from '../../hooks/useCalendar';
 import { MINUTES_PER_DAY, positionEventsForDay } from '../../utils/eventLayout';
@@ -33,12 +33,27 @@ const WeekView: React.FC = () => {
       {/* Header */}
       <div className="grid" style={{ gridTemplateColumns: '60px repeat(7, 1fr)' }}>
         <div className="calendar-header bg-stone-100 border-r border-b border-outline-variant/40"></div>
-        {days.map(day => (
-          <div key={day.toISOString()} className="calendar-header bg-stone-100 p-2 text-center border-b border-l border-outline-variant/40">
-            <p className="text-[8px] font-bold text-stone-400 uppercase">{format(day, 'eee')}</p>
-            <p className="text-sm font-serif-italic text-on-surface">{format(day, 'd')}</p>
+        {days.map(day => {
+          const isCurrentDay = isToday(day);
+
+          return (
+          <div
+            key={day.toISOString()}
+            className="calendar-header border-b border-l border-outline-variant/40 bg-stone-100 p-2 text-center"
+          >
+            <p className={`text-[8px] font-bold uppercase ${isCurrentDay ? 'text-stone-950' : 'text-stone-400'}`}>
+              {format(day, 'eee')}
+            </p>
+            <p
+              className={`mx-auto mt-0.5 grid size-7 place-items-center rounded-full text-sm font-black ${
+                isCurrentDay ? 'bg-stone-950 text-white shadow-sm' : 'font-serif-italic text-on-surface'
+              }`}
+            >
+              {format(day, 'd')}
+            </p>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Body */}
@@ -62,7 +77,11 @@ const WeekView: React.FC = () => {
             const positionedEvents = positionEventsForDay(events, day, HOUR_HEIGHT);
 
             return (
-              <div key={day.toISOString()} className="relative bg-white border-l border-outline-variant/30" style={{ height: gridHeight }}>
+              <div
+                key={day.toISOString()}
+                className="relative border-l border-outline-variant/30 bg-white"
+                style={{ height: gridHeight }}
+              >
                 {hours.map(hour => (
                   <div
                     key={hour}

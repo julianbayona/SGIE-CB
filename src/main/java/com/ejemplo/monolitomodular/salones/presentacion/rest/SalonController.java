@@ -9,6 +9,7 @@ import com.ejemplo.monolitomodular.salones.presentacion.rest.dto.RegistrarSalonR
 import com.ejemplo.monolitomodular.salones.presentacion.rest.dto.SalonResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -39,6 +40,7 @@ public class SalonController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<SalonResponse> crear(@Valid @RequestBody RegistrarSalonRequest request) {
         SalonView salon = registrarSalonUseCase.ejecutar(
                 new RegistrarSalonCommand(request.nombre(), request.capacidad(), request.descripcion())
@@ -53,11 +55,13 @@ public class SalonController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'GERENTE', 'TESORERO')")
     public SalonResponse obtenerPorId(@PathVariable UUID id) {
         return toResponse(consultarSalonUseCase.obtenerPorId(id));
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'GERENTE', 'TESORERO')")
     public List<SalonResponse> listar() {
         return consultarSalonUseCase.listar().stream()
                 .map(this::toResponse)
@@ -65,6 +69,7 @@ public class SalonController {
     }
 
     @GetMapping("/disponibilidad")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'GERENTE', 'TESORERO')")
     public List<SalonResponse> consultarDisponibilidad(
             @RequestParam LocalDateTime fechaHoraInicio,
             @RequestParam LocalDateTime fechaHoraFin,

@@ -4,6 +4,7 @@ import com.ejemplo.monolitomodular.calendario.aplicacion.dto.EventoCalendarView;
 import com.ejemplo.monolitomodular.calendario.aplicacion.puerto.entrada.ListarEventosCalendarPorEventoUseCase;
 import com.ejemplo.monolitomodular.calendario.aplicacion.puerto.entrada.ReintentarEventoCalendarUseCase;
 import com.ejemplo.monolitomodular.calendario.presentacion.rest.dto.EventoCalendarResponse;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,6 +16,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/calendario/eventos")
+@PreAuthorize("hasAnyRole('ADMINISTRADOR', 'GERENTE', 'TESORERO')")
 public class EventoCalendarController {
 
     private final ReintentarEventoCalendarUseCase reintentarEventoCalendarUseCase;
@@ -36,6 +38,7 @@ public class EventoCalendarController {
     }
 
     @PostMapping("/{eventoCalendarId}/reintentar")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public EventoCalendarResponse reintentar(@PathVariable UUID eventoCalendarId) {
         return toResponse(reintentarEventoCalendarUseCase.reintentar(eventoCalendarId));
     }

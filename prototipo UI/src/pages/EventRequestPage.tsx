@@ -209,7 +209,7 @@ function EventRequestPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f3eee6] text-stone-950">
+    <div className="min-h-screen text-stone-950">
       <div className="mx-auto flex max-w-7xl flex-col gap-8 px-6 py-8">
         <section className="overflow-hidden rounded-[2rem] border border-stone-300/80 bg-[linear-gradient(135deg,#fbf8f1_0%,#e4d6c2_52%,#A8841C_100%)] text-stone-950 shadow-2xl shadow-stone-900/10">
           <div className="grid gap-8 p-8 lg:grid-cols-[1.35fr_0.65fr] lg:p-10">

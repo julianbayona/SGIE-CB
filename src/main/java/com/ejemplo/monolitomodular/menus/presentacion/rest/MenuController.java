@@ -16,6 +16,7 @@ import com.ejemplo.monolitomodular.menus.presentacion.rest.dto.MenuResponse;
 import com.ejemplo.monolitomodular.menus.presentacion.rest.dto.SeleccionMenuRequest;
 import com.ejemplo.monolitomodular.menus.presentacion.rest.dto.SeleccionMenuResponse;
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,6 +29,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/reservas/{reservaRaizId}/menu")
+@PreAuthorize("hasAnyRole('ADMINISTRADOR', 'GERENTE', 'TESORERO')")
 public class MenuController {
 
     private final ConfigurarMenuUseCase configurarMenuUseCase;

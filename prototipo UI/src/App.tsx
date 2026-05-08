@@ -36,10 +36,10 @@ function App() {
               </ProtectedRoute>
             }
           >
-            <Route index element={<CalendarPage />} />
-            <Route path="quotes" element={<QuotesPage />} />
-            <Route path="clients" element={<ClientsPage />} />
-            <Route path="reports" element={<ReportsPage />} />
+            <Route index element={<ProtectedRoute requiredRoles={['ADMINISTRADOR', 'GERENTE', 'TESORERO']}><CalendarPage /></ProtectedRoute>} />
+            <Route path="quotes" element={<ProtectedRoute requiredRoles={['ADMINISTRADOR', 'GERENTE', 'TESORERO']}><QuotesPage /></ProtectedRoute>} />
+            <Route path="clients" element={<ProtectedRoute requiredRoles={['ADMINISTRADOR', 'GERENTE', 'TESORERO']}><ClientsPage /></ProtectedRoute>} />
+            <Route path="reports" element={<ProtectedRoute requiredRoles={['ADMINISTRADOR', 'GERENTE', 'TESORERO']}><ReportsPage /></ProtectedRoute>} />
             <Route
               path="users"
               element={
@@ -53,19 +53,19 @@ function App() {
             <Route
               path="catalogs"
               element={
-                <ProtectedRoute requiredRoles={['ADMINISTRADOR', 'GERENTE']}>
+                <ProtectedRoute requiredRoles="ADMINISTRADOR">
                   <CatalogsPage />
                 </ProtectedRoute>
               }
             />
             
-            <Route path="events" element={<EventsPage />} />
-            <Route path="events/request" element={<EventRequestPage />} />
-            <Route path="events/:eventId" element={<EventSummaryPage />} />
-            <Route path="events/:eventId/menu" element={<EventMenuPage />} />
-            <Route path="events/:eventId/agenda" element={<EventAgendaPage />} />
-            <Route path="events/:eventId/montaje" element={<EventMontagePage />} />
-            <Route path="events/:eventId/cotizacion" element={<EventQuotePage />} />
+            <Route path="events" element={<ProtectedRoute requiredRoles={['ADMINISTRADOR', 'GERENTE', 'TESORERO']}><EventsPage /></ProtectedRoute>} />
+            <Route path="events/request" element={<ProtectedRoute requiredRoles={['ADMINISTRADOR', 'GERENTE', 'TESORERO']}><EventRequestPage /></ProtectedRoute>} />
+            <Route path="events/:eventId" element={<ProtectedRoute requiredRoles={['ADMINISTRADOR', 'GERENTE', 'TESORERO']}><EventSummaryPage /></ProtectedRoute>} />
+            <Route path="events/:eventId/menu" element={<ProtectedRoute requiredRoles={['ADMINISTRADOR', 'GERENTE', 'TESORERO']}><EventMenuPage /></ProtectedRoute>} />
+            <Route path="events/:eventId/agenda" element={<ProtectedRoute requiredRoles={['ADMINISTRADOR', 'GERENTE', 'TESORERO']}><EventAgendaPage /></ProtectedRoute>} />
+            <Route path="events/:eventId/montaje" element={<ProtectedRoute requiredRoles={['ADMINISTRADOR', 'GERENTE', 'TESORERO']}><EventMontagePage /></ProtectedRoute>} />
+            <Route path="events/:eventId/cotizacion" element={<ProtectedRoute requiredRoles={['ADMINISTRADOR', 'GERENTE', 'TESORERO']}><EventQuotePage /></ProtectedRoute>} />
             
             {/* Pagos - Solo ADMINISTRADOR, GERENTE y TESORERO */}
             <Route
@@ -77,7 +77,7 @@ function App() {
               }
             />
             
-            <Route path="events/:eventId/:section" element={<EventSectionPlaceholderPage />} />
+            <Route path="events/:eventId/:section" element={<ProtectedRoute requiredRoles={['ADMINISTRADOR', 'GERENTE', 'TESORERO']}><EventSectionPlaceholderPage /></ProtectedRoute>} />
           </Route>
 
           {/* Redirigir cualquier ruta no encontrada al inicio */}

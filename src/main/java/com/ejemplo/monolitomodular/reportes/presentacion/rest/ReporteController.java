@@ -21,6 +21,7 @@ import com.ejemplo.monolitomodular.reportes.presentacion.rest.dto.ReporteAnticip
 import com.ejemplo.monolitomodular.reportes.presentacion.rest.dto.ReporteFinancieroEventoResponse;
 import com.ejemplo.monolitomodular.reportes.presentacion.rest.dto.ResumenEventosResponse;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -31,6 +32,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/reportes")
+@PreAuthorize("hasAnyRole('ADMINISTRADOR', 'GERENTE', 'TESORERO')")
 public class ReporteController {
 
     private final ConsultarResumenEventosUseCase consultarResumenEventosUseCase;

@@ -30,8 +30,12 @@ const MonthView: React.FC = () => {
         const dayEvents = events.filter((event) => format(event.start, 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd'));
 
         return (
-          <div key={day.toString()} className={`p-2 border-r border-b border-outline-variant/30 min-h-[120px] ${isCurrentDay ? 'bg-primary-gold/[0.05]' : 'bg-white'}`}>
-            <p className={`text-[10px] font-bold ${isCurrentDay ? 'text-primary-gold' : 'text-on-surface-variant'}`}>
+          <div key={day.toString()} className="min-h-[120px] border-r border-b border-outline-variant/30 bg-white p-2">
+            <p
+              className={`grid size-6 place-items-center rounded-full text-[10px] font-black ${
+                isCurrentDay ? 'bg-stone-950 text-white shadow-sm' : 'text-on-surface-variant'
+              }`}
+            >
               {format(day, 'd')}
             </p>
             <div className="mt-1 flex flex-col gap-1">

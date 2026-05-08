@@ -121,16 +121,17 @@ const EventDetailHeaderTabs: React.FC<EventDetailHeaderTabsProps> = ({
                 <span className="material-symbols-outlined align-middle text-lg text-[#A8841C]">edit</span>
                 <span className="ml-2">Editar</span>
               </button>
-              <button
-                type="button"
-                onClick={openCancelModal}
-                disabled={!canCancel}
-                title={!isAdmin ? 'Solo un administrador puede cancelar eventos' : undefined}
-                className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-bold text-red-700 shadow-sm transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <span className="material-symbols-outlined align-middle text-lg">cancel</span>
-                <span className="ml-2">Cancelar</span>
-              </button>
+              {isAdmin ? (
+                <button
+                  type="button"
+                  onClick={openCancelModal}
+                  disabled={!canCancel}
+                  className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-bold text-red-700 shadow-sm transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <span className="material-symbols-outlined align-middle text-lg">cancel</span>
+                  <span className="ml-2">Cancelar</span>
+                </button>
+              ) : null}
             </div>
           </div>
         </div>

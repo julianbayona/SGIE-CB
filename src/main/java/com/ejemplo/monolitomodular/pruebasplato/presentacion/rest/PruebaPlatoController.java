@@ -7,6 +7,7 @@ import com.ejemplo.monolitomodular.pruebasplato.aplicacion.puerto.entrada.Progra
 import com.ejemplo.monolitomodular.pruebasplato.presentacion.rest.dto.ProgramarPruebaPlatoRequest;
 import com.ejemplo.monolitomodular.pruebasplato.presentacion.rest.dto.PruebaPlatoResponse;
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,6 +19,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api")
+@PreAuthorize("hasAnyRole('ADMINISTRADOR', 'GERENTE', 'TESORERO')")
 public class PruebaPlatoController {
 
     private final ProgramarPruebaPlatoUseCase programarPruebaPlatoUseCase;

@@ -21,6 +21,7 @@ import com.ejemplo.monolitomodular.eventos.presentacion.rest.dto.CancelarEventoR
 import com.ejemplo.monolitomodular.eventos.presentacion.rest.dto.ReservaSalonResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -37,6 +38,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/eventos")
+@PreAuthorize("hasAnyRole('ADMINISTRADOR', 'GERENTE', 'TESORERO')")
 public class EventoController {
 
     private final CrearEventoUseCase crearEventoUseCase;
@@ -143,6 +145,7 @@ public class EventoController {
     }
 
     @PostMapping("/{eventoId}/cancelar")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public EventoResponse cancelar(
             @AuthenticationPrincipal UsuarioAutenticado usuario,
             @PathVariable UUID eventoId,
