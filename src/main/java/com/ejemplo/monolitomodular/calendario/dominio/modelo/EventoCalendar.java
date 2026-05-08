@@ -71,6 +71,29 @@ public class EventoCalendar {
         );
     }
 
+    public static EventoCalendar pendienteConGoogleEventId(
+            OrigenEventoCalendar origenTipo,
+            UUID origenId,
+            UUID eventoId,
+            TipoOperacionCalendar tipo,
+            String googleEventId,
+            String payloadJson
+    ) {
+        return new EventoCalendar(
+                UUID.randomUUID(),
+                origenTipo,
+                origenId,
+                eventoId,
+                tipo,
+                googleEventId,
+                null,
+                EstadoEventoCalendar.PENDIENTE,
+                payloadJson,
+                0,
+                null
+        );
+    }
+
     public static EventoCalendar reconstruir(
             UUID id,
             OrigenEventoCalendar origenTipo,

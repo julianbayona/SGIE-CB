@@ -96,12 +96,13 @@ public class CotizacionOperacionApplicationService implements
     @Transactional
     public CotizacionView enviarPorEmail(UUID cotizacionId) {
         Cotizacion cotizacion = buscarCotizacion(cotizacionId);
+        Evento evento = evento(cotizacion);
+        evento.validarOperable();
         CotizacionView view = switch (cotizacion.getEstado()) {
             case GENERADA -> enviarCotizacionUseCase.enviar(cotizacionId);
             case ENVIADA, ACEPTADA -> toView(cotizacion);
             default -> throw new DomainException("Solo una cotizacion generada, enviada o aceptada puede enviarse por email");
         };
-        Evento evento = evento(cotizacion);
         Cliente cliente = clienteRepository.buscarPorId(evento.getClienteId())
                 .orElseThrow(() -> new DomainException("Cliente no encontrado"));
         crearNotificacionUseCase.ejecutar(new CrearNotificacionCommand(

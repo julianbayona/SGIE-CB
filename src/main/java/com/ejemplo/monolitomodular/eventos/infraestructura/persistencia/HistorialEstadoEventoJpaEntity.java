@@ -33,6 +33,9 @@ public class HistorialEstadoEventoJpaEntity {
     @Column(name = "estado_nuevo", nullable = false, length = 40)
     private EstadoEvento estadoNuevo;
 
+    @Column(name = "motivo", length = 500)
+    private String motivo;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -45,6 +48,7 @@ public class HistorialEstadoEventoJpaEntity {
             UUID usuarioId,
             EstadoEvento estadoAnterior,
             EstadoEvento estadoNuevo,
+            String motivo,
             LocalDateTime createdAt
     ) {
         this.id = id;
@@ -52,6 +56,7 @@ public class HistorialEstadoEventoJpaEntity {
         this.usuarioId = usuarioId;
         this.estadoAnterior = estadoAnterior;
         this.estadoNuevo = estadoNuevo;
+        this.motivo = motivo;
         this.createdAt = createdAt;
     }
 
@@ -73,6 +78,10 @@ public class HistorialEstadoEventoJpaEntity {
 
     public EstadoEvento getEstadoNuevo() {
         return estadoNuevo;
+    }
+
+    public String getMotivo() {
+        return motivo;
     }
 
     public LocalDateTime getCreatedAt() {

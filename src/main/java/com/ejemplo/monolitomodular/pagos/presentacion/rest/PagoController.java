@@ -17,6 +17,7 @@ import com.ejemplo.monolitomodular.pagos.presentacion.rest.dto.ProgramarRecordat
 import com.ejemplo.monolitomodular.pagos.presentacion.rest.dto.RegistrarAnticipoRequest;
 import com.ejemplo.monolitomodular.pagos.presentacion.rest.dto.RecordatorioAnticipoResponse;
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,6 +32,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api")
+@PreAuthorize("hasAnyRole('ADMINISTRADOR', 'GERENTE', 'TESORERO')")
 public class PagoController {
 
     private final RegistrarAnticipoUseCase registrarAnticipoUseCase;
@@ -82,6 +84,7 @@ public class PagoController {
     }
 
     @PostMapping("/recordatorios-anticipo/procesar-pendientes")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public int procesarRecordatoriosPendientes(
             @RequestParam(defaultValue = "50") int limite
     ) {

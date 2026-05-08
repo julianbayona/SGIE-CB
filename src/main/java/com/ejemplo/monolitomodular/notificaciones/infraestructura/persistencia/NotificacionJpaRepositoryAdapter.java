@@ -2,6 +2,7 @@ package com.ejemplo.monolitomodular.notificaciones.infraestructura.persistencia;
 
 import com.ejemplo.monolitomodular.notificaciones.dominio.modelo.Notificacion;
 import com.ejemplo.monolitomodular.notificaciones.dominio.modelo.NotificacionDestinatario;
+import com.ejemplo.monolitomodular.notificaciones.dominio.modelo.EstadoNotificacion;
 import com.ejemplo.monolitomodular.notificaciones.dominio.modelo.TipoNotificacion;
 import com.ejemplo.monolitomodular.notificaciones.dominio.puerto.salida.NotificacionRepository;
 import org.springframework.data.domain.PageRequest;
@@ -54,6 +55,34 @@ public class NotificacionJpaRepositoryAdapter implements NotificacionRepository 
     @Override
     public boolean existePorEventoYTipoDesde(UUID eventoId, TipoNotificacion tipo, LocalDateTime fechaDesde) {
         return notificacionRepository.existsByEventoIdAndTipoAndFechaProgramadaGreaterThanEqual(eventoId, tipo, fechaDesde);
+    }
+
+    @Override
+    public List<Notificacion> buscarPorEventoId(UUID eventoId) {
+        return notificacionRepository.findByEventoIdOrderByFechaProgramadaDesc(eventoId).stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
+    public List<Notificacion> buscarCancelablesPorEventoYTipo(UUID eventoId, TipoNotificacion tipo) {
+        return notificacionRepository.findByEventoIdAndTipoAndEstadoIn(
+                        eventoId,
+                        tipo,
+                        List.of(EstadoNotificacion.PENDIENTE, EstadoNotificacion.ERROR)
+                ).stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
+    public List<Notificacion> buscarCancelablesPorEventoId(UUID eventoId) {
+        return notificacionRepository.findByEventoIdAndEstadoIn(
+                        eventoId,
+                        List.of(EstadoNotificacion.PENDIENTE, EstadoNotificacion.ERROR)
+                ).stream()
+                .map(this::toDomain)
+                .toList();
     }
 
     private Notificacion toDomain(NotificacionJpaEntity entity) {

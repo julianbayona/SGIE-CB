@@ -35,6 +35,20 @@ public class Usuario {
         return new Usuario(id, nombre, contrasenaHash, rol, activo);
     }
 
+    public Usuario activar() {
+        if (activo) {
+            return this;
+        }
+        return new Usuario(id, nombre, contrasenaHash, rol, true);
+    }
+
+    public Usuario desactivar() {
+        if (!activo) {
+            return this;
+        }
+        return new Usuario(id, nombre, contrasenaHash, rol, false);
+    }
+
     public UUID getId() {
         return id;
     }

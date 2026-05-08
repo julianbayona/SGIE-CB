@@ -108,6 +108,26 @@ public class Evento {
         return cambiarEstado(EstadoEvento.CONFIRMADO);
     }
 
+    public Evento marcarPendienteAnticipo() {
+        if (estado == EstadoEvento.CANCELADO) {
+            throw new DomainException("No se puede marcar pendiente de anticipo para un evento cancelado");
+        }
+        if (estado == EstadoEvento.COTIZACION_APROBADA) {
+            return cambiarEstado(EstadoEvento.PENDIENTE_ANTICIPO);
+        }
+        if (estado == EstadoEvento.PENDIENTE_ANTICIPO || estado == EstadoEvento.CONFIRMADO) {
+            return this;
+        }
+        throw new DomainException("Solo un evento con cotizacion aprobada puede pasar a pendiente de anticipo");
+    }
+
+    public Evento cancelar() {
+        if (estado == EstadoEvento.CANCELADO) {
+            throw new DomainException("El evento ya se encuentra cancelado");
+        }
+        return cambiarEstado(EstadoEvento.CANCELADO);
+    }
+
     public Evento volverAPendientePorCotizacionDesactualizada() {
         if (estado == EstadoEvento.CANCELADO) {
             throw new DomainException("No se puede reabrir un evento cancelado por cambios de cotizacion");
@@ -116,6 +136,12 @@ public class Evento {
             return this;
         }
         return cambiarEstado(EstadoEvento.PENDIENTE);
+    }
+
+    public void validarOperable() {
+        if (estado == EstadoEvento.CANCELADO) {
+            throw new DomainException("No se puede operar un evento cancelado");
+        }
     }
 
     private Evento cambiarEstado(EstadoEvento nuevoEstado) {

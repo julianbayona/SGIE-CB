@@ -1,7 +1,9 @@
 package com.ejemplo.monolitomodular.clientes.aplicacion.servicio;
 
+import com.ejemplo.monolitomodular.clientes.aplicacion.dto.ActualizarClienteCommand;
 import com.ejemplo.monolitomodular.clientes.aplicacion.dto.ClienteView;
 import com.ejemplo.monolitomodular.clientes.aplicacion.dto.RegistrarClienteCommand;
+import com.ejemplo.monolitomodular.clientes.aplicacion.puerto.entrada.ActualizarClienteUseCase;
 import com.ejemplo.monolitomodular.clientes.aplicacion.puerto.entrada.ConsultarClienteUseCase;
 import com.ejemplo.monolitomodular.clientes.aplicacion.puerto.entrada.RegistrarClienteUseCase;
 import com.ejemplo.monolitomodular.clientes.dominio.modelo.Cliente;
@@ -14,7 +16,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-public class ClienteApplicationService implements RegistrarClienteUseCase, ConsultarClienteUseCase {
+public class ClienteApplicationService implements RegistrarClienteUseCase, ActualizarClienteUseCase, ConsultarClienteUseCase {
 
     private final ClienteRepository clienteRepository;
     private final UsuarioRepository usuarioRepository;
@@ -46,6 +48,28 @@ public class ClienteApplicationService implements RegistrarClienteUseCase, Consu
                 });
 
         return toView(clienteRepository.guardar(cliente));
+    }
+
+    @Override
+    public ClienteView ejecutar(ActualizarClienteCommand command) {
+        Cliente cliente = clienteRepository.buscarPorId(command.id())
+                .orElseThrow(() -> new DomainException("Cliente no encontrado"));
+
+        Cliente actualizado = cliente.actualizar(
+                command.cedula(),
+                command.nombreCompleto(),
+                command.telefono(),
+                command.correo(),
+                command.tipoCliente()
+        );
+
+        clienteRepository.buscarPorCedula(actualizado.getCedula())
+                .filter(clienteExistente -> !clienteExistente.getId().equals(cliente.getId()))
+                .ifPresent(clienteExistente -> {
+                    throw new DomainException("Ya existe un cliente con la cedula indicada");
+                });
+
+        return toView(clienteRepository.guardar(actualizado));
     }
 
     @Override

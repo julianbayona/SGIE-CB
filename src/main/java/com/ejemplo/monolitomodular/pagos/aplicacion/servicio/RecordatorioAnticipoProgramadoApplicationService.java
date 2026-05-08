@@ -6,7 +6,9 @@ import com.ejemplo.monolitomodular.cotizaciones.dominio.modelo.Cotizacion;
 import com.ejemplo.monolitomodular.cotizaciones.dominio.puerto.salida.CotizacionRepository;
 import com.ejemplo.monolitomodular.eventos.dominio.modelo.EstadoEvento;
 import com.ejemplo.monolitomodular.eventos.dominio.modelo.Evento;
+import com.ejemplo.monolitomodular.eventos.dominio.modelo.HistorialEstadoEvento;
 import com.ejemplo.monolitomodular.eventos.dominio.puerto.salida.EventoRepository;
+import com.ejemplo.monolitomodular.eventos.dominio.puerto.salida.HistorialEstadoEventoRepository;
 import com.ejemplo.monolitomodular.notificaciones.aplicacion.dto.CrearNotificacionCommand;
 import com.ejemplo.monolitomodular.notificaciones.aplicacion.dto.NotificacionView;
 import com.ejemplo.monolitomodular.notificaciones.aplicacion.puerto.entrada.CrearNotificacionUseCase;
@@ -35,6 +37,7 @@ public class RecordatorioAnticipoProgramadoApplicationService implements Program
 
     private final RecordatorioAnticipoRepository recordatorioRepository;
     private final EventoRepository eventoRepository;
+    private final HistorialEstadoEventoRepository historialEstadoEventoRepository;
     private final ClienteRepository clienteRepository;
     private final UsuarioRepository usuarioRepository;
     private final CotizacionRepository cotizacionRepository;
@@ -45,6 +48,7 @@ public class RecordatorioAnticipoProgramadoApplicationService implements Program
     public RecordatorioAnticipoProgramadoApplicationService(
             RecordatorioAnticipoRepository recordatorioRepository,
             EventoRepository eventoRepository,
+            HistorialEstadoEventoRepository historialEstadoEventoRepository,
             ClienteRepository clienteRepository,
             UsuarioRepository usuarioRepository,
             CotizacionRepository cotizacionRepository,
@@ -54,6 +58,7 @@ public class RecordatorioAnticipoProgramadoApplicationService implements Program
     ) {
         this.recordatorioRepository = recordatorioRepository;
         this.eventoRepository = eventoRepository;
+        this.historialEstadoEventoRepository = historialEstadoEventoRepository;
         this.clienteRepository = clienteRepository;
         this.usuarioRepository = usuarioRepository;
         this.cotizacionRepository = cotizacionRepository;
@@ -85,6 +90,7 @@ public class RecordatorioAnticipoProgramadoApplicationService implements Program
                 command.usuarioId(),
                 command.fechaRecordatorio()
         ));
+        marcarEventoPendienteAnticipo(evento, command.usuarioId());
         return toView(guardado);
     }
 
@@ -123,6 +129,20 @@ public class RecordatorioAnticipoProgramadoApplicationService implements Program
     private Cotizacion cotizacionAceptada(Evento evento) {
         return cotizacionRepository.buscarAceptadaVigentePorEventoId(evento.getId())
                 .orElseThrow(() -> new DomainException("El evento no tiene una cotizacion aceptada vigente"));
+    }
+
+    private void marcarEventoPendienteAnticipo(Evento evento, java.util.UUID usuarioId) {
+        Evento actualizado = evento.marcarPendienteAnticipo();
+        if (actualizado.getEstado() == evento.getEstado()) {
+            return;
+        }
+        eventoRepository.guardar(actualizado);
+        historialEstadoEventoRepository.guardar(HistorialEstadoEvento.registrarCambio(
+                evento.getId(),
+                usuarioId,
+                evento.getEstado(),
+                actualizado.getEstado()
+        ));
     }
 
     private void validarSaldoPendiente(Evento evento, Cotizacion cotizacion) {

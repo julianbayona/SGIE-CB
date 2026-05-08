@@ -64,6 +64,16 @@ public class Cliente {
         return new Cliente(id, cedula, nombreCompleto, telefono, correo, tipoCliente, activo, creadoPor);
     }
 
+    public Cliente actualizar(
+            String cedula,
+            String nombreCompleto,
+            String telefono,
+            String correo,
+            TipoCliente tipoCliente
+    ) {
+        return new Cliente(id, cedula, nombreCompleto, telefono, correo, tipoCliente, activo, creadoPor);
+    }
+
     public UUID getId() {
         return id;
     }

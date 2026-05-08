@@ -78,4 +78,8 @@ public class UsuarioJpaEntity {
     public boolean isActivo() {
         return activo;
     }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
 }

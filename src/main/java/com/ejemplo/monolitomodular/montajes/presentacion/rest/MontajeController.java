@@ -20,6 +20,7 @@ import com.ejemplo.monolitomodular.montajes.presentacion.rest.dto.MontajeMesaRes
 import com.ejemplo.monolitomodular.montajes.presentacion.rest.dto.MontajeMesaReservaResponse;
 import com.ejemplo.monolitomodular.montajes.presentacion.rest.dto.MontajeResponse;
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,6 +33,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/reservas/{reservaRaizId}/montaje")
+@PreAuthorize("hasAnyRole('ADMINISTRADOR', 'GERENTE', 'TESORERO')")
 public class MontajeController {
 
     private final ConfigurarMontajeUseCase configurarMontajeUseCase;

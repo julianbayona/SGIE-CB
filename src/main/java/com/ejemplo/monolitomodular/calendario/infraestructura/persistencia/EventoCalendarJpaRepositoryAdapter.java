@@ -1,6 +1,9 @@
 package com.ejemplo.monolitomodular.calendario.infraestructura.persistencia;
 
+import com.ejemplo.monolitomodular.calendario.dominio.modelo.EstadoEventoCalendar;
 import com.ejemplo.monolitomodular.calendario.dominio.modelo.EventoCalendar;
+import com.ejemplo.monolitomodular.calendario.dominio.modelo.OrigenEventoCalendar;
+import com.ejemplo.monolitomodular.calendario.dominio.modelo.TipoOperacionCalendar;
 import com.ejemplo.monolitomodular.calendario.dominio.puerto.salida.EventoCalendarRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
@@ -51,6 +54,34 @@ public class EventoCalendarJpaRepositoryAdapter implements EventoCalendarReposit
         return repository.buscarPendientes(PageRequest.of(0, limite)).stream()
                 .map(this::toDomain)
                 .toList();
+    }
+
+    @Override
+    public List<EventoCalendar> buscarPorEventoId(UUID eventoId) {
+        return repository.findByEventoIdOrderByCreatedAtDesc(eventoId).stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
+    public List<EventoCalendar> buscarSincronizadosCancelablesPorEventoId(UUID eventoId) {
+        return repository.findByEventoIdAndEstadoAndTipoIn(
+                        eventoId,
+                        EstadoEventoCalendar.SINCRONIZADO,
+                        List.of(TipoOperacionCalendar.CREAR, TipoOperacionCalendar.ACTUALIZAR)
+                ).stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
+    public void cancelarPendientesPorEventoId(UUID eventoId) {
+        repository.cancelarPendientesPorEventoId(eventoId, LocalDateTime.now());
+    }
+
+    @Override
+    public void cancelarPendientesPorEventoYOrigen(UUID eventoId, OrigenEventoCalendar origenTipo) {
+        repository.cancelarPendientesPorEventoYOrigen(eventoId, origenTipo, LocalDateTime.now());
     }
 
     private EventoCalendar toDomain(EventoCalendarJpaEntity entity) {

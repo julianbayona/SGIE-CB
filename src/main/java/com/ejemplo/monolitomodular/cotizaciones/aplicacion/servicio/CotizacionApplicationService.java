@@ -93,6 +93,7 @@ public class CotizacionApplicationService implements
     public CotizacionView ejecutar(GenerarCotizacionCommand command) {
         ReservaSalon reserva = reservaSalonRepository.buscarVigentePorRaizId(command.reservaRaizId())
                 .orElseThrow(() -> new DomainException("No existe una reserva vigente para el identificador indicado"));
+        validarEventoOperable(reserva);
         usuarioRepository.buscarPorId(command.usuarioId())
                 .orElseThrow(() -> new DomainException("Usuario no encontrado"));
         if (cotizacionRepository.buscarActivaPorReservaId(reserva.getId()).isPresent()) {
@@ -133,6 +134,7 @@ public class CotizacionApplicationService implements
     public CotizacionView ejecutar(ActualizarItemCotizacionCommand command) {
         Cotizacion cotizacion = cotizacionRepository.buscarPorId(command.cotizacionId())
                 .orElseThrow(() -> new DomainException("Cotizacion no encontrada"));
+        validarEventoOperable(cotizacion);
         Map<UUID, BigDecimal> preciosOverridePorItem = new LinkedHashMap<>();
         preciosOverridePorItem.put(command.itemId(), command.precioOverride());
         return actualizarItems(cotizacion, preciosOverridePorItem);
@@ -143,6 +145,7 @@ public class CotizacionApplicationService implements
     public CotizacionView ejecutar(ActualizarItemsCotizacionCommand command) {
         Cotizacion cotizacion = cotizacionRepository.buscarPorId(command.cotizacionId())
                 .orElseThrow(() -> new DomainException("Cotizacion no encontrada"));
+        validarEventoOperable(cotizacion);
         Map<UUID, BigDecimal> preciosOverridePorItem = construirMapaPrecios(command);
         return actualizarItems(cotizacion, preciosOverridePorItem);
     }
@@ -177,6 +180,7 @@ public class CotizacionApplicationService implements
     public CotizacionView generar(UUID cotizacionId) {
         Cotizacion cotizacion = cotizacionRepository.buscarPorId(cotizacionId)
                 .orElseThrow(() -> new DomainException("Cotizacion no encontrada"));
+        validarEventoOperable(cotizacion);
         return toView(cotizacionRepository.guardar(cotizacion.generarDocumento()));
     }
 
@@ -185,6 +189,7 @@ public class CotizacionApplicationService implements
     public CotizacionView enviar(UUID cotizacionId) {
         Cotizacion cotizacion = cotizacionRepository.buscarPorId(cotizacionId)
                 .orElseThrow(() -> new DomainException("Cotizacion no encontrada"));
+        validarEventoOperable(cotizacion);
         Cotizacion enviada = cotizacionRepository.guardar(cotizacion.enviar());
         actualizarEvento(enviada, Evento::marcarCotizacionEnviada);
         return toView(enviada);
@@ -195,6 +200,7 @@ public class CotizacionApplicationService implements
     public CotizacionView aceptar(UUID cotizacionId) {
         Cotizacion cotizacion = cotizacionRepository.buscarPorId(cotizacionId)
                 .orElseThrow(() -> new DomainException("Cotizacion no encontrada"));
+        validarEventoOperable(cotizacion);
         Cotizacion aceptada = cotizacion.aceptar();
         validarTotalContraAnticiposDelEvento(aceptada);
         aceptada = cotizacionRepository.guardar(aceptada);
@@ -207,7 +213,20 @@ public class CotizacionApplicationService implements
     public CotizacionView rechazar(UUID cotizacionId) {
         Cotizacion cotizacion = cotizacionRepository.buscarPorId(cotizacionId)
                 .orElseThrow(() -> new DomainException("Cotizacion no encontrada"));
+        validarEventoOperable(cotizacion);
         return toView(cotizacionRepository.guardar(cotizacion.rechazar()));
+    }
+
+    private void validarEventoOperable(Cotizacion cotizacion) {
+        ReservaSalon reserva = reservaSalonRepository.buscarPorId(cotizacion.getReservaId())
+                .orElseThrow(() -> new DomainException("Reserva asociada a la cotizacion no encontrada"));
+        validarEventoOperable(reserva);
+    }
+
+    private void validarEventoOperable(ReservaSalon reserva) {
+        Evento evento = eventoRepository.buscarPorId(reserva.getEventoId())
+                .orElseThrow(() -> new DomainException("Evento asociado a la reserva no encontrado"));
+        evento.validarOperable();
     }
 
     private void actualizarEvento(Cotizacion cotizacion, java.util.function.Function<Evento, Evento> transicion) {

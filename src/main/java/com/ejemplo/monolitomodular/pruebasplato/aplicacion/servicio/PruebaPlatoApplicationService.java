@@ -46,6 +46,7 @@ public class PruebaPlatoApplicationService implements ProgramarPruebaPlatoUseCas
                 .orElseThrow(() -> new DomainException("Usuario no encontrado"));
         Evento evento = eventoRepository.buscarPorId(command.eventoId())
                 .orElseThrow(() -> new DomainException("Evento no encontrado"));
+        evento.validarOperable();
         Cliente cliente = clienteRepository.buscarPorId(evento.getClienteId())
                 .orElseThrow(() -> new DomainException("Cliente no encontrado"));
 

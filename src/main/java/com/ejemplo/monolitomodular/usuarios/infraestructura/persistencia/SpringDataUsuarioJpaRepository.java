@@ -8,4 +8,6 @@ import java.util.UUID;
 public interface SpringDataUsuarioJpaRepository extends JpaRepository<UsuarioJpaEntity, UUID> {
 
     Optional<UsuarioJpaEntity> findFirstByNombreIgnoreCase(String nombre);
+
+    long countByRolAndActivoTrue(com.ejemplo.monolitomodular.usuarios.dominio.modelo.RolUsuario rol);
 }

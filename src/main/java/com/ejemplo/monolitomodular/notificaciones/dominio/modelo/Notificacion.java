@@ -156,6 +156,23 @@ public class Notificacion {
         );
     }
 
+    public Notificacion cancelar() {
+        if (estado == EstadoNotificacion.ENVIADA || estado == EstadoNotificacion.CANCELADA) {
+            return this;
+        }
+        return new Notificacion(
+                id,
+                eventoId,
+                tipo,
+                fechaProgramada,
+                fechaEnvio,
+                EstadoNotificacion.CANCELADA,
+                intentos,
+                payloadJson,
+                destinatarios
+        );
+    }
+
     public UUID getId() {
         return id;
     }

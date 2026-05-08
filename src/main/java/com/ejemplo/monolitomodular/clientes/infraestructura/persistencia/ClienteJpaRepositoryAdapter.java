@@ -21,6 +21,9 @@ public class ClienteJpaRepositoryAdapter implements ClienteRepository {
     @Override
     public Cliente guardar(Cliente cliente) {
         LocalDateTime now = LocalDateTime.now();
+        LocalDateTime createdAt = repository.findById(cliente.getId())
+                .map(ClienteJpaEntity::getCreatedAt)
+                .orElse(now);
         ClienteJpaEntity entity = new ClienteJpaEntity(
                 cliente.getId(),
                 cliente.getCedula(),
@@ -30,7 +33,7 @@ public class ClienteJpaRepositoryAdapter implements ClienteRepository {
                 cliente.getTipoCliente(),
                 cliente.isActivo(),
                 cliente.getCreadoPor(),
-                now,
+                createdAt,
                 now
         );
         return toDomain(repository.save(entity));

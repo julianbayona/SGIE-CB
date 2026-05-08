@@ -21,4 +21,7 @@ public interface CotizacionRepository {
     List<Cotizacion> listarPorEventoId(UUID eventoId);
 
     void desactualizarActivasPorReservaId(UUID reservaId);
+
+    default void desactualizarActivasPorEventoId(UUID eventoId) {
+    }
 }

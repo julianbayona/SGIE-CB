@@ -16,4 +16,8 @@ public interface RecordatorioAnticipoRepository {
     boolean existePendientePorEventoYFecha(UUID eventoId, LocalDate fechaRecordatorio);
 
     List<RecordatorioAnticipo> buscarPendientesHasta(LocalDate fechaReferencia, int limite);
+
+    default List<RecordatorioAnticipo> buscarCancelablesPorEventoId(UUID eventoId) {
+        return List.of();
+    }
 }

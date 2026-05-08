@@ -23,6 +23,7 @@ import com.ejemplo.monolitomodular.cotizaciones.presentacion.rest.dto.GenerarCot
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -38,6 +39,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api")
+@PreAuthorize("hasAnyRole('ADMINISTRADOR', 'GERENTE', 'TESORERO')")
 public class CotizacionController {
 
     private final GenerarCotizacionUseCase generarCotizacionUseCase;

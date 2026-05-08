@@ -105,4 +105,12 @@ public class ClienteJpaEntity {
     public UUID getCreadoPor() {
         return creadoPor;
     }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
 }

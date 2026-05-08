@@ -1,10 +1,12 @@
 package com.ejemplo.monolitomodular.usuarios.infraestructura.persistencia;
 
 import com.ejemplo.monolitomodular.usuarios.dominio.modelo.Usuario;
+import com.ejemplo.monolitomodular.usuarios.dominio.modelo.RolUsuario;
 import com.ejemplo.monolitomodular.usuarios.dominio.puerto.salida.UsuarioRepository;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -20,13 +22,16 @@ public class UsuarioJpaRepositoryAdapter implements UsuarioRepository {
     @Override
     public Usuario guardar(Usuario usuario) {
         LocalDateTime now = LocalDateTime.now();
+        LocalDateTime createdAt = repository.findById(usuario.getId())
+                .map(UsuarioJpaEntity::getCreatedAt)
+                .orElse(now);
         UsuarioJpaEntity entity = new UsuarioJpaEntity(
                 usuario.getId(),
                 usuario.getNombre(),
                 usuario.getContrasenaHash(),
                 usuario.getRol(),
                 usuario.isActivo(),
-                now,
+                createdAt,
                 now
         );
         return toDomain(repository.save(entity));
@@ -35,6 +40,18 @@ public class UsuarioJpaRepositoryAdapter implements UsuarioRepository {
     @Override
     public Optional<Usuario> buscarPorId(UUID id) {
         return repository.findById(id).map(this::toDomain);
+    }
+
+    @Override
+    public List<Usuario> listar() {
+        return repository.findAll().stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
+    public long contarAdministradoresActivos() {
+        return repository.countByRolAndActivoTrue(RolUsuario.ADMINISTRADOR);
     }
 
     @Override
