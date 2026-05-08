@@ -403,7 +403,7 @@ const EventMontagePage: React.FC = () => {
   if (loading) {
     return (
       <section className="space-y-10 pb-32">
-        <div className="flex items-center justify-center py-16 text-on-surface-variant">
+        <div className="rounded-2xl border border-stone-300 bg-[#fbf8f2] px-6 py-14 text-center text-sm font-semibold text-stone-600 shadow-sm">
           Cargando configuración de montaje...
         </div>
       </section>
@@ -419,7 +419,7 @@ const EventMontagePage: React.FC = () => {
   }
 
   return (
-    <section className="space-y-10 pb-32">
+    <section className="space-y-7 pb-32">
       <EventDetailHeaderTabs event={event} activeTab="montaje" onEventCancelled={setEvento} />
 
       <div className="gap-6 lg:flex lg:items-start">
@@ -428,38 +428,41 @@ const EventMontagePage: React.FC = () => {
             <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
           )}
 
-          <div className="rounded-lg border border-border bg-surface-container-lowest p-6 shadow-sm">
+          <div className="overflow-hidden rounded-2xl border border-stone-300 bg-[#fbf8f2] shadow-xl shadow-stone-900/5">
+            <div className="border-b border-stone-200 bg-gradient-to-br from-white to-[#f4ead8] px-6 py-5">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-stone-500">Ficha operativa</p>
-                <h3 className="mt-1 font-display text-2xl font-bold text-on-surface">Montaje del evento</h3>
-                <p className="mt-2 max-w-2xl text-sm text-on-surface-variant">
+                <p className="text-xs font-black uppercase tracking-[0.24em] text-[#A8841C]">Ficha operativa</p>
+                <h3 className="mt-1 font-serif text-2xl font-black text-stone-950">Montaje del evento</h3>
+                <p className="mt-2 max-w-2xl text-sm font-medium leading-6 text-stone-600">
                   Aquí defines lo solicitado para la reserva: mesas, sillas, textiles, infraestructura y adicionales.
                   La cotización toma estos valores como fuente de verdad.
                 </p>
               </div>
-              <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">
+              <span className="rounded-full border border-[#A8841C]/20 bg-white px-3 py-1 text-xs font-black text-[#A8841C]">
                 {quoteState && quoteState !== 'BORRADOR' ? `Cotización ${quoteState.toLowerCase()}` : 'En edición'}
               </span>
+            </div>
             </div>
           </div>
 
           {quoteState && quoteState !== 'BORRADOR' && (
-            <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <div className="rounded-2xl border border-[#A8841C]/25 bg-[#f6efd5] px-5 py-4 text-sm font-medium text-stone-800">
               Este montaje ya respalda una cotización en estado <strong>{quoteState}</strong>. Si cambias mesas,
               textiles, infraestructura o adicionales y guardas, esa versión se invalidará y tendrás que generar una
               nueva desde Cotización.
             </div>
           )}
 
-          <div className="space-y-8 rounded-xl border border-border bg-surface-container-lowest p-8 shadow-sm">
+          <div className="space-y-8 rounded-2xl border border-stone-300 bg-[#fbf8f2] p-8 shadow-xl shadow-stone-900/5">
             <section className="space-y-4">
-              <h3 className="font-display text-xl font-bold text-on-surface">Configuración de mesas</h3>
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-stone-500">Distribución principal</p>
+              <h3 className="font-serif text-xl font-black text-stone-950">Configuración de mesas</h3>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <div>
                   <label className="mb-2 block text-xs font-bold text-neutral-700">Tipo de mesa</label>
                   <select
-                    className="w-full rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-2.5 text-sm"
+                    className="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-[#A8841C] focus:ring-2 focus:ring-[#A8841C]/15"
                     value={tableType}
                     onChange={(eventTarget) => setTableType(eventTarget.target.value)}
                     disabled={tiposMesa.length === 0}
@@ -476,7 +479,7 @@ const EventMontagePage: React.FC = () => {
                 <div>
                   <label className="mb-2 block text-xs font-bold text-neutral-700">Tipo de silla</label>
                   <select
-                    className="w-full rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-2.5 text-sm"
+                    className="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-[#A8841C] focus:ring-2 focus:ring-[#A8841C]/15"
                     value={chairType}
                     onChange={(eventTarget) => setChairType(eventTarget.target.value)}
                     disabled={tiposSilla.length === 0}
@@ -493,7 +496,7 @@ const EventMontagePage: React.FC = () => {
                 <div>
                   <label className="mb-2 block text-xs font-bold text-neutral-700">Personas por mesa</label>
                   <input
-                    className="w-full rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-2.5 text-sm"
+                    className="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-[#A8841C] focus:ring-2 focus:ring-[#A8841C]/15"
                     type="number"
                     min={1}
                     value={peoplePerTable}
@@ -504,7 +507,7 @@ const EventMontagePage: React.FC = () => {
                 <div>
                   <label className="mb-2 block text-xs font-bold text-neutral-700">Cantidad de mesas</label>
                   <input
-                    className="w-full rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-2.5 text-sm"
+                    className="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-[#A8841C] focus:ring-2 focus:ring-[#A8841C]/15"
                     type="number"
                     min={1}
                     value={tableCount}
@@ -515,7 +518,7 @@ const EventMontagePage: React.FC = () => {
                 <div>
                   <label className="mb-2 block text-xs font-bold text-neutral-700">Vajilla</label>
                   <select
-                    className="w-full rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-2.5 text-sm"
+                    className="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-[#A8841C] focus:ring-2 focus:ring-[#A8841C]/15"
                     value={dinnerware ? 'true' : 'false'}
                     onChange={(eventTarget) => setDinnerware(eventTarget.target.value === 'true')}
                   >
@@ -527,7 +530,7 @@ const EventMontagePage: React.FC = () => {
                 <div>
                   <label className="mb-2 block text-xs font-bold text-neutral-700">Fajón</label>
                   <select
-                    className="w-full rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-2.5 text-sm"
+                    className="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-[#A8841C] focus:ring-2 focus:ring-[#A8841C]/15"
                     value={fajonEnabled ? 'true' : 'false'}
                     onChange={(eventTarget) => setFajonEnabled(eventTarget.target.value === 'true')}
                   >
@@ -536,13 +539,13 @@ const EventMontagePage: React.FC = () => {
                   </select>
                 </div>
 
-                <div className="rounded-lg border border-outline-variant/30 bg-surface-container-low p-4 md:col-span-3">
+                <div className="rounded-2xl border border-stone-300 bg-white p-4 md:col-span-3">
                   <p className="mb-3 text-sm font-semibold text-on-surface">Textiles de mesa</p>
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div className="space-y-3 rounded-md border border-outline-variant/30 bg-surface-container-lowest p-3">
+                    <div className="space-y-3 rounded-xl border border-stone-300 bg-[#fbf8f2] p-3">
                       <label className="block text-xs font-bold text-neutral-700">Mantel</label>
                       <select
-                        className="w-full rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-2.5 text-sm"
+                        className="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-[#A8841C] focus:ring-2 focus:ring-[#A8841C]/15"
                         value={clothType}
                         onChange={(eventTarget) => setClothType(eventTarget.target.value)}
                         disabled={manteles.length === 0}
@@ -559,10 +562,10 @@ const EventMontagePage: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="space-y-3 rounded-md border border-outline-variant/30 bg-surface-container-lowest p-3">
+                    <div className="space-y-3 rounded-xl border border-stone-300 bg-[#fbf8f2] p-3">
                       <label className="block text-xs font-bold text-neutral-700">Sobremantel</label>
                       <select
-                        className="w-full rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-2.5 text-sm"
+                        className="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-[#A8841C] focus:ring-2 focus:ring-[#A8841C]/15"
                         value={topClothType}
                         onChange={(eventTarget) => setTopClothType(eventTarget.target.value)}
                         disabled={sobremanteles.length === 0}
@@ -584,22 +587,23 @@ const EventMontagePage: React.FC = () => {
             </section>
 
             <section className="space-y-4 border-t border-outline-variant/30 pt-2">
-              <h3 className="font-display text-xl font-bold text-on-surface">Infraestructura</h3>
-              <div className="overflow-hidden rounded-lg border border-outline-variant/30">
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-stone-500">Apoyo operativo</p>
+              <h3 className="font-serif text-xl font-black text-stone-950">Infraestructura</h3>
+              <div className="overflow-hidden rounded-2xl border border-stone-300 bg-white">
                 <table className="w-full text-left">
-                  <thead className="bg-surface-container-low text-xs uppercase tracking-wider text-neutral-500">
+                  <thead className="bg-[#f4ead8] text-xs uppercase tracking-wider text-stone-600">
                     <tr>
                       <th className="px-5 py-3">Item</th>
                       <th className="px-5 py-3 text-right">Seleccionar</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-outline-variant/20 bg-surface-container-lowest">
+                  <tbody className="divide-y divide-stone-200 bg-white">
                     {infrastructure.map((item) => (
                       <tr key={item.id}>
                         <td className="px-5 py-3 font-semibold text-on-surface">{item.name}</td>
                         <td className="px-5 py-3 text-right">
                           <input
-                            className="h-4 w-4 rounded border-outline-variant text-primary-gold"
+                            className="h-4 w-4 rounded border-stone-300 text-[#A8841C]"
                             type="checkbox"
                             checked={item.selected}
                             onChange={(eventTarget) => updateInfrastructureSelection(item.id, eventTarget.target.checked)}
@@ -613,10 +617,11 @@ const EventMontagePage: React.FC = () => {
             </section>
 
             <section className="space-y-4 border-t border-outline-variant/30 pt-2">
-              <h3 className="font-display text-xl font-bold text-on-surface">Adicionales</h3>
-              <div className="overflow-hidden rounded-lg border border-outline-variant/30">
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-stone-500">Cotizable</p>
+              <h3 className="font-serif text-xl font-black text-stone-950">Adicionales</h3>
+              <div className="overflow-hidden rounded-2xl border border-stone-300 bg-white">
                 <table className="w-full text-left">
-                  <thead className="bg-surface-container-low text-xs uppercase tracking-wider text-neutral-500">
+                  <thead className="bg-[#f4ead8] text-xs uppercase tracking-wider text-stone-600">
                     <tr>
                       <th className="px-5 py-3">Item</th>
                       <th className="px-5 py-3">Cobro</th>
@@ -625,7 +630,7 @@ const EventMontagePage: React.FC = () => {
                       <th className="px-5 py-3 text-right">Seleccionar</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-outline-variant/20 bg-surface-container-lowest">
+                  <tbody className="divide-y divide-stone-200 bg-white">
                     {additionalItems.map((item) => (
                       <tr key={item.id}>
                         <td className="px-5 py-3 font-semibold text-on-surface">{item.name}</td>
@@ -635,7 +640,7 @@ const EventMontagePage: React.FC = () => {
                         <td className="px-5 py-3 text-right">
                           {item.billingType === 'UNIDAD' ? (
                             <input
-                              className="w-20 rounded-md border border-outline-variant/40 bg-surface-container-low px-2 py-1.5 text-right text-sm"
+                              className="w-20 rounded-xl border border-stone-300 bg-[#fbf8f2] px-2 py-1.5 text-right text-sm outline-none focus:border-[#A8841C] focus:ring-2 focus:ring-[#A8841C]/15"
                               type="number"
                               min={1}
                               value={item.quantity}
@@ -652,7 +657,7 @@ const EventMontagePage: React.FC = () => {
                         </td>
                         <td className="px-5 py-3 text-right">
                           <input
-                            className="h-4 w-4 rounded border-outline-variant text-primary-gold"
+                            className="h-4 w-4 rounded border-stone-300 text-[#A8841C]"
                             type="checkbox"
                             checked={item.selected}
                             onChange={(eventTarget) => updateAdditionalSelection(item.id, eventTarget.target.checked)}
@@ -668,8 +673,9 @@ const EventMontagePage: React.FC = () => {
         </div>
 
         <aside className="mt-2 hidden w-[320px] space-y-6 lg:sticky lg:top-[92px] lg:block">
-          <div className="space-y-4 rounded-xl border border-border bg-surface-container-lowest p-5 shadow-sm">
-            <h4 className="font-display text-lg font-bold text-primary-gold">Resumen de montaje</h4>
+          <div className="space-y-4 rounded-2xl border border-stone-300 bg-[#fbf8f2] p-5 shadow-xl shadow-stone-900/5">
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-[#A8841C]">Resumen</p>
+            <h4 className="font-serif text-xl font-black text-stone-950">Montaje operativo</h4>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between gap-3">
                 <span className="text-on-surface-variant">Mesas</span>
@@ -722,8 +728,8 @@ const EventMontagePage: React.FC = () => {
             </div>
           </div>
 
-          <div className="space-y-4 rounded-xl border border-border bg-surface-container-lowest p-5 shadow-sm">
-            <h4 className="font-display text-lg font-bold text-on-surface">Adicionales seleccionados</h4>
+          <div className="space-y-4 rounded-2xl border border-stone-300 bg-[#fbf8f2] p-5 shadow-xl shadow-stone-900/5">
+            <h4 className="font-serif text-xl font-black text-stone-950">Adicionales seleccionados</h4>
             {selectedAdditionalItems.length > 0 ? (
               <div className="space-y-3">
                 {selectedAdditionalItems.map((item) => {
@@ -744,7 +750,7 @@ const EventMontagePage: React.FC = () => {
 
                 <div className="flex items-center justify-between border-t border-outline-variant/20 pt-3">
                   <span className="text-xs font-bold uppercase tracking-wider text-neutral-500">Total adicionales</span>
-                  <span className="font-display text-lg font-bold text-primary-gold">
+                  <span className="font-serif text-lg font-black text-[#A8841C]">
                     {currencyFormatter.format(additionalTotal)}
                   </span>
                 </div>
@@ -756,7 +762,7 @@ const EventMontagePage: React.FC = () => {
         </aside>
       </div>
 
-      <footer className="fixed bottom-0 right-0 z-[60] flex w-full items-center justify-between border-t border-surface-container bg-surface-container-lowest/80 px-6 py-4 backdrop-blur-md md:w-[calc(100%-16rem)]">
+      <footer className="fixed bottom-0 right-0 z-[60] flex w-full items-center justify-between border-t border-stone-300 bg-white/90 px-6 py-4 shadow-2xl shadow-stone-900/10 backdrop-blur-md md:w-[calc(100%-16rem)]">
         <div className="hidden items-center gap-2 text-on-secondary-container sm:flex">
           <span className="material-symbols-outlined text-lg">info</span>
           <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">
@@ -765,7 +771,7 @@ const EventMontagePage: React.FC = () => {
         </div>
         <div className="flex w-full gap-4 sm:w-auto">
           <button
-            className="flex-1 rounded-md bg-primary-gold px-8 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-primary disabled:opacity-50 sm:flex-none"
+            className="flex-1 rounded-xl bg-[#A8841C] px-8 py-2.5 text-sm font-black text-white shadow-sm transition-colors hover:bg-[#8f7118] disabled:opacity-50 sm:flex-none"
             type="button"
             onClick={handleGuardarMontaje}
             disabled={saving || !evento}

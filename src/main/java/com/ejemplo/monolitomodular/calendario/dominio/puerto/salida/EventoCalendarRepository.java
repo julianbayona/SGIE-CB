@@ -15,6 +15,10 @@ public interface EventoCalendarRepository {
 
     List<EventoCalendar> buscarPendientes(int limite);
 
+    default List<EventoCalendar> buscarPorEventoId(UUID eventoId) {
+        return List.of();
+    }
+
     default List<EventoCalendar> buscarSincronizadosCancelablesPorEventoId(UUID eventoId) {
         return List.of();
     }

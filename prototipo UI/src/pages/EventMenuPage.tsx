@@ -1,22 +1,23 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import EventDetailHeaderTabs from '@/features/events/components/EventDetailHeaderTabs';
-import eventosApi from '@/api/eventos';
-import clientesApi from '@/api/clientes';
-import salonesApi from '@/api/salones';
+import { useParams } from 'react-router-dom';
+
 import catalogosApi from '@/api/catalogos';
-import menusApi from '@/api/menus';
-import { estadoEventoToEventStatus } from '@/features/events/utils/eventStatus';
+import clientesApi from '@/api/clientes';
 import cotizacionesApi from '@/api/cotizaciones';
+import eventosApi from '@/api/eventos';
+import menusApi from '@/api/menus';
+import salonesApi from '@/api/salones';
+import EventDetailHeaderTabs from '@/features/events/components/EventDetailHeaderTabs';
+import { estadoEventoToEventStatus } from '@/features/events/utils/eventStatus';
 import type {
-  EventoResponse,
-  ClienteResponse,
-  SalonResponse,
   CatalogoBasicoResponse,
-  PlatoResponse,
-  TipoMomentoMenuResponse,
+  ClienteResponse,
   EstadoCotizacion,
+  EventoResponse,
   PlatoMomentoResponse,
+  PlatoResponse,
+  SalonResponse,
+  TipoMomentoMenuResponse,
 } from '@/api/types';
 import { formatShortId } from '@/utils/formatters';
 
@@ -43,6 +44,9 @@ const formatCurrency = (value: number) =>
 
 const uid = () => `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
+const fieldClass =
+  'w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-[#A8841C] focus:ring-2 focus:ring-[#A8841C]/15';
+
 const EventMenuPage: React.FC = () => {
   const { eventId } = useParams();
 
@@ -67,7 +71,7 @@ const EventMenuPage: React.FC = () => {
   const [addCantidad, setAddCantidad] = useState(1);
   const [addExcepciones, setAddExcepciones] = useState('');
 
-  const guests = evento?.reservas.find((r) => r.vigente)?.numInvitados ?? 0;
+  const guests = evento?.reservas.find((reserva) => reserva.vigente)?.numInvitados ?? 0;
 
   useEffect(() => {
     if (!eventId) return;
@@ -99,14 +103,16 @@ const EventMenuPage: React.FC = () => {
         setMomentos(momentosActivos);
         setPlatoMomentos(platoMomentosApiData);
 
-        if (momentosActivos.length > 0) setAddMomentoId(momentosActivos[0]!.id);
         if (momentosActivos.length > 0) {
           const primerMomentoId = momentosActivos[0]!.id;
-          const primerPlatoAsociado = platoMomentosApiData.find((relacion) => relacion.tipoMomentoId === primerMomentoId);
+          const primerPlatoAsociado = platoMomentosApiData.find(
+            (relacion) => relacion.tipoMomentoId === primerMomentoId,
+          );
+          setAddMomentoId(primerMomentoId);
           setAddPlatoId(primerPlatoAsociado?.platoId ?? '');
         }
 
-        const reserva = eventoData.reservas.find((r) => r.vigente);
+        const reserva = eventoData.reservas.find((item) => item.vigente);
         if (!reserva) {
           setError('No hay reserva activa para este evento');
           setLoading(false);
@@ -145,33 +151,25 @@ const EventMenuPage: React.FC = () => {
                     excepciones: item.excepciones ?? '',
                   };
                 }),
-              }))
+              })),
             );
           }
         } catch {
-          if (!cancelled) {
-            setSelecciones([]);
-          }
+          if (!cancelled) setSelecciones([]);
         }
 
         try {
           const cotizacionVigente = await cotizacionesApi.obtenerVigente(reservaId);
-          if (!cancelled) {
-            setQuoteState(cotizacionVigente.estado);
-          }
+          if (!cancelled) setQuoteState(cotizacionVigente.estado);
         } catch {
-          if (!cancelled) {
-            setQuoteState(null);
-          }
+          if (!cancelled) setQuoteState(null);
         }
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : 'Error al cargar datos');
         }
       } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+        if (!cancelled) setLoading(false);
       }
     })();
 
@@ -181,8 +179,16 @@ const EventMenuPage: React.FC = () => {
   }, [eventId]);
 
   const totalMenu = useMemo(
-    () => selecciones.flatMap((seleccion) => seleccion.items).reduce((acc, item) => acc + item.precioBase * item.cantidad, 0),
-    [selecciones]
+    () =>
+      selecciones
+        .flatMap((seleccion) => seleccion.items)
+        .reduce((acc, item) => acc + item.precioBase * item.cantidad, 0),
+    [selecciones],
+  );
+
+  const totalItems = useMemo(
+    () => selecciones.flatMap((seleccion) => seleccion.items).length,
+    [selecciones],
   );
 
   const costoPorInvitado = guests > 0 ? Math.round(totalMenu / guests) : 0;
@@ -193,11 +199,16 @@ const EventMenuPage: React.FC = () => {
     const platoIdsPermitidos = new Set(
       platoMomentos
         .filter((relacion) => relacion.tipoMomentoId === addMomentoId)
-        .map((relacion) => relacion.platoId)
+        .map((relacion) => relacion.platoId),
     );
 
     return platos.filter((plato) => platoIdsPermitidos.has(plato.id));
   }, [addMomentoId, platoMomentos, platos]);
+
+  const selectedPlato = useMemo(
+    () => platosDisponiblesParaMomento.find((plato) => plato.id === addPlatoId) ?? null,
+    [addPlatoId, platosDisponiblesParaMomento],
+  );
 
   useEffect(() => {
     if (!addMomentoId) {
@@ -234,7 +245,7 @@ const EventMenuPage: React.FC = () => {
       return prev.map((seleccion) =>
         seleccion.tipoMomentoId === addMomentoId
           ? { ...seleccion, items: [...seleccion.items, nuevoItem] }
-          : seleccion
+          : seleccion,
       );
     });
 
@@ -249,9 +260,9 @@ const EventMenuPage: React.FC = () => {
         .map((seleccion) =>
           seleccion.tipoMomentoId === momentoId
             ? { ...seleccion, items: seleccion.items.filter((item) => item.localId !== localId) }
-            : seleccion
+            : seleccion,
         )
-        .filter((seleccion) => seleccion.items.length > 0)
+        .filter((seleccion) => seleccion.items.length > 0),
     );
   };
 
@@ -262,11 +273,11 @@ const EventMenuPage: React.FC = () => {
           ? {
               ...seleccion,
               items: seleccion.items.map((item) =>
-                item.localId === localId ? { ...item, cantidad: Math.max(1, cantidad) } : item
+                item.localId === localId ? { ...item, cantidad: Math.max(1, cantidad) } : item,
               ),
             }
-          : seleccion
-      )
+          : seleccion,
+      ),
     );
   };
 
@@ -277,18 +288,18 @@ const EventMenuPage: React.FC = () => {
           ? {
               ...seleccion,
               items: seleccion.items.map((item) =>
-                item.localId === localId ? { ...item, excepciones } : item
+                item.localId === localId ? { ...item, excepciones } : item,
               ),
             }
-          : seleccion
-      )
+          : seleccion,
+      ),
     );
   };
 
   const handleGuardarMenu = async () => {
     if (!evento) return;
 
-    const reserva = evento.reservas.find((r) => r.vigente);
+    const reserva = evento.reservas.find((item) => item.vigente);
     if (!reserva) {
       setError('No hay reserva activa');
       return;
@@ -301,12 +312,10 @@ const EventMenuPage: React.FC = () => {
 
     if (quoteState && quoteState !== 'BORRADOR') {
       const continuar = window.confirm(
-        `Este evento ya tiene una cotización en estado ${quoteState}. Si guardas cambios en Menú, esa cotización dejará de estar vigente y tendrás que generar una nueva.`
+        `Este evento ya tiene una cotizacion en estado ${quoteState}. Si guardas cambios en Menu, esa cotizacion dejara de estar vigente y tendras que generar una nueva.`,
       );
 
-      if (!continuar) {
-        return;
-      }
+      if (!continuar) return;
     }
 
     try {
@@ -330,7 +339,7 @@ const EventMenuPage: React.FC = () => {
       setSavedOk(true);
       window.setTimeout(() => setSavedOk(false), 3000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al guardar menú');
+      setError(err instanceof Error ? err.message : 'Error al guardar menu');
     } finally {
       setSaving(false);
     }
@@ -354,7 +363,7 @@ const EventMenuPage: React.FC = () => {
       };
     }
 
-    const reserva = evento.reservas.find((r) => r.vigente);
+    const reserva = evento.reservas.find((item) => item.vigente);
     const inicio = new Date(evento.fechaHoraInicio);
 
     return {
@@ -367,19 +376,20 @@ const EventMenuPage: React.FC = () => {
       customerPhone: cliente?.telefono ?? '',
       eventType: tipoEvento?.nombre ?? 'Cargando...',
       guests: reserva?.numInvitados ?? 0,
-      venue: salon?.nombre ?? 'Sin salón',
+      venue: salon?.nombre ?? 'Sin salon',
       venueCapacity: salon ? `Capacidad: ${salon.capacidad} pax` : '',
       totalQuote: '$0',
     };
   }, [cliente, eventId, evento, salon, tipoEvento]);
 
-  const momentoNombre = (id: string) => momentos.find((momento) => momento.id === id)?.nombre ?? formatShortId(id, 'MOM-');
+  const momentoNombre = (id: string) =>
+    momentos.find((momento) => momento.id === id)?.nombre ?? formatShortId(id, 'MOM-');
 
   if (loading) {
     return (
       <section className="space-y-8 pb-32">
-        <div className="flex items-center justify-center py-16 text-on-surface-variant">
-          Cargando menú del evento...
+        <div className="rounded-2xl border border-stone-300 bg-[#fbf8f2] px-6 py-14 text-center text-sm font-semibold text-stone-600 shadow-sm">
+          Cargando menu del evento...
         </div>
       </section>
     );
@@ -388,192 +398,166 @@ const EventMenuPage: React.FC = () => {
   if (error && !evento) {
     return (
       <section className="space-y-8 pb-32">
-        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+        <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-700">
+          {error}
+        </div>
       </section>
     );
   }
 
   return (
-    <section className="space-y-8 pb-32">
+    <section className="space-y-7 pb-32">
       <EventDetailHeaderTabs event={event} activeTab="menu" onEventCancelled={setEvento} />
 
-      <div className="gap-6 lg:flex lg:items-start">
-        <div className="mb-24 flex-1 space-y-6">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <main className="space-y-6">
           {error && (
-            <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+            <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-700">
+              {error}
+            </div>
           )}
 
           {savedOk && (
-            <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-700">
-              Menú guardado correctamente
+            <div className="rounded-2xl border border-green-200 bg-green-50 px-5 py-4 text-sm font-semibold text-green-700">
+              Menu guardado correctamente.
             </div>
           )}
 
-          <div className="rounded-lg border border-border bg-surface-container-lowest p-6 shadow-sm">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-stone-500">Ficha gastronómica</p>
-                <h3 className="mt-1 font-display text-2xl font-bold text-on-surface">Menú del evento</h3>
-                <p className="mt-2 max-w-2xl text-sm text-on-surface-variant">
-                  Aquí defines exactamente qué se pidió para la reserva. La cotización toma estos platos y cantidades
-                  como fuente de verdad.
-                </p>
+          <section className="overflow-hidden rounded-2xl border border-stone-300 bg-[#fbf8f2] shadow-xl shadow-stone-900/5">
+            <div className="border-b border-stone-200 bg-[#fbf8f2] px-6 py-5">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.24em] text-[#A8841C]">
+                    Ficha gastronomica
+                  </p>
+                  <h3 className="mt-1 font-serif text-2xl font-black text-stone-950">Menu del evento</h3>
+                  <p className="mt-2 max-w-2xl text-sm font-medium leading-6 text-stone-600">
+                    Arma el menu por momentos. Primero elige el momento, despues el plato, y finalmente ajusta cantidad
+                    y excepciones.
+                  </p>
+                </div>
+                <span className="rounded-full border border-[#A8841C]/20 bg-white px-3 py-1 text-xs font-black text-[#A8841C]">
+                  {quoteState && quoteState !== 'BORRADOR' ? `Cotizacion ${quoteState.toLowerCase()}` : 'En edicion'}
+                </span>
               </div>
-              <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">
-                {quoteState && quoteState !== 'BORRADOR' ? `Cotización ${quoteState.toLowerCase()}` : 'En edición'}
-              </span>
             </div>
-          </div>
+          </section>
 
           {quoteState && quoteState !== 'BORRADOR' && (
-            <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              Este menú ya respalda una cotización en estado <strong>{quoteState}</strong>. Si cambias platos,
-              cantidades o excepciones y guardas, esa versión se invalidará y tendrás que generar una nueva desde
-              Cotización.
+            <div className="rounded-2xl border border-[#A8841C]/25 bg-[#f6efd5] px-5 py-4 text-sm font-medium text-stone-800">
+              Este menu ya respalda una cotizacion en estado <strong>{quoteState}</strong>. Si guardas cambios, esa
+              cotizacion dejara de estar vigente y tendras que generar una nueva.
             </div>
           )}
 
-          <div className="overflow-hidden rounded-lg border border-border bg-surface-container-lowest shadow-sm">
-            <div className="border-b border-outline-variant/20 px-6 py-4">
-              <h4 className="font-display text-lg font-bold text-on-surface">Items del menú</h4>
-              <p className="mt-1 text-sm text-on-surface-variant">
-                {selecciones.length === 0
-                  ? 'Aún no hay platos. Usa el formulario de abajo para agregarlos.'
-                  : `${selecciones.flatMap((seleccion) => seleccion.items).length} plato(s) en ${selecciones.length} momento(s)`}
-              </p>
-            </div>
-
-            {selecciones.length > 0 && (
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[760px] text-left">
-                  <thead className="bg-surface-container-low text-xs uppercase tracking-wider text-neutral-500">
-                    <tr>
-                      <th className="px-6 py-3">Momento</th>
-                      <th className="px-4 py-3">Plato</th>
-                      <th className="px-4 py-3 text-right">Precio base</th>
-                      <th className="px-4 py-3 text-right">Cantidad</th>
-                      <th className="px-4 py-3">Excepciones</th>
-                      <th className="px-6 py-3 text-right">Acción</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-outline-variant/20">
-                    {selecciones.flatMap((seleccion) =>
-                      seleccion.items.map((item) => (
-                        <tr key={item.localId}>
-                          <td className="px-6 py-4 text-sm font-semibold text-on-surface">
-                            {momentoNombre(seleccion.tipoMomentoId)}
-                          </td>
-                          <td className="px-4 py-4 text-sm font-semibold text-on-surface">{item.platoNombre}</td>
-                          <td className="px-4 py-4 text-right text-sm text-on-surface-variant">
-                            {formatCurrency(item.precioBase)}
-                          </td>
-                          <td className="px-4 py-4 text-right">
-                            <input
-                              className="w-20 rounded-md border border-outline-variant/40 bg-surface-container-low px-2 py-1.5 text-right text-sm"
-                              type="number"
-                              min={1}
-                              value={item.cantidad}
-                              onChange={(eventTarget) =>
-                                actualizarCantidad(seleccion.tipoMomentoId, item.localId, Number(eventTarget.target.value))
-                              }
-                            />
-                          </td>
-                          <td className="px-4 py-4">
-                            <input
-                              className="w-full rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-1.5 text-sm"
-                              type="text"
-                              value={item.excepciones}
-                              placeholder="Sin observaciones"
-                              onChange={(eventTarget) =>
-                                actualizarExcepciones(seleccion.tipoMomentoId, item.localId, eventTarget.target.value)
-                              }
-                            />
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            <button
-                              className="text-sm font-semibold text-red-700 hover:text-red-800"
-                              type="button"
-                              onClick={() => quitarItem(seleccion.tipoMomentoId, item.localId)}
-                            >
-                              Quitar
-                            </button>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.4fr_0.6fr]">
-            <div className="space-y-5 rounded-lg border border-border bg-surface-container-lowest p-6 shadow-sm">
+          <section className="rounded-2xl border border-stone-300 bg-[#fbf8f2] p-6 shadow-xl shadow-stone-900/5">
+            <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
               <div>
-                <h4 className="font-display text-lg font-bold text-on-surface">Agregar plato al menú</h4>
-                <p className="mt-1 text-sm text-on-surface-variant">
-                  Selecciona el momento, el plato y la cantidad solicitada para el evento.
+                <p className="text-xs font-black uppercase tracking-[0.22em] text-stone-500">Constructor</p>
+                <h4 className="mt-1 font-serif text-xl font-black text-stone-950">Agregar plato</h4>
+                <p className="mt-1 text-sm font-medium text-stone-600">
+                  Usa este bloque como si fuera un carrito: selecciona y agrega al menu.
                 </p>
               </div>
+              <div className="rounded-2xl border border-stone-300 bg-white px-4 py-3 text-sm">
+                <span className="font-black text-[#A8841C]">{guests}</span>
+                <span className="ml-1 font-semibold text-stone-600">invitados</span>
+              </div>
+            </div>
 
-              {platos.length === 0 || momentos.length === 0 ? (
-                <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-                  {platos.length === 0
-                    ? 'No hay platos en el catálogo. Agrégalos primero desde Catálogos.'
-                    : 'No hay momentos de menú disponibles en el catálogo.'}
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 items-end gap-4 md:grid-cols-12">
-                  <div className="md:col-span-3">
-                    <label className="mb-2 block text-xs font-bold text-neutral-700">Momento</label>
-                    <select
-                      className="w-full rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-2.5 text-sm"
-                      value={addMomentoId}
-                      onChange={(eventTarget) => setAddMomentoId(eventTarget.target.value)}
-                    >
-                      {momentos.map((momento) => (
-                        <option key={momento.id} value={momento.id}>
-                          {momento.nombre}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+            <div className="grid gap-5 lg:grid-cols-[280px_minmax(0,1fr)]">
+              <div className="space-y-3">
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-stone-500">1. Momento</p>
+                <div className="grid gap-2">
+                  {momentos.map((momento) => {
+                    const selected = addMomentoId === momento.id;
+                    const itemCount =
+                      selecciones.find((seleccion) => seleccion.tipoMomentoId === momento.id)?.items.length ?? 0;
 
-                  <div className="md:col-span-4">
-                    <label className="mb-2 block text-xs font-bold text-neutral-700">Plato</label>
-                    {platosDisponiblesParaMomento.length === 0 ? (
-                      <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-700">
-                        No hay platos asociados a este momento.
-                      </div>
-                    ) : (
-                      <select
-                        className="w-full rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-2.5 text-sm"
-                        value={addPlatoId}
-                        onChange={(eventTarget) => setAddPlatoId(eventTarget.target.value)}
+                    return (
+                      <button
+                        key={momento.id}
+                        type="button"
+                        onClick={() => setAddMomentoId(momento.id)}
+                        className={`rounded-2xl border px-4 py-3 text-left transition ${
+                          selected
+                            ? 'border-[#A8841C] bg-[#f6efd5] ring-4 ring-[#A8841C]/10'
+                            : 'border-stone-300 bg-white hover:border-[#A8841C]'
+                        }`}
                       >
-                        {platosDisponiblesParaMomento.map((plato) => (
-                          <option key={plato.id} value={plato.id}>
-                            {plato.nombre} - {formatCurrency(Number(plato.precioBase))}
-                          </option>
-                        ))}
-                      </select>
-                    )}
-                  </div>
+                        <span className="block text-sm font-black text-stone-950">{momento.nombre}</span>
+                        <span className="mt-1 block text-xs font-semibold text-stone-500">
+                          {itemCount} plato(s) agregado(s)
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
-                  <div className="md:col-span-2">
-                    <label className="mb-2 block text-xs font-bold text-neutral-700">Cantidad</label>
-                    <input
-                      className="w-full rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-2.5 text-sm"
-                      type="number"
-                      min={1}
-                      value={addCantidad}
-                      onChange={(eventTarget) => setAddCantidad(Number(eventTarget.target.value) || 1)}
-                    />
-                  </div>
+              <div className="space-y-5">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.2em] text-stone-500">2. Plato</p>
+                  {platosDisponiblesParaMomento.length === 0 ? (
+                    <div className="mt-3 rounded-2xl border border-[#A8841C]/25 bg-[#f6efd5] px-5 py-4 text-sm font-medium text-stone-700">
+                      No hay platos asociados a este momento. Revisa el catalogo de plato-momento.
+                    </div>
+                  ) : (
+                    <div className="mt-3 grid gap-3 md:grid-cols-2">
+                      {platosDisponiblesParaMomento.map((plato) => {
+                        const selected = addPlatoId === plato.id;
+                        return (
+                          <button
+                            key={plato.id}
+                            type="button"
+                            onClick={() => setAddPlatoId(plato.id)}
+                            className={`rounded-2xl border p-4 text-left transition ${
+                              selected
+                                ? 'border-[#A8841C] bg-white ring-4 ring-[#A8841C]/10'
+                                : 'border-stone-300 bg-white hover:border-[#A8841C]'
+                            }`}
+                          >
+                            <span className="block font-serif text-lg font-black text-stone-950">{plato.nombre}</span>
+                            <span className="mt-2 block text-sm font-semibold text-[#A8841C]">
+                              {formatCurrency(Number(plato.precioBase))}
+                            </span>
+                            {plato.descripcion ? (
+                              <span className="mt-2 line-clamp-2 block text-xs font-medium text-stone-500">
+                                {plato.descripcion}
+                              </span>
+                            ) : null}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
 
-                  <div className="md:col-span-3">
+                <div className="rounded-2xl border border-stone-300 bg-white p-4">
+                  <p className="text-xs font-black uppercase tracking-[0.2em] text-stone-500">3. Cantidad y notas</p>
+                  <div className="mt-4 grid gap-4 md:grid-cols-[160px_minmax(0,1fr)_160px]">
+                    <div>
+                      <label className="mb-2 block text-xs font-bold text-stone-600">Cantidad</label>
+                      <input
+                        className={fieldClass}
+                        type="number"
+                        min={1}
+                        value={addCantidad}
+                        onChange={(eventTarget) => setAddCantidad(Number(eventTarget.target.value) || 1)}
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-xs font-bold text-stone-600">Excepciones</label>
+                      <input
+                        className={fieldClass}
+                        type="text"
+                        value={addExcepciones}
+                        placeholder="Ej: sin cebolla, vegetariano, sin gluten"
+                        onChange={(eventTarget) => setAddExcepciones(eventTarget.target.value)}
+                      />
+                    </div>
                     <button
-                      className="w-full rounded-md bg-primary-gold px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-primary disabled:opacity-50"
+                      className="self-end rounded-xl bg-[#A8841C] px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-[#8f7118] disabled:opacity-50"
                       type="button"
                       onClick={agregarItem}
                       disabled={!addMomentoId || !addPlatoId || platosDisponiblesParaMomento.length === 0}
@@ -581,94 +565,177 @@ const EventMenuPage: React.FC = () => {
                       Agregar
                     </button>
                   </div>
-
-                  <div className="md:col-span-12">
-                    <label className="mb-2 block text-xs font-bold text-neutral-700">Excepciones para este plato</label>
-                    <input
-                      className="w-full rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-2.5 text-sm"
-                      type="text"
-                      value={addExcepciones}
-                      placeholder="Ej: sin cebolla, sin gluten"
-                      onChange={(eventTarget) => setAddExcepciones(eventTarget.target.value)}
-                    />
-                  </div>
+                  {selectedPlato ? (
+                    <p className="mt-3 text-xs font-semibold text-stone-500">
+                      Subtotal del item: {formatCurrency(Number(selectedPlato.precioBase) * Math.max(1, addCantidad))}
+                    </p>
+                  ) : null}
                 </div>
-              )}
-            </div>
-
-            <div className="space-y-4 rounded-lg border border-border bg-surface-container-lowest p-6 shadow-sm">
-              <h4 className="font-display text-lg font-bold text-on-surface">Notas generales</h4>
-              <textarea
-                className="min-h-[140px] w-full rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-3 text-sm"
-                value={notasGenerales}
-                placeholder="Ej: menú infantil, personas vegetarianas, alergias"
-                onChange={(eventTarget) => setNotasGenerales(eventTarget.target.value)}
-              />
-            </div>
-          </div>
-        </div>
-
-        <aside className="space-y-6 lg:sticky lg:top-[92px] lg:w-[330px]">
-          <div className="space-y-4 rounded-lg border border-border bg-surface-container-lowest p-5 shadow-sm">
-            <h4 className="font-display text-lg font-bold text-on-surface">Resumen del menú</h4>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between gap-3">
-                <span className="text-on-surface-variant">Invitados</span>
-                <span className="font-semibold text-on-surface">{guests} pax</span>
-              </div>
-              <div className="flex justify-between gap-3">
-                <span className="text-on-surface-variant">Platos definidos</span>
-                <span className="font-semibold text-on-surface">
-                  {selecciones.flatMap((seleccion) => seleccion.items).length}
-                </span>
-              </div>
-              <div className="flex justify-between gap-3">
-                <span className="text-on-surface-variant">Estimado por invitado</span>
-                <span className="font-semibold text-on-surface">{formatCurrency(costoPorInvitado)}</span>
-              </div>
-              <div className="flex justify-between gap-3 border-t border-outline-variant/20 pt-3">
-                <span className="text-xs font-bold uppercase tracking-wider text-neutral-500">Total menú</span>
-                <span className="font-display text-lg font-bold text-primary-gold">{formatCurrency(totalMenu)}</span>
               </div>
             </div>
-          </div>
+          </section>
 
-          <div className="space-y-3 rounded-lg border border-amber-200 bg-amber-50 p-5 shadow-sm">
-            <h4 className="font-display text-base font-bold text-amber-800">Impacto en cotización</h4>
-            <p className="text-sm text-amber-800">
-              Guarda el menú antes de ir a Cotización. Si ya existe una cotización generada o enviada, guardar aquí la
-              dejará sin vigencia y luego tendrás que crear otra.
+          <section className="overflow-hidden rounded-2xl border border-stone-300 bg-[#fbf8f2] shadow-xl shadow-stone-900/5">
+            <div className="border-b border-stone-200 px-6 py-5">
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-stone-500">Seleccion actual</p>
+              <h4 className="mt-1 font-serif text-xl font-black text-stone-950">Menu armado</h4>
+              <p className="mt-1 text-sm font-medium text-stone-600">
+                {totalItems === 0
+                  ? 'Aun no hay platos agregados.'
+                  : `${totalItems} plato(s) distribuidos en ${selecciones.length} momento(s).`}
+              </p>
+            </div>
+
+            {totalItems === 0 ? (
+              <div className="p-8 text-center">
+                <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-[#A8841C]/10 text-[#A8841C]">
+                  <span className="material-symbols-outlined text-3xl">restaurant_menu</span>
+                </div>
+                <p className="mt-4 font-serif text-xl font-black text-stone-950">Sin platos todavia</p>
+                <p className="mx-auto mt-2 max-w-md text-sm font-medium text-stone-500">
+                  Selecciona un momento y un plato para empezar a construir el menu del evento.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4 p-5">
+                {selecciones.map((seleccion) => (
+                  <div key={seleccion.tipoMomentoId} className="rounded-2xl border border-stone-300 bg-white p-4">
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      <h5 className="font-serif text-lg font-black text-stone-950">
+                        {momentoNombre(seleccion.tipoMomentoId)}
+                      </h5>
+                      <span className="rounded-full bg-[#f6efd5] px-3 py-1 text-xs font-black text-[#A8841C]">
+                        {seleccion.items.length} item(s)
+                      </span>
+                    </div>
+
+                    <div className="space-y-3">
+                      {seleccion.items.map((item) => (
+                        <div key={item.localId} className="rounded-xl border border-stone-200 bg-[#fbf8f2] p-4">
+                          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                            <div className="min-w-0">
+                              <p className="font-black text-stone-950">{item.platoNombre}</p>
+                              <p className="mt-1 text-sm font-semibold text-[#A8841C]">
+                                {formatCurrency(item.precioBase)} base
+                              </p>
+                            </div>
+                            <button
+                              className="self-start text-sm font-black text-red-700 hover:text-red-800"
+                              type="button"
+                              onClick={() => quitarItem(seleccion.tipoMomentoId, item.localId)}
+                            >
+                              Quitar
+                            </button>
+                          </div>
+
+                          <div className="mt-4 grid gap-3 md:grid-cols-[140px_minmax(0,1fr)_160px]">
+                            <div>
+                              <label className="mb-1 block text-xs font-bold text-stone-600">Cantidad</label>
+                              <input
+                                className={fieldClass}
+                                type="number"
+                                min={1}
+                                value={item.cantidad}
+                                onChange={(eventTarget) =>
+                                  actualizarCantidad(
+                                    seleccion.tipoMomentoId,
+                                    item.localId,
+                                    Number(eventTarget.target.value),
+                                  )
+                                }
+                              />
+                            </div>
+                            <div>
+                              <label className="mb-1 block text-xs font-bold text-stone-600">Excepciones</label>
+                              <input
+                                className={fieldClass}
+                                type="text"
+                                value={item.excepciones}
+                                placeholder="Sin observaciones"
+                                onChange={(eventTarget) =>
+                                  actualizarExcepciones(
+                                    seleccion.tipoMomentoId,
+                                    item.localId,
+                                    eventTarget.target.value,
+                                  )
+                                }
+                              />
+                            </div>
+                            <div>
+                              <label className="mb-1 block text-xs font-bold text-stone-600">Subtotal</label>
+                              <div className="rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-right text-sm font-black text-stone-900">
+                                {formatCurrency(item.precioBase * item.cantidad)}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          <section className="rounded-2xl border border-stone-300 bg-[#fbf8f2] p-6 shadow-xl shadow-stone-900/5">
+            <h4 className="font-serif text-xl font-black text-stone-950">Notas generales</h4>
+            <p className="mt-1 text-sm font-medium text-stone-600">
+              Usa este espacio para alergias generales, restricciones del cliente o indicaciones de cocina.
             </p>
-            <Link
-              className="inline-flex w-full items-center justify-center rounded-md border border-amber-300 bg-white px-4 py-2.5 text-sm font-bold text-amber-800 hover:bg-amber-100"
-              to={`/events/${event.id}/cotizacion`}
-            >
-              Ir a Cotización
-            </Link>
+            <textarea
+              className="mt-4 min-h-[130px] w-full rounded-xl border border-stone-300 bg-white px-3 py-3 text-sm outline-none focus:border-[#A8841C] focus:ring-2 focus:ring-[#A8841C]/15"
+              value={notasGenerales}
+              placeholder="Ej: menu infantil, personas vegetarianas, alergias"
+              onChange={(eventTarget) => setNotasGenerales(eventTarget.target.value)}
+            />
+          </section>
+        </main>
+
+        <aside className="space-y-6 xl:sticky xl:top-[92px] xl:self-start">
+          <div className="space-y-4 rounded-2xl border border-stone-300 bg-[#fbf8f2] p-5 shadow-xl shadow-stone-900/5">
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-[#A8841C]">Resumen</p>
+            <h4 className="font-serif text-xl font-black text-stone-950">Menu cotizable</h4>
+            <div className="space-y-2 text-sm">
+              <SummaryLine label="Invitados" value={`${guests} pax`} />
+              <SummaryLine label="Platos definidos" value={`${totalItems}`} />
+              <SummaryLine label="Momentos usados" value={`${selecciones.length}`} />
+              <SummaryLine label="Estimado por invitado" value={formatCurrency(costoPorInvitado)} />
+              <div className="flex justify-between gap-3 border-t border-stone-200 pt-3">
+                <span className="text-xs font-black uppercase tracking-wider text-stone-500">Total menu</span>
+                <span className="font-serif text-lg font-black text-[#A8841C]">{formatCurrency(totalMenu)}</span>
+              </div>
+            </div>
           </div>
         </aside>
       </div>
 
-      <footer className="fixed bottom-0 right-0 z-[60] flex w-full items-center justify-between border-t border-surface-container bg-surface-container-lowest/90 px-6 py-4 backdrop-blur-md md:w-[calc(100%-16rem)]">
+      <footer className="fixed bottom-0 right-0 z-[60] flex w-full items-center justify-between border-t border-stone-300 bg-white/90 px-6 py-4 shadow-2xl shadow-stone-900/10 backdrop-blur-md md:w-[calc(100%-16rem)]">
         <div className="hidden items-center gap-2 sm:flex">
-          <span className="material-symbols-outlined text-lg text-neutral-400">info</span>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">
-            Menú y cantidades se editan aquí, no dentro de la cotización
+          <span className="material-symbols-outlined text-lg text-stone-400">info</span>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-stone-500">
+            Menu y cantidades se editan aqui, no dentro de la cotizacion
           </p>
         </div>
-        <div className="flex w-full gap-3 sm:w-auto">
-          <button
-            className="flex-1 rounded-md bg-primary-gold px-8 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-primary disabled:opacity-50 sm:flex-none"
-            type="button"
-            onClick={handleGuardarMenu}
-            disabled={saving || selecciones.length === 0}
-          >
-            {saving ? 'Guardando...' : 'Guardar menú'}
-          </button>
-        </div>
+        <button
+          className="w-full rounded-xl bg-[#A8841C] px-8 py-2.5 text-sm font-black text-white shadow-sm transition-colors hover:bg-[#8f7118] disabled:opacity-50 sm:w-auto"
+          type="button"
+          onClick={handleGuardarMenu}
+          disabled={saving || totalItems === 0}
+        >
+          {saving ? 'Guardando...' : 'Guardar menu'}
+        </button>
       </footer>
     </section>
   );
 };
+
+function SummaryLine({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex justify-between gap-3">
+      <span className="font-medium text-stone-600">{label}</span>
+      <span className="font-black text-stone-900">{value}</span>
+    </div>
+  );
+}
 
 export default EventMenuPage;

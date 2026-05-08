@@ -3,8 +3,11 @@ package com.ejemplo.monolitomodular.notificaciones.aplicacion.servicio;
 import com.ejemplo.monolitomodular.notificaciones.aplicacion.dto.CrearNotificacionCommand;
 import com.ejemplo.monolitomodular.notificaciones.aplicacion.dto.EnviarEmailCommand;
 import com.ejemplo.monolitomodular.notificaciones.aplicacion.dto.EnviarWhatsAppCommand;
+import com.ejemplo.monolitomodular.notificaciones.aplicacion.dto.NotificacionDestinatarioView;
+import com.ejemplo.monolitomodular.notificaciones.aplicacion.dto.NotificacionDetalleView;
 import com.ejemplo.monolitomodular.notificaciones.aplicacion.dto.NotificacionView;
 import com.ejemplo.monolitomodular.notificaciones.aplicacion.puerto.entrada.CrearNotificacionUseCase;
+import com.ejemplo.monolitomodular.notificaciones.aplicacion.puerto.entrada.ListarNotificacionesPorEventoUseCase;
 import com.ejemplo.monolitomodular.notificaciones.aplicacion.puerto.entrada.ProcesarNotificacionesPendientesUseCase;
 import com.ejemplo.monolitomodular.notificaciones.dominio.modelo.Notificacion;
 import com.ejemplo.monolitomodular.notificaciones.dominio.modelo.EstadoDestinatarioNotificacion;
@@ -18,9 +21,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
-public class NotificacionApplicationService implements CrearNotificacionUseCase, ProcesarNotificacionesPendientesUseCase {
+public class NotificacionApplicationService implements CrearNotificacionUseCase, ProcesarNotificacionesPendientesUseCase, ListarNotificacionesPorEventoUseCase {
 
     private final NotificacionRepository notificacionRepository;
     private final WhatsAppPort whatsAppPort;
@@ -62,6 +66,14 @@ public class NotificacionApplicationService implements CrearNotificacionUseCase,
         return notificacionRepository.buscarPendientes(LocalDateTime.now(), limite).stream()
                 .mapToInt(this::procesar)
                 .sum();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<NotificacionDetalleView> listarPorEvento(UUID eventoId) {
+        return notificacionRepository.buscarPorEventoId(eventoId).stream()
+                .map(this::toDetalleView)
+                .toList();
     }
 
     private int procesar(Notificacion notificacion) {
@@ -122,6 +134,30 @@ public class NotificacionApplicationService implements CrearNotificacionUseCase,
                 notificacion.getEstado(),
                 notificacion.getIntentos(),
                 notificacion.getPayloadJson()
+        );
+    }
+
+    private NotificacionDetalleView toDetalleView(Notificacion notificacion) {
+        return new NotificacionDetalleView(
+                notificacion.getId(),
+                notificacion.getEventoId(),
+                notificacion.getTipo(),
+                notificacion.getFechaProgramada(),
+                notificacion.getFechaEnvio(),
+                notificacion.getEstado(),
+                notificacion.getIntentos(),
+                notificacion.getPayloadJson(),
+                notificacion.getDestinatarios().stream().map(this::toDestinatarioView).toList()
+        );
+    }
+
+    private NotificacionDestinatarioView toDestinatarioView(NotificacionDestinatario destinatario) {
+        return new NotificacionDestinatarioView(
+                destinatario.getId(),
+                destinatario.getUsuarioId(),
+                destinatario.getTelefono(),
+                destinatario.getCorreo(),
+                destinatario.getEstado()
         );
     }
 }

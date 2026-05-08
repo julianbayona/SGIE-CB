@@ -32,6 +32,8 @@ public interface SpringDataEventoCalendarJpaRepository extends JpaRepository<Eve
             List<TipoOperacionCalendar> tipos
     );
 
+    List<EventoCalendarJpaEntity> findByEventoIdOrderByCreatedAtDesc(UUID eventoId);
+
     @Modifying
     @Query("""
             update EventoCalendarJpaEntity e

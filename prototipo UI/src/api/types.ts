@@ -464,3 +464,40 @@ export interface EstadoFinancieroEventoResponse {
   saldoPendiente: number;
   pagadoTotalmente: boolean;
 }
+
+// ─────────────────────────────────────────────
+// Notificaciones y Calendar
+// ─────────────────────────────────────────────
+
+export interface NotificacionDestinatarioResponse {
+  id: string;
+  usuarioId: string | null;
+  telefono: string | null;
+  correo: string | null;
+  estado: string;
+}
+
+export interface NotificacionResponse {
+  id: string;
+  eventoId: string;
+  tipo: string;
+  fechaProgramada: string;
+  fechaEnvio: string | null;
+  estado: string;
+  intentos: number;
+  payloadJson: string;
+  destinatarios: NotificacionDestinatarioResponse[];
+}
+
+export interface EventoCalendarResponse {
+  id: string;
+  origenTipo: string;
+  origenId: string;
+  eventoId: string;
+  tipo: string;
+  googleEventId: string | null;
+  fechaSync: string | null;
+  estado: string;
+  intentos: number;
+  mensajeError: string | null;
+}

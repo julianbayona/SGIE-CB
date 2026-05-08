@@ -57,6 +57,13 @@ public class EventoCalendarJpaRepositoryAdapter implements EventoCalendarReposit
     }
 
     @Override
+    public List<EventoCalendar> buscarPorEventoId(UUID eventoId) {
+        return repository.findByEventoIdOrderByCreatedAtDesc(eventoId).stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
     public List<EventoCalendar> buscarSincronizadosCancelablesPorEventoId(UUID eventoId) {
         return repository.findByEventoIdAndEstadoAndTipoIn(
                         eventoId,

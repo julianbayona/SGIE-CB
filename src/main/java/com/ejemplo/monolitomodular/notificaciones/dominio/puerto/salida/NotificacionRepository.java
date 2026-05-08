@@ -15,6 +15,10 @@ public interface NotificacionRepository {
 
     boolean existePorEventoYTipoDesde(UUID eventoId, TipoNotificacion tipo, LocalDateTime fechaDesde);
 
+    default List<Notificacion> buscarPorEventoId(UUID eventoId) {
+        return List.of();
+    }
+
     default List<Notificacion> buscarCancelablesPorEventoYTipo(UUID eventoId, TipoNotificacion tipo) {
         return List.of();
     }

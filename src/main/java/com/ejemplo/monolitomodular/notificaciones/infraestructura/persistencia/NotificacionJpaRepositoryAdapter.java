@@ -58,6 +58,13 @@ public class NotificacionJpaRepositoryAdapter implements NotificacionRepository 
     }
 
     @Override
+    public List<Notificacion> buscarPorEventoId(UUID eventoId) {
+        return notificacionRepository.findByEventoIdOrderByFechaProgramadaDesc(eventoId).stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
     public List<Notificacion> buscarCancelablesPorEventoYTipo(UUID eventoId, TipoNotificacion tipo) {
         return notificacionRepository.findByEventoIdAndTipoAndEstadoIn(
                         eventoId,

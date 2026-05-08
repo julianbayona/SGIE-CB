@@ -3,6 +3,7 @@ package com.ejemplo.monolitomodular.calendario.aplicacion.servicio;
 import com.ejemplo.monolitomodular.calendario.aplicacion.dto.EventoCalendarView;
 import com.ejemplo.monolitomodular.calendario.aplicacion.dto.SincronizarGoogleCalendarCommand;
 import com.ejemplo.monolitomodular.calendario.aplicacion.dto.SincronizarGoogleCalendarResult;
+import com.ejemplo.monolitomodular.calendario.aplicacion.puerto.entrada.ListarEventosCalendarPorEventoUseCase;
 import com.ejemplo.monolitomodular.calendario.aplicacion.puerto.entrada.ProcesarEventosCalendarPendientesUseCase;
 import com.ejemplo.monolitomodular.calendario.aplicacion.puerto.entrada.ReintentarEventoCalendarUseCase;
 import com.ejemplo.monolitomodular.calendario.dominio.modelo.EventoCalendar;
@@ -12,8 +13,11 @@ import com.ejemplo.monolitomodular.shared.dominio.excepcion.DomainException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.UUID;
+
 @Service
-public class EventoCalendarApplicationService implements ProcesarEventosCalendarPendientesUseCase, ReintentarEventoCalendarUseCase {
+public class EventoCalendarApplicationService implements ProcesarEventosCalendarPendientesUseCase, ReintentarEventoCalendarUseCase, ListarEventosCalendarPorEventoUseCase {
 
     private final EventoCalendarRepository eventoCalendarRepository;
     private final GoogleCalendarPort googleCalendarPort;
@@ -54,6 +58,14 @@ public class EventoCalendarApplicationService implements ProcesarEventosCalendar
         EventoCalendar eventoCalendar = eventoCalendarRepository.buscarPorId(eventoCalendarId)
                 .orElseThrow(() -> new DomainException("Evento de calendario no encontrado"));
         return toView(eventoCalendarRepository.guardar(eventoCalendar.reintentar()));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<EventoCalendarView> listarPorEvento(UUID eventoId) {
+        return eventoCalendarRepository.buscarPorEventoId(eventoId).stream()
+                .map(this::toView)
+                .toList();
     }
 
     private EventoCalendarView toView(EventoCalendar eventoCalendar) {

@@ -8,7 +8,16 @@ import catalogosApi from '@/api/catalogos';
 import pagosApi from '@/api/pagos';
 import { estadoEventoToEventStatus } from '@/features/events/utils/eventStatus';
 import pruebasPlatoApi from '@/api/pruebasPlato';
-import type { EventoResponse, ClienteResponse, SalonResponse, CatalogoBasicoResponse } from '@/api/types';
+import calendarioApi from '@/api/calendario';
+import notificacionesApi from '@/api/notificaciones';
+import type {
+  EventoCalendarResponse,
+  EventoResponse,
+  ClienteResponse,
+  NotificacionResponse,
+  SalonResponse,
+  CatalogoBasicoResponse,
+} from '@/api/types';
 
 type AgendaCategory = 'degustacion' | 'anticipo';
 type AgendaStatus = 'programado' | 'enviado' | 'completado' | 'cancelado';
@@ -50,6 +59,16 @@ const statusPillClass: Record<AgendaStatus, string> = {
   cancelado: 'bg-stone-200 text-stone-600',
 };
 
+const integrationStatusClass: Record<string, string> = {
+  PENDIENTE: 'bg-blue-50 text-blue-700',
+  ENVIANDO: 'bg-blue-50 text-blue-700',
+  ENVIADA: 'bg-green-50 text-green-700',
+  SINCRONIZADO: 'bg-green-50 text-green-700',
+  ERROR: 'bg-red-50 text-red-700',
+  CANCELADA: 'bg-stone-200 text-stone-600',
+  CANCELADO: 'bg-stone-200 text-stone-600',
+};
+
 const formatDateTime = (value: string): string => {
   if (!value) {
     return 'Sin fecha';
@@ -58,7 +77,7 @@ const formatDateTime = (value: string): string => {
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
-    return 'Fecha invalida';
+    return 'Fecha inválida';
   }
 
   return new Intl.DateTimeFormat('es-CO', {
@@ -90,6 +109,11 @@ const EventAgendaPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notificaciones, setNotificaciones] = useState<NotificacionResponse[]>([]);
+  const [eventosCalendar, setEventosCalendar] = useState<EventoCalendarResponse[]>([]);
+  const [monitorError, setMonitorError] = useState<string | null>(null);
+  const [refreshingMonitor, setRefreshingMonitor] = useState(false);
+  const [retryingCalendarId, setRetryingCalendarId] = useState<string | null>(null);
 
   // Estado inicial vacío - sin datos hardcodeados
   const [entries, setEntries] = useState<AgendaEntry[]>([]);
@@ -100,6 +124,17 @@ const EventAgendaPage: React.FC = () => {
   const [newChannel, setNewChannel] = useState<ReminderChannel>('whatsapp');
   const [newNotes, setNewNotes] = useState('');
   const [filterCategory, setFilterCategory] = useState<'todos' | AgendaCategory>('todos');
+
+  const cargarMonitoreo = async (currentEventId: string) => {
+    const [notificacionesData, calendarData] = await Promise.all([
+      notificacionesApi.listarPorEvento(currentEventId),
+      calendarioApi.listarPorEvento(currentEventId),
+    ]);
+
+    setNotificaciones(notificacionesData);
+    setEventosCalendar(calendarData);
+    setMonitorError(null);
+  };
 
   // Cargar evento al montar
   useEffect(() => {
@@ -134,6 +169,25 @@ const EventAgendaPage: React.FC = () => {
         setCliente(clienteData);
         setTipoEvento(tipoEventoData);
         setSalon(salonData);
+
+        try {
+          const currentEventId = eventId;
+          const [notificacionesData, calendarData] = await Promise.all([
+            notificacionesApi.listarPorEvento(currentEventId),
+            calendarioApi.listarPorEvento(currentEventId),
+          ]);
+          if (!cancelled) {
+            setNotificaciones(notificacionesData);
+            setEventosCalendar(calendarData);
+            setMonitorError(null);
+          }
+        } catch {
+          if (!cancelled) {
+            setNotificaciones([]);
+            setEventosCalendar([]);
+            setMonitorError('No fue posible cargar el monitoreo de notificaciones y Calendar.');
+          }
+        }
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : 'Error al cargar evento');
@@ -145,6 +199,34 @@ const EventAgendaPage: React.FC = () => {
 
     return () => { cancelled = true; };
   }, [eventId]);
+
+  const refrescarMonitoreo = async () => {
+    if (!eventId) return;
+
+    try {
+      setRefreshingMonitor(true);
+      await cargarMonitoreo(eventId);
+    } catch {
+      setMonitorError('No fue posible actualizar el monitoreo de notificaciones y Calendar.');
+    } finally {
+      setRefreshingMonitor(false);
+    }
+  };
+
+  const reintentarEventoCalendar = async (eventoCalendarId: string) => {
+    try {
+      setRetryingCalendarId(eventoCalendarId);
+      const actualizado = await calendarioApi.reintentar(eventoCalendarId);
+      setEventosCalendar((prev) =>
+        prev.map((calendar) => (calendar.id === actualizado.id ? actualizado : calendar))
+      );
+      setMonitorError(null);
+    } catch {
+      setMonitorError('No fue posible reintentar la sincronización con Google Calendar.');
+    } finally {
+      setRetryingCalendarId(null);
+    }
+  };
 
   // Crear objeto event compatible con EventDetailHeaderTabs
   const event = useMemo(() => {
@@ -195,6 +277,14 @@ const EventAgendaPage: React.FC = () => {
   const totalPending = useMemo(
     () => entries.filter((entry) => entry.status === 'programado' || entry.status === 'enviado').length,
     [entries]
+  );
+  const totalNotificationsWithError = useMemo(
+    () => notificaciones.filter((notificacion) => notificacion.estado === 'ERROR').length,
+    [notificaciones]
+  );
+  const totalCalendarWithError = useMemo(
+    () => eventosCalendar.filter((calendar) => calendar.estado === 'ERROR').length,
+    [eventosCalendar]
   );
 
   const visibleEntries = useMemo(() => {
@@ -254,6 +344,7 @@ const EventAgendaPage: React.FC = () => {
 
       setNewScheduledAt('');
       setNewNotes('');
+      await refrescarMonitoreo();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al crear agendamiento.');
     } finally {
@@ -315,13 +406,152 @@ const EventAgendaPage: React.FC = () => {
         </div>
       </div>
 
+      <section className="rounded-2xl border border-stone-300 bg-[#fbf8f2] shadow-xl shadow-stone-900/5">
+        <div className="border-b border-stone-200 px-6 py-5">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.24em] text-[#A8841C]">Monitoreo</p>
+              <h4 className="mt-1 font-serif text-2xl font-black text-stone-950">Notificaciones y Google Calendar</h4>
+              <p className="mt-1 text-sm font-medium text-stone-600">
+                Revisa que los mensajes y sincronizaciones disparados por observers se hayan procesado correctamente.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <MonitorChip label="Notificaciones" value={notificaciones.length} errorCount={totalNotificationsWithError} />
+              <MonitorChip label="Calendar" value={eventosCalendar.length} errorCount={totalCalendarWithError} />
+              <button
+                type="button"
+                onClick={refrescarMonitoreo}
+                disabled={refreshingMonitor}
+                className="rounded-2xl border border-stone-300 bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.14em] text-stone-700 transition hover:border-[#A8841C] hover:text-[#A8841C] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {refreshingMonitor ? 'Actualizando...' : 'Actualizar'}
+              </button>
+            </div>
+          </div>
+          {monitorError ? (
+            <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+              {monitorError}
+            </div>
+          ) : null}
+        </div>
+
+        <div className="grid gap-5 p-6 xl:grid-cols-2">
+          <div className="overflow-hidden rounded-2xl border border-stone-300 bg-white">
+            <div className="border-b border-stone-200 bg-[#f4ead8] px-5 py-4">
+              <h5 className="font-serif text-lg font-black text-stone-950">Notificaciones</h5>
+              <p className="mt-1 text-xs font-semibold text-stone-600">
+                Estado general y destinatarios de cada mensaje.
+              </p>
+            </div>
+            <div className="max-h-[360px] overflow-auto">
+              {notificaciones.length === 0 ? (
+                <EmptyMonitor message="Todavía no hay notificaciones asociadas a este evento." />
+              ) : (
+                <div className="divide-y divide-stone-200">
+                  {notificaciones.map((notificacion) => (
+                    <div key={notificacion.id} className="p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-black text-stone-950">{notificacion.tipo}</p>
+                          <p className="mt-1 text-xs font-semibold text-stone-500">
+                            Programada: {formatDateTime(notificacion.fechaProgramada)}
+                          </p>
+                          {notificacion.fechaEnvio ? (
+                            <p className="mt-1 text-xs font-semibold text-stone-500">
+                              Enviada: {formatDateTime(notificacion.fechaEnvio)}
+                            </p>
+                          ) : null}
+                        </div>
+                        <StatusChip status={notificacion.estado} />
+                      </div>
+                      <div className="mt-3 space-y-2">
+                        {notificacion.destinatarios.map((destinatario) => (
+                          <div
+                            key={destinatario.id}
+                            className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[#fbf8f2] px-3 py-2 text-xs"
+                          >
+                            <span className="font-semibold text-stone-700">
+                              {destinatario.correo || destinatario.telefono || 'Destinatario'}
+                            </span>
+                            <StatusChip status={destinatario.estado} />
+                          </div>
+                        ))}
+                      </div>
+                      <p className="mt-3 text-xs font-semibold text-stone-500">
+                        Intentos: {notificacion.intentos}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="overflow-hidden rounded-2xl border border-stone-300 bg-white">
+            <div className="border-b border-stone-200 bg-[#f4ead8] px-5 py-4">
+              <h5 className="font-serif text-lg font-black text-stone-950">Google Calendar</h5>
+              <p className="mt-1 text-xs font-semibold text-stone-600">
+                Operaciones enviadas al calendario operativo.
+              </p>
+            </div>
+            <div className="max-h-[360px] overflow-auto">
+              {eventosCalendar.length === 0 ? (
+                <EmptyMonitor message="Todavía no hay operaciones de Calendar asociadas a este evento." />
+              ) : (
+                <div className="divide-y divide-stone-200">
+                  {eventosCalendar.map((calendar) => (
+                    <div key={calendar.id} className="p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-black text-stone-950">
+                            {calendar.origenTipo} · {calendar.tipo}
+                          </p>
+                          <p className="mt-1 text-xs font-semibold text-stone-500">
+                            Google ID: {calendar.googleEventId || 'Sin sincronizar'}
+                          </p>
+                          <p className="mt-1 text-xs font-semibold text-stone-500">
+                            Sync: {calendar.fechaSync ? formatDateTime(calendar.fechaSync) : 'Pendiente'}
+                          </p>
+                        </div>
+                        <StatusChip status={calendar.estado} />
+                      </div>
+                      {calendar.mensajeError ? (
+                        <p className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
+                          {calendar.mensajeError}
+                        </p>
+                      ) : null}
+                      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                        <p className="text-xs font-semibold text-stone-500">
+                          Intentos: {calendar.intentos}
+                        </p>
+                        {calendar.estado === 'ERROR' ? (
+                          <button
+                            type="button"
+                            onClick={() => reintentarEventoCalendar(calendar.id)}
+                            disabled={retryingCalendarId === calendar.id}
+                            className="rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-black text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {retryingCalendarId === calendar.id ? 'Reintentando...' : 'Reintentar Calendar'}
+                          </button>
+                        ) : null}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
       <div className="grid grid-cols-1 xl:grid-cols-[1.5fr_1fr] gap-6">
         <section className="bg-surface-container-lowest border border-border rounded-xl p-6 shadow-sm space-y-5">
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div>
               <h4 className="text-2xl font-display font-bold text-on-surface">Agenda de recordatorios</h4>
               <p className="text-sm text-on-surface-variant mt-1">
-                Crea multiples agendamientos para degustacion y multiples recordatorios para cada anticipo.
+                Crea múltiples agendamientos para degustación y múltiples recordatorios para cada anticipo.
               </p>
             </div>
             <select
@@ -458,5 +688,40 @@ const EventAgendaPage: React.FC = () => {
     </section>
   );
 };
+
+function StatusChip({ status }: { status: string }) {
+  return (
+    <span
+      className={`rounded-full px-2.5 py-1 text-[11px] font-black ${
+        integrationStatusClass[status] ?? 'bg-stone-100 text-stone-600'
+      }`}
+    >
+      {status}
+    </span>
+  );
+}
+
+function MonitorChip({ label, value, errorCount }: { label: string; value: number; errorCount: number }) {
+  return (
+    <div className="rounded-2xl border border-stone-300 bg-white px-4 py-3 text-right">
+      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-stone-500">{label}</p>
+      <p className="mt-1 text-xl font-black text-stone-950">{value}</p>
+      <p className={`text-xs font-bold ${errorCount > 0 ? 'text-red-700' : 'text-green-700'}`}>
+        {errorCount > 0 ? `${errorCount} error(es)` : 'Sin errores'}
+      </p>
+    </div>
+  );
+}
+
+function EmptyMonitor({ message }: { message: string }) {
+  return (
+    <div className="p-8 text-center">
+      <div className="mx-auto grid size-12 place-items-center rounded-2xl bg-[#A8841C]/10 text-[#A8841C]">
+        <span className="material-symbols-outlined text-2xl">notifications</span>
+      </div>
+      <p className="mx-auto mt-3 max-w-sm text-sm font-semibold text-stone-500">{message}</p>
+    </div>
+  );
+}
 
 export default EventAgendaPage;
