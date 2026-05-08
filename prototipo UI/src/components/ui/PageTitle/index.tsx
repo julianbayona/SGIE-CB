@@ -10,7 +10,7 @@ interface PageTitleProps {
 
 const PageTitle: React.FC<PageTitleProps> = ({ eyebrow, title, description, actions, children }) => {
   return (
-    <div className="rounded-2xl border border-stone-300 bg-white px-5 py-4 shadow-sm">
+    <div className="overflow-hidden rounded-2xl border border-stone-300 bg-[linear-gradient(135deg,#fbf8f1_0%,#efe4cf_62%,#d9c17b_100%)] px-5 py-4 shadow-xl shadow-stone-900/5">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0">
           {eyebrow ? (

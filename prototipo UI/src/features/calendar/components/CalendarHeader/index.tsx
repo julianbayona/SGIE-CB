@@ -36,7 +36,7 @@ const CalendarHeader: React.FC = () => {
   };
 
   return (
-    <div className="flex items-center justify-between p-4 border-b border-outline-variant/10">
+    <div className="flex items-center justify-between border-b border-stone-300 bg-[linear-gradient(135deg,#fbf8f1_0%,#efe4cf_62%,#d9c17b_100%)] p-4">
       <div className="flex items-center gap-4">
         <h2 className="text-xl font-display font-bold text-on-surface capitalize">{getTitle()}</h2>
         <div className="flex bg-surface-container-low p-0.5 rounded">

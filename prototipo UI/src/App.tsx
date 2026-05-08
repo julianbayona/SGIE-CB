@@ -17,6 +17,7 @@ import EventPaymentsPage from './pages/EventPaymentsPage';
 import EventAgendaPage from './pages/EventAgendaPage';
 import CatalogsPage from './pages/CatalogsPage';
 import ReportsPage from './pages/ReportsPage';
+import UsersPage from './pages/UsersPage';
 
 function App() {
   return (
@@ -39,6 +40,14 @@ function App() {
             <Route path="quotes" element={<QuotesPage />} />
             <Route path="clients" element={<ClientsPage />} />
             <Route path="reports" element={<ReportsPage />} />
+            <Route
+              path="users"
+              element={
+                <ProtectedRoute requiredRoles="ADMINISTRADOR">
+                  <UsersPage />
+                </ProtectedRoute>
+              }
+            />
             
             {/* Catálogos - Solo ADMINISTRADOR y GERENTE */}
             <Route

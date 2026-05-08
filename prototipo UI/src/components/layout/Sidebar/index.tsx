@@ -7,6 +7,7 @@ const navItems = [
   { to: '/clients', icon: 'group', label: 'Clientes' },
   { to: '/quotes', icon: 'description', label: 'Cotizaciones' },
   { to: '/reports', icon: 'monitoring', label: 'Reportes' },
+  { to: '/users', icon: 'manage_accounts', label: 'Usuarios' },
   { to: '/catalogs', icon: 'settings', label: 'Catálogos' },
 ];
 
