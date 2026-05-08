@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import EventsPageHeader from '@/features/events/components/EventsPageHeader';
-import EventsToolbar from '@/features/events/components/EventsToolbar';
 import EventsTable from '@/features/events/components/EventsTable';
 import EventsTablePagination from '@/features/events/components/EventsTablePagination';
 import type { EventRecord, EventStatus, EventsTab } from '@/features/events/types';
@@ -146,7 +145,7 @@ const EventsPage: React.FC = () => {
 
   return (
     <section className="space-y-6">
-      <EventsPageHeader />
+      <EventsPageHeader activeTab={activeTab} onTabChange={setActiveTab} />
 
       {error && (
         <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -155,7 +154,6 @@ const EventsPage: React.FC = () => {
       )}
 
       <div className="bg-surface rounded-lg shadow-sm overflow-hidden border border-border">
-        <EventsToolbar activeTab={activeTab} onTabChange={setActiveTab} />
         {loading ? (
           <div className="flex items-center justify-center py-16 text-on-surface-variant text-sm">
             Cargando eventos…

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import catalogosApi from '@/api/catalogos';
 import salonesApi from '@/api/salones';
+import PageTitle from '@/components/ui/PageTitle';
 import type {
   CatalogoBasicoResponse,
   TipoAdicionalResponse,
@@ -344,13 +345,11 @@ const CatalogsPage: React.FC = () => {
 
   return (
     <section className="space-y-6">
-      <div>
-        <p className="text-primary-gold tracking-widest text-xs uppercase mb-2">Administracion</p>
-        <h1 className="text-2xl font-display font-bold text-on-surface">Catalogos</h1>
-        <p className="text-sm text-on-surface-variant mt-1">
-          Gestion operativa de catalogos base usados en salones, montaje y adicionales.
-        </p>
-      </div>
+      <PageTitle
+        eyebrow="Administracion"
+        title="Catalogos"
+        description="Gestion operativa de catalogos base usados en salones, montaje y adicionales."
+      />
 
       <div className="grid grid-cols-1 xl:grid-cols-[220px_1fr_340px] gap-5">
         <aside className="bg-surface-container-lowest border border-border rounded-lg p-3 h-fit">

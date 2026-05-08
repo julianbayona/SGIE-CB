@@ -11,6 +11,7 @@ import type {
 } from '@/api/types';
 import { formatShortId } from '@/utils/formatters';
 import { Button } from '@/components/ui/Button';
+import PageTitle from '@/components/ui/PageTitle';
 
 const GOLD = '#A8841C';
 const GREEN = '#2E7D32';
@@ -179,30 +180,21 @@ const ReportsPage: React.FC = () => {
 
   return (
     <section className="space-y-7 pb-16">
-      <div className="overflow-hidden rounded-[2rem] border border-stone-300 bg-[#f8f4ec] shadow-xl shadow-stone-900/5">
-        <div className="grid gap-7 p-7 xl:grid-cols-[1.2fr_0.8fr]">
-          <div>
-            <p className="text-xs font-black uppercase tracking-[0.30em] text-[#A8841C]">Gerencia</p>
-            <h1 className="mt-3 font-serif text-4xl font-black text-stone-950 md:text-5xl">
-              Reportes ejecutivos del Club
-            </h1>
-            <p className="mt-3 max-w-3xl text-base font-medium leading-7 text-stone-700">
-              Lectura rápida de eventos, recaudo, saldos pendientes y uso de salones para tomar decisiones operativas.
-            </p>
-          </div>
-
-          <div className="rounded-3xl border border-stone-300 bg-white p-5 shadow-sm">
-            <p className="text-xs font-black uppercase tracking-[0.20em] text-stone-500">Periodo de análisis</p>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+      <PageTitle
+        eyebrow="Gerencia"
+        title="Reportes ejecutivos"
+        description="Lectura rapida de eventos, recaudo, saldos pendientes y uso de salones."
+      >
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div className="grid gap-3 sm:grid-cols-2">
               <DateField label="Desde" value={desde} onChange={setDesde} />
               <DateField label="Hasta" value={hasta} onChange={setHasta} />
             </div>
-            <Button className="mt-4 w-full bg-[#A8841C] text-white hover:bg-[#8f7118]" onClick={cargarReportes} disabled={loading}>
-              {loading ? 'Actualizando reportes...' : 'Actualizar reportes'}
+          <Button className="h-10 rounded-xl bg-[#A8841C] px-4 text-xs font-black text-white hover:bg-[#8f7118]" onClick={cargarReportes} disabled={loading}>
+            {loading ? 'Actualizando...' : 'Actualizar reportes'}
             </Button>
           </div>
-        </div>
-      </div>
+      </PageTitle>
 
       {error ? (
         <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-700">

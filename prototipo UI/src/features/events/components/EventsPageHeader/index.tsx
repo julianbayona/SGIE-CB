@@ -1,27 +1,60 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import PageTitle from '@/components/ui/PageTitle';
+import type { EventsTab } from '@/features/events/types';
 
-const EventsPageHeader: React.FC = () => {
+interface EventsPageHeaderProps {
+  activeTab: EventsTab;
+  onTabChange: (tab: EventsTab) => void;
+}
+
+const tabs: EventsTab[] = ['Todos', 'Activos', 'Pendientes', 'Confirmados', 'Cancelados'];
+
+const EventsPageHeader: React.FC<EventsPageHeaderProps> = ({ activeTab, onTabChange }) => {
   return (
-    <div className="flex flex-wrap items-end justify-between gap-4">
-      <div>
-        <nav className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-text3 mb-2">
-          <span>Gestión</span>
-          <span className="material-symbols-outlined text-[12px]">chevron_right</span>
-          <span className="text-gold font-bold">Eventos</span>
-        </nav>
-        <h1 className="text-2xl font-display font-bold text-text1">Gestión de eventos</h1>
-        <p className="text-sm text-text3 mt-1">Seguimiento del flujo cliente, menú, cotización, anticipo y confirmación.</p>
-      </div>
+    <PageTitle
+      eyebrow="Gestion operativa"
+      title="Gestion de eventos"
+      description="Seguimiento del flujo cliente, menu, cotizacion, anticipo y confirmacion."
+      actions={
+        <Link
+          to="/events/request"
+          className="flex items-center gap-2 rounded-xl bg-[#A8841C] px-4 py-2 text-xs font-black text-white shadow-sm transition-all hover:bg-[#7A5E10] active:scale-[0.98]"
+        >
+          <span className="material-symbols-outlined text-lg">add_circle</span>
+          Crear solicitud
+        </Link>
+      }
+    >
+      <nav className="flex flex-wrap gap-2">
+        {tabs.map((tab) => {
+          const isActive = tab === activeTab;
 
-      <Link
-        to="/events/request"
-        className="flex items-center gap-2 bg-gold text-white px-5 py-2.5 rounded-md shadow-sm hover:bg-gold-d active:scale-[0.98] transition-all font-bold text-sm"
-      >
-        <span className="material-symbols-outlined text-lg">add_circle</span>
-        Crear solicitud de evento
-      </Link>
-    </div>
+          return (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => onTabChange(tab)}
+              className={`rounded-full border px-3 py-1.5 text-xs font-black transition-colors ${
+                isActive
+                  ? 'border-[#A8841C] bg-[#A8841C] text-white'
+                  : 'border-stone-300 bg-white text-stone-600 hover:border-[#A8841C] hover:text-[#A8841C]'
+              }`}
+            >
+              {tab}
+            </button>
+          );
+        })}
+
+        <button
+          type="button"
+          className="flex items-center gap-1.5 rounded-full border border-stone-300 bg-white px-3 py-1.5 text-xs font-black text-stone-600 transition-colors hover:border-[#A8841C] hover:text-[#A8841C]"
+        >
+          <span className="material-symbols-outlined text-base">tune</span>
+          Filtros
+        </button>
+      </nav>
+    </PageTitle>
   );
 };
 
