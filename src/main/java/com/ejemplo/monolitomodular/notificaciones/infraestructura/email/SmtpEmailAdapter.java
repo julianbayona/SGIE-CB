@@ -42,11 +42,11 @@ public class SmtpEmailAdapter implements EmailPort {
             mailSender.send(message);
             return EnviarEmailResult.ok();
         } catch (RuntimeException ex) {
-            LOGGER.error(
-                    "Fallo enviando Email. notificacionId={}, correo={}",
+            LOGGER.warn(
+                    "Fallo enviando Email. notificacionId={}, correo={}, causa={}",
                     command.notificacionId(),
                     command.correo(),
-                    ex
+                    ex.getMessage()
             );
             return EnviarEmailResult.error(ex.getMessage());
         }
