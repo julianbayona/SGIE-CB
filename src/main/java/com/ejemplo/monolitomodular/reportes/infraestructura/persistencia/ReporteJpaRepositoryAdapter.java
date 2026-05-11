@@ -90,18 +90,40 @@ public class ReporteJpaRepositoryAdapter implements ReporteRepository {
                                 select sum(a.valor)
                                 from anticipo a
                                 join cotizacion c_pago on c_pago.id_cotizacion = a.id_cotizacion
-                                join reserva_salon r_pago on r_pago.id_reserva = c_pago.id_reserva
-                                where r_pago.id_evento = e.id_evento
+                                where exists (
+                                    select 1
+                                    from cotizacion_reserva cr_pago
+                                    join reserva_salon r_pago on r_pago.id_reserva = cr_pago.id_reserva
+                                    where cr_pago.id_cotizacion = c_pago.id_cotizacion
+                                      and r_pago.id_evento = e.id_evento
+                                )
+                                or exists (
+                                    select 1
+                                    from reserva_salon r_pago_ancla
+                                    where r_pago_ancla.id_reserva = c_pago.id_reserva
+                                      and r_pago_ancla.id_evento = e.id_evento
+                                )
                             ), 0) as total_pagado
                         from evento e
                         join cliente cl on cl.id_cliente = e.id_cliente
                         left join lateral (
                             select c.id_cotizacion, c.valor_total
                             from cotizacion c
-                            join reserva_salon r on r.id_reserva = c.id_reserva
-                            where r.id_evento = e.id_evento
-                              and r.vigente = true
-                              and r.activa = true
+                            where (
+                                exists (
+                                    select 1
+                                    from cotizacion_reserva cr
+                                    join reserva_salon r on r.id_reserva = cr.id_reserva
+                                    where cr.id_cotizacion = c.id_cotizacion
+                                      and r.id_evento = e.id_evento
+                                )
+                                or exists (
+                                    select 1
+                                    from reserva_salon r_ancla
+                                    where r_ancla.id_reserva = c.id_reserva
+                                      and r_ancla.id_evento = e.id_evento
+                                )
+                              )
                               and c.vigente = true
                               and c.estado = 'ACEPTADA'
                             order by c.created_at desc
@@ -132,8 +154,21 @@ public class ReporteJpaRepositoryAdapter implements ReporteRepository {
                             a.fecha_pago
                         from anticipo a
                         join cotizacion c on c.id_cotizacion = a.id_cotizacion
-                        join reserva_salon r on r.id_reserva = c.id_reserva
-                        join evento e on e.id_evento = r.id_evento
+                        join evento e on (
+                            exists (
+                                select 1
+                                from cotizacion_reserva cr
+                                join reserva_salon r on r.id_reserva = cr.id_reserva
+                                where cr.id_cotizacion = c.id_cotizacion
+                                  and r.id_evento = e.id_evento
+                            )
+                            or exists (
+                                select 1
+                                from reserva_salon r_ancla
+                                where r_ancla.id_reserva = c.id_reserva
+                                  and r_ancla.id_evento = e.id_evento
+                            )
+                        )
                         join cliente cl on cl.id_cliente = e.id_cliente
                         where a.fecha_pago >= :desde
                           and a.fecha_pago <= :hasta
