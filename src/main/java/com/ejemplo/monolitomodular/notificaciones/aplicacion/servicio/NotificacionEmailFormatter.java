@@ -123,6 +123,7 @@ class NotificacionEmailFormatter {
     private EmailMessage cotizacionCliente(JsonNode payload) {
         String cliente = valor(payload, "cliente");
         String fechaEvento = fecha(valor(payload, "fechaEvento"));
+        String resumenReservas = valor(payload, "resumenReservas");
         String valorTotal = valor(payload, "valorTotal");
         return new EmailMessage(
                 "Cotizacion de evento - Club Boyaca",
@@ -132,12 +133,13 @@ class NotificacionEmailFormatter {
                 Te enviamos la cotizacion de tu evento.
 
                 Fecha del evento: %s
+                Reservas: %s
                 Valor total: %s
 
                 Puedes comunicarte con el Club Boyaca para aprobarla o solicitar ajustes.
 
                 Club Boyaca
-                """.formatted(cliente, fechaEvento, valorTotal).trim()
+                """.formatted(cliente, fechaEvento, resumenReservas, valorTotal).trim()
         );
     }
 

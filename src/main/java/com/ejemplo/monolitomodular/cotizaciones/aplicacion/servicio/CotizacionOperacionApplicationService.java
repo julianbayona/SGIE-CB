@@ -13,6 +13,7 @@ import com.ejemplo.monolitomodular.cotizaciones.dominio.modelo.Cotizacion;
 import com.ejemplo.monolitomodular.cotizaciones.dominio.modelo.CotizacionItem;
 import com.ejemplo.monolitomodular.cotizaciones.dominio.modelo.EstadoCotizacion;
 import com.ejemplo.monolitomodular.cotizaciones.dominio.puerto.salida.CotizacionRepository;
+import com.ejemplo.monolitomodular.cotizaciones.dominio.puerto.salida.CotizacionReservaRepository;
 import com.ejemplo.monolitomodular.eventos.dominio.modelo.Evento;
 import com.ejemplo.monolitomodular.eventos.dominio.modelo.ReservaSalon;
 import com.ejemplo.monolitomodular.eventos.dominio.puerto.salida.EventoRepository;
@@ -20,6 +21,8 @@ import com.ejemplo.monolitomodular.eventos.dominio.puerto.salida.ReservaSalonRep
 import com.ejemplo.monolitomodular.notificaciones.aplicacion.dto.CrearNotificacionCommand;
 import com.ejemplo.monolitomodular.notificaciones.aplicacion.puerto.entrada.CrearNotificacionUseCase;
 import com.ejemplo.monolitomodular.notificaciones.dominio.modelo.TipoNotificacion;
+import com.ejemplo.monolitomodular.salones.dominio.modelo.Salon;
+import com.ejemplo.monolitomodular.salones.dominio.puerto.salida.SalonRepository;
 import com.ejemplo.monolitomodular.shared.dominio.excepcion.DomainException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -34,6 +37,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -45,26 +50,32 @@ public class CotizacionOperacionApplicationService implements
         EnviarCotizacionEmailUseCase {
 
     private final CotizacionRepository cotizacionRepository;
+    private final CotizacionReservaRepository cotizacionReservaRepository;
     private final ReservaSalonRepository reservaSalonRepository;
     private final EventoRepository eventoRepository;
     private final ClienteRepository clienteRepository;
+    private final SalonRepository salonRepository;
     private final CrearNotificacionUseCase crearNotificacionUseCase;
     private final EnviarCotizacionUseCase enviarCotizacionUseCase;
     private final ObjectMapper objectMapper;
 
     public CotizacionOperacionApplicationService(
             CotizacionRepository cotizacionRepository,
+            CotizacionReservaRepository cotizacionReservaRepository,
             ReservaSalonRepository reservaSalonRepository,
             EventoRepository eventoRepository,
             ClienteRepository clienteRepository,
+            SalonRepository salonRepository,
             CrearNotificacionUseCase crearNotificacionUseCase,
             EnviarCotizacionUseCase enviarCotizacionUseCase,
             ObjectMapper objectMapper
     ) {
         this.cotizacionRepository = cotizacionRepository;
+        this.cotizacionReservaRepository = cotizacionReservaRepository;
         this.reservaSalonRepository = reservaSalonRepository;
         this.eventoRepository = eventoRepository;
         this.clienteRepository = clienteRepository;
+        this.salonRepository = salonRepository;
         this.crearNotificacionUseCase = crearNotificacionUseCase;
         this.enviarCotizacionUseCase = enviarCotizacionUseCase;
         this.objectMapper = objectMapper;
@@ -83,12 +94,13 @@ public class CotizacionOperacionApplicationService implements
     public DocumentoCotizacionView descargar(UUID cotizacionId) {
         Cotizacion cotizacion = buscarCotizacion(cotizacionId);
         Evento evento = evento(cotizacion);
+        List<ReservaSalon> reservas = reservasIncluidas(cotizacion);
         Cliente cliente = clienteRepository.buscarPorId(evento.getClienteId())
                 .orElseThrow(() -> new DomainException("Cliente no encontrado"));
         return new DocumentoCotizacionView(
                 "cotizacion-" + cotizacion.getId() + ".pdf",
                 "application/pdf",
-                generarPdf(cotizacion, evento, cliente)
+                generarPdf(cotizacion, evento, cliente, reservas)
         );
     }
 
@@ -103,13 +115,14 @@ public class CotizacionOperacionApplicationService implements
             case ENVIADA, ACEPTADA -> toView(cotizacion);
             default -> throw new DomainException("Solo una cotizacion generada, enviada o aceptada puede enviarse por email");
         };
+        List<ReservaSalon> reservas = reservasIncluidas(cotizacion);
         Cliente cliente = clienteRepository.buscarPorId(evento.getClienteId())
                 .orElseThrow(() -> new DomainException("Cliente no encontrado"));
         crearNotificacionUseCase.ejecutar(new CrearNotificacionCommand(
                 evento.getId(),
                 TipoNotificacion.COTIZACION_CLIENTE,
                 LocalDateTime.now(),
-                payloadCotizacion(view, cliente, evento),
+                payloadCotizacion(view, cliente, evento, reservas),
                 List.of(new CrearNotificacionCommand.Destinatario(null, cliente.getTelefono(), cliente.getCorreo()))
         ));
         return view;
@@ -127,13 +140,26 @@ public class CotizacionOperacionApplicationService implements
                 .orElseThrow(() -> new DomainException("Evento asociado a la cotizacion no encontrado"));
     }
 
-    private String payloadCotizacion(CotizacionView cotizacion, Cliente cliente, Evento evento) {
+    private List<ReservaSalon> reservasIncluidas(Cotizacion cotizacion) {
+        List<UUID> reservaIds = cotizacionReservaRepository.listarReservaIdsPorCotizacionId(cotizacion.getId());
+        if (reservaIds.isEmpty()) {
+            reservaIds = List.of(cotizacion.getReservaId());
+        }
+        return reservaIds.stream()
+                .map(reservaId -> reservaSalonRepository.buscarPorId(reservaId)
+                        .orElseThrow(() -> new DomainException("Reserva incluida en la cotizacion no encontrada")))
+                .sorted(Comparator.comparing(ReservaSalon::getFechaHoraInicio))
+                .toList();
+    }
+
+    private String payloadCotizacion(CotizacionView cotizacion, Cliente cliente, Evento evento, List<ReservaSalon> reservas) {
         try {
             return objectMapper.writeValueAsString(Map.of(
                     "tipo", "COTIZACION",
                     "cliente", cliente.getNombreCompleto(),
                     "cotizacionId", cotizacion.id(),
                     "fechaEvento", evento.getFechaHoraInicio().toString(),
+                    "resumenReservas", resumenReservas(reservas),
                     "valorTotal", cotizacion.valorTotal()
             ));
         } catch (Exception ex) {
@@ -141,7 +167,7 @@ public class CotizacionOperacionApplicationService implements
         }
     }
 
-    private byte[] generarPdf(Cotizacion cotizacion, Evento evento, Cliente cliente) {
+    private byte[] generarPdf(Cotizacion cotizacion, Evento evento, Cliente cliente, List<ReservaSalon> reservas) {
         try (PDDocument document = new PDDocument(); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             PDPage page = new PDPage(PDRectangle.LETTER);
             document.addPage(page);
@@ -154,6 +180,13 @@ public class CotizacionOperacionApplicationService implements
                 escribir(content, "Cliente: " + cliente.getNombreCompleto(), 50, y, 10, false);
                 y -= 16;
                 escribir(content, "Fecha evento: " + evento.getFechaHoraInicio(), 50, y, 10, false);
+                y -= 24;
+                escribir(content, "Reservas incluidas", 50, y, 12, true);
+                y -= 16;
+                for (int i = 0; i < reservas.size(); i++) {
+                    escribir(content, recortar("Reserva " + (i + 1) + ": " + detalleReserva(reservas.get(i)), 95), 50, y, 9, false);
+                    y -= 13;
+                }
                 y -= 28;
                 escribir(content, "Items", 50, y, 12, true);
                 y -= 18;
@@ -177,6 +210,36 @@ public class CotizacionOperacionApplicationService implements
         } catch (IOException ex) {
             throw new DomainException("No se pudo generar el documento de cotizacion");
         }
+    }
+
+    private String resumenReservas(List<ReservaSalon> reservas) {
+        if (reservas.isEmpty()) {
+            return "Sin reservas registradas";
+        }
+        String encabezado = reservas.size() == 1 ? "Evento con 1 reserva" : "Evento con " + reservas.size() + " reservas";
+        String detalle = reservas.stream()
+                .map(this::detalleReserva)
+                .toList()
+                .stream()
+                .reduce((actual, siguiente) -> actual + "; " + siguiente)
+                .orElse("");
+        return encabezado + ": " + detalle;
+    }
+
+    private String detalleReserva(ReservaSalon reserva) {
+        String salon = salonRepository.buscarPorId(reserva.getSalonId())
+                .map(Salon::getNombre)
+                .orElse("Salon " + reserva.getSalonId());
+        return salon + " " + rangoHorario(reserva);
+    }
+
+    private String rangoHorario(ReservaSalon reserva) {
+        DateTimeFormatter fechaHora = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+        DateTimeFormatter hora = DateTimeFormatter.ofPattern("HH:mm");
+        if (reserva.getFechaHoraInicio().toLocalDate().equals(reserva.getFechaHoraFin().toLocalDate())) {
+            return reserva.getFechaHoraInicio().format(fechaHora) + "-" + reserva.getFechaHoraFin().format(hora);
+        }
+        return reserva.getFechaHoraInicio().format(fechaHora) + " - " + reserva.getFechaHoraFin().format(fechaHora);
     }
 
     private String lineaItem(CotizacionItem item) {
