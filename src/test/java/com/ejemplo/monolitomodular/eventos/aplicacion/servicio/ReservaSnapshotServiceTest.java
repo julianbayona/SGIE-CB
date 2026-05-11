@@ -69,7 +69,7 @@ class ReservaSnapshotServiceTest {
         assertEquals(nueva.getId(), menuRepository.buscarPorReservaId(nueva.getId()).orElseThrow().getReservaId());
         assertEquals(2, montajeRepository.totalMontajes());
         assertEquals(2, menuRepository.totalMenus());
-        assertEquals(reserva.getId(), cotizacionRepository.reservaDesactualizada());
+        assertEquals(reserva.getEventoId(), cotizacionRepository.eventoDesactualizado());
         assertEquals(EstadoEvento.PENDIENTE, eventoRepository.estado());
         assertEquals(1, historialRepository.total());
     }
@@ -286,6 +286,7 @@ class ReservaSnapshotServiceTest {
     private static class CotizacionRepositoryStub implements CotizacionRepository {
 
         private UUID reservaDesactualizada;
+        private UUID eventoDesactualizado;
 
         @Override
         public Cotizacion guardar(Cotizacion cotizacion) {
@@ -324,6 +325,15 @@ class ReservaSnapshotServiceTest {
 
         UUID reservaDesactualizada() {
             return reservaDesactualizada;
+        }
+
+        @Override
+        public void desactualizarActivasPorEventoId(UUID eventoId) {
+            eventoDesactualizado = eventoId;
+        }
+
+        UUID eventoDesactualizado() {
+            return eventoDesactualizado;
         }
     }
 

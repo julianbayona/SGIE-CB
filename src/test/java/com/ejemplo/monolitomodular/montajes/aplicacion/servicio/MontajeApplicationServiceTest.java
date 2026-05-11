@@ -154,7 +154,7 @@ class MontajeApplicationServiceTest {
         assertEquals(reserva.getId(), montajeInicial.reservaId());
         assertEquals(reservaRepository.reservaVigente().getId(), montajeModificado.reservaId());
         assertEquals(2, montajeRepository.totalMontajes());
-        assertEquals(reserva.getId(), cotizacionRepository.reservaDesactualizada());
+        assertEquals(reserva.getEventoId(), cotizacionRepository.eventoDesactualizado());
     }
 
     private static ReservaSnapshotService snapshotService(
@@ -510,6 +510,7 @@ class MontajeApplicationServiceTest {
     private static class CotizacionRepositoryStub implements CotizacionRepository {
 
         private UUID reservaDesactualizada;
+        private UUID eventoDesactualizado;
 
         @Override
         public Cotizacion guardar(Cotizacion cotizacion) {
@@ -548,6 +549,15 @@ class MontajeApplicationServiceTest {
 
         UUID reservaDesactualizada() {
             return reservaDesactualizada;
+        }
+
+        @Override
+        public void desactualizarActivasPorEventoId(UUID eventoId) {
+            eventoDesactualizado = eventoId;
+        }
+
+        UUID eventoDesactualizado() {
+            return eventoDesactualizado;
         }
     }
 

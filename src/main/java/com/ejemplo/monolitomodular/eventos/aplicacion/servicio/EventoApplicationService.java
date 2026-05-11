@@ -254,7 +254,7 @@ public class EventoApplicationService implements
                         command.usuarioId()
                 )
         );
-        cotizacionRepository.desactualizarActivasPorReservaId(reservaActual.getId());
+        cotizacionRepository.desactualizarActivasPorEventoId(evento.getId());
         Evento eventoActualizado = volverEventoAPendienteSiAplica(evento, command.usuarioId());
 
         List<ReservaSalon> reservas = reservaSalonRepository.listarPorEvento(evento.getId());
@@ -281,7 +281,7 @@ public class EventoApplicationService implements
         }
 
         reservaSalonRepository.retirarReservaVigente(reservaRaizId);
-        cotizacionRepository.desactualizarActivasPorReservaId(reservaActual.getId());
+        cotizacionRepository.desactualizarActivasPorEventoId(evento.getId());
         Evento eventoActualizado = volverEventoAPendienteSiAplica(evento, usuarioId);
 
         List<ReservaSalon> reservas = reservaSalonRepository.listarPorEvento(evento.getId());

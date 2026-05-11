@@ -15,6 +15,20 @@ public interface SpringDataCotizacionJpaRepository extends JpaRepository<Cotizac
     @Query("""
             select c
             from CotizacionJpaEntity c
+            where c.vigente = true
+              and exists (
+                  select 1
+                  from ReservaSalonJpaEntity r
+                  where r.id = c.reservaId
+                    and r.eventoId = :eventoId
+              )
+            order by c.createdAt desc
+            """)
+    List<CotizacionJpaEntity> findActivaByEventoIdOrderByCreatedAtDesc(UUID eventoId);
+
+    @Query("""
+            select c
+            from CotizacionJpaEntity c
             where exists (
                 select 1
                 from ReservaSalonJpaEntity r

@@ -58,6 +58,14 @@ public class CotizacionJpaRepositoryAdapter implements CotizacionRepository {
     }
 
     @Override
+    public Optional<Cotizacion> buscarActivaPorEventoId(UUID eventoId) {
+        return cotizacionRepository.findActivaByEventoIdOrderByCreatedAtDesc(eventoId)
+                .stream()
+                .findFirst()
+                .map(this::toDomain);
+    }
+
+    @Override
     public Optional<Cotizacion> buscarUltimaPorReservaRaizId(UUID reservaRaizId) {
         return cotizacionRepository.findByReservaRaizIdOrderByCreatedAtDesc(reservaRaizId)
                 .stream()

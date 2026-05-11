@@ -9,4 +9,6 @@ public interface ConsultarCotizacionUseCase {
     CotizacionView obtenerPorId(UUID id);
 
     CotizacionView obtenerVigentePorReservaRaizId(UUID reservaRaizId);
+
+    CotizacionView obtenerVigentePorEventoId(UUID eventoId);
 }

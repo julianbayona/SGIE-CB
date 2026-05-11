@@ -14,6 +14,10 @@ public interface CotizacionRepository {
 
     Optional<Cotizacion> buscarActivaPorReservaId(UUID reservaId);
 
+    default Optional<Cotizacion> buscarActivaPorEventoId(UUID eventoId) {
+        return Optional.empty();
+    }
+
     Optional<Cotizacion> buscarUltimaPorReservaRaizId(UUID reservaRaizId);
 
     Optional<Cotizacion> buscarAceptadaVigentePorEventoId(UUID eventoId);

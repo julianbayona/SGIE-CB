@@ -7,12 +7,14 @@ import com.ejemplo.monolitomodular.cotizaciones.aplicacion.dto.CotizacionItemVie
 import com.ejemplo.monolitomodular.cotizaciones.aplicacion.dto.CotizacionView;
 import com.ejemplo.monolitomodular.cotizaciones.aplicacion.dto.DocumentoCotizacionView;
 import com.ejemplo.monolitomodular.cotizaciones.aplicacion.dto.GenerarCotizacionCommand;
+import com.ejemplo.monolitomodular.cotizaciones.aplicacion.dto.GenerarCotizacionEventoCommand;
 import com.ejemplo.monolitomodular.cotizaciones.aplicacion.puerto.entrada.ActualizarItemCotizacionUseCase;
 import com.ejemplo.monolitomodular.cotizaciones.aplicacion.puerto.entrada.ConsultarCotizacionUseCase;
 import com.ejemplo.monolitomodular.cotizaciones.aplicacion.puerto.entrada.DescargarDocumentoCotizacionUseCase;
 import com.ejemplo.monolitomodular.cotizaciones.aplicacion.puerto.entrada.EnviarCotizacionEmailUseCase;
 import com.ejemplo.monolitomodular.cotizaciones.aplicacion.puerto.entrada.EnviarCotizacionUseCase;
 import com.ejemplo.monolitomodular.cotizaciones.aplicacion.puerto.entrada.GenerarDocumentoCotizacionUseCase;
+import com.ejemplo.monolitomodular.cotizaciones.aplicacion.puerto.entrada.GenerarCotizacionEventoUseCase;
 import com.ejemplo.monolitomodular.cotizaciones.aplicacion.puerto.entrada.GenerarCotizacionUseCase;
 import com.ejemplo.monolitomodular.cotizaciones.aplicacion.puerto.entrada.ListarCotizacionesEventoUseCase;
 import com.ejemplo.monolitomodular.cotizaciones.presentacion.rest.dto.ActualizarItemCotizacionRequest;
@@ -43,6 +45,7 @@ import java.util.UUID;
 public class CotizacionController {
 
     private final GenerarCotizacionUseCase generarCotizacionUseCase;
+    private final GenerarCotizacionEventoUseCase generarCotizacionEventoUseCase;
     private final ConsultarCotizacionUseCase consultarCotizacionUseCase;
     private final ActualizarItemCotizacionUseCase actualizarItemCotizacionUseCase;
     private final GenerarDocumentoCotizacionUseCase generarDocumentoCotizacionUseCase;
@@ -53,6 +56,7 @@ public class CotizacionController {
 
     public CotizacionController(
             GenerarCotizacionUseCase generarCotizacionUseCase,
+            GenerarCotizacionEventoUseCase generarCotizacionEventoUseCase,
             ConsultarCotizacionUseCase consultarCotizacionUseCase,
             ActualizarItemCotizacionUseCase actualizarItemCotizacionUseCase,
             GenerarDocumentoCotizacionUseCase generarDocumentoCotizacionUseCase,
@@ -62,6 +66,7 @@ public class CotizacionController {
             EnviarCotizacionEmailUseCase enviarCotizacionEmailUseCase
     ) {
         this.generarCotizacionUseCase = generarCotizacionUseCase;
+        this.generarCotizacionEventoUseCase = generarCotizacionEventoUseCase;
         this.consultarCotizacionUseCase = consultarCotizacionUseCase;
         this.actualizarItemCotizacionUseCase = actualizarItemCotizacionUseCase;
         this.generarDocumentoCotizacionUseCase = generarDocumentoCotizacionUseCase;
@@ -80,6 +85,20 @@ public class CotizacionController {
         return toResponse(generarCotizacionUseCase.ejecutar(toCommand(reservaRaizId, usuario, request)));
     }
 
+    @PostMapping("/eventos/{eventoId}/cotizaciones")
+    public CotizacionResponse generarPorEvento(
+            @AuthenticationPrincipal UsuarioAutenticado usuario,
+            @PathVariable UUID eventoId,
+            @Valid @RequestBody GenerarCotizacionRequest request
+    ) {
+        return toResponse(generarCotizacionEventoUseCase.ejecutar(new GenerarCotizacionEventoCommand(
+                eventoId,
+                usuario.id(),
+                request.descuento(),
+                request.observaciones()
+        )));
+    }
+
     @GetMapping("/cotizaciones/{id}")
     public CotizacionResponse obtener(@PathVariable UUID id) {
         return toResponse(consultarCotizacionUseCase.obtenerPorId(id));
@@ -88,6 +107,11 @@ public class CotizacionController {
     @GetMapping("/reservas/{reservaRaizId}/cotizacion-vigente")
     public CotizacionResponse obtenerVigente(@PathVariable UUID reservaRaizId) {
         return toResponse(consultarCotizacionUseCase.obtenerVigentePorReservaRaizId(reservaRaizId));
+    }
+
+    @GetMapping("/eventos/{eventoId}/cotizacion-vigente")
+    public CotizacionResponse obtenerVigentePorEvento(@PathVariable UUID eventoId) {
+        return toResponse(consultarCotizacionUseCase.obtenerVigentePorEventoId(eventoId));
     }
 
     @GetMapping("/eventos/{eventoId}/cotizaciones")

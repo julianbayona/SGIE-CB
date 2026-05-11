@@ -90,7 +90,7 @@ class MenuApplicationServiceTest {
         assertEquals(reserva.getId(), inicial.reservaId());
         assertEquals(reservaRepository.reservaVigente().getId(), modificado.reservaId());
         assertEquals(2, menuRepository.totalMenus());
-        assertEquals(reserva.getId(), cotizacionRepository.reservaDesactualizada());
+        assertEquals(reserva.getEventoId(), cotizacionRepository.eventoDesactualizado());
     }
 
     private static ReservaSalon reserva(UUID usuarioId) {
@@ -335,6 +335,7 @@ class MenuApplicationServiceTest {
     private static class CotizacionRepositoryStub implements CotizacionRepository {
 
         private UUID reservaDesactualizada;
+        private UUID eventoDesactualizado;
 
         @Override
         public Cotizacion guardar(Cotizacion cotizacion) {
@@ -373,6 +374,15 @@ class MenuApplicationServiceTest {
 
         UUID reservaDesactualizada() {
             return reservaDesactualizada;
+        }
+
+        @Override
+        public void desactualizarActivasPorEventoId(UUID eventoId) {
+            eventoDesactualizado = eventoId;
+        }
+
+        UUID eventoDesactualizado() {
+            return eventoDesactualizado;
         }
     }
 

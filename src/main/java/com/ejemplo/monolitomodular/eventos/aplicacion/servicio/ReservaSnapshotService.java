@@ -63,7 +63,7 @@ public class ReservaSnapshotService {
                 usuarioId
         );
         reservaSalonRepository.desactivarReservaVigente(reservaActual.getReservaRaizId());
-        cotizacionRepository.desactualizarActivasPorReservaId(reservaActual.getId());
+        cotizacionRepository.desactualizarActivasPorEventoId(reservaActual.getEventoId());
         volverEventoAPendienteSiAplica(reservaActual, usuarioId);
         ReservaSalon guardada = reservaSalonRepository.guardar(nuevaVersion);
 
