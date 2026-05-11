@@ -101,6 +101,7 @@ public class ReporteJpaRepositoryAdapter implements ReporteRepository {
                             join reserva_salon r on r.id_reserva = c.id_reserva
                             where r.id_evento = e.id_evento
                               and r.vigente = true
+                              and r.activa = true
                               and c.vigente = true
                               and c.estado = 'ACEPTADA'
                             order by c.created_at desc
@@ -183,6 +184,7 @@ public class ReporteJpaRepositoryAdapter implements ReporteRepository {
                         from reserva_salon r
                         join salon s on s.id_salon = r.id_salon
                         where r.vigente = true
+                          and r.activa = true
                           and r.fecha_hora_inicio >= :desde
                           and r.fecha_hora_inicio < :hasta
                         group by s.id_salon, s.nombre

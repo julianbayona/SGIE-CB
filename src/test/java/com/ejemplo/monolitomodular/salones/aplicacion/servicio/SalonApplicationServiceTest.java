@@ -657,5 +657,9 @@ class SalonApplicationServiceTest {
         @Override
         public void desactivarReservaVigente(UUID reservaRaizId) {
         }
+
+        @Override
+        public void retirarReservaVigente(UUID reservaRaizId) {
+        }
     }
 }

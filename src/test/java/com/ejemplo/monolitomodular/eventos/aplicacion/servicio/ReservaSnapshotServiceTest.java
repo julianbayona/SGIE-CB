@@ -228,6 +228,16 @@ class ReservaSnapshotServiceTest {
             }
         }
 
+        @Override
+        public void retirarReservaVigente(UUID reservaRaizId) {
+            for (int i = 0; i < reservas.size(); i++) {
+                ReservaSalon actual = reservas.get(i);
+                if (actual.isVigente() && actual.getReservaRaizId().equals(reservaRaizId)) {
+                    reservas.set(i, actual.retirarDelEvento());
+                }
+            }
+        }
+
         int totalVersiones() {
             return reservas.size();
         }

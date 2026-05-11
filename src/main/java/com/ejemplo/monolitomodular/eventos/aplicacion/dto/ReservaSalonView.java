@@ -11,6 +11,7 @@ public record ReservaSalonView(
         LocalDateTime fechaHoraInicio,
         LocalDateTime fechaHoraFin,
         int version,
-        boolean vigente
+        boolean vigente,
+        boolean activa
 ) {
 }

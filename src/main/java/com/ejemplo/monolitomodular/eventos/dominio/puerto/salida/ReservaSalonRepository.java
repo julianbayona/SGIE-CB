@@ -31,4 +31,6 @@ public interface ReservaSalonRepository {
     Optional<ReservaSalon> buscarVigentePorRaizId(UUID reservaRaizId);
 
     void desactivarReservaVigente(UUID reservaRaizId);
+
+    void retirarReservaVigente(UUID reservaRaizId);
 }

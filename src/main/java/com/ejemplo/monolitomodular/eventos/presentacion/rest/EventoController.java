@@ -13,6 +13,7 @@ import com.ejemplo.monolitomodular.eventos.aplicacion.puerto.entrada.ConsultarEv
 import com.ejemplo.monolitomodular.eventos.aplicacion.puerto.entrada.CrearEventoUseCase;
 import com.ejemplo.monolitomodular.eventos.aplicacion.puerto.entrada.CrearReservaSalonUseCase;
 import com.ejemplo.monolitomodular.eventos.aplicacion.puerto.entrada.ModificarReservaSalonUseCase;
+import com.ejemplo.monolitomodular.eventos.aplicacion.puerto.entrada.RetirarReservaSalonUseCase;
 import com.ejemplo.monolitomodular.eventos.presentacion.rest.dto.CrearEventoRequest;
 import com.ejemplo.monolitomodular.eventos.presentacion.rest.dto.CrearReservaSalonRequest;
 import com.ejemplo.monolitomodular.eventos.presentacion.rest.dto.EventoResponse;
@@ -23,6 +24,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -45,6 +47,7 @@ public class EventoController {
     private final ConsultarEventoUseCase consultarEventoUseCase;
     private final CrearReservaSalonUseCase crearReservaSalonUseCase;
     private final ModificarReservaSalonUseCase modificarReservaSalonUseCase;
+    private final RetirarReservaSalonUseCase retirarReservaSalonUseCase;
     private final ConfirmarEventoUseCase confirmarEventoUseCase;
     private final CancelarEventoUseCase cancelarEventoUseCase;
 
@@ -53,6 +56,7 @@ public class EventoController {
             ConsultarEventoUseCase consultarEventoUseCase,
             CrearReservaSalonUseCase crearReservaSalonUseCase,
             ModificarReservaSalonUseCase modificarReservaSalonUseCase,
+            RetirarReservaSalonUseCase retirarReservaSalonUseCase,
             ConfirmarEventoUseCase confirmarEventoUseCase,
             CancelarEventoUseCase cancelarEventoUseCase
     ) {
@@ -60,6 +64,7 @@ public class EventoController {
         this.consultarEventoUseCase = consultarEventoUseCase;
         this.crearReservaSalonUseCase = crearReservaSalonUseCase;
         this.modificarReservaSalonUseCase = modificarReservaSalonUseCase;
+        this.retirarReservaSalonUseCase = retirarReservaSalonUseCase;
         this.confirmarEventoUseCase = confirmarEventoUseCase;
         this.cancelarEventoUseCase = cancelarEventoUseCase;
     }
@@ -129,6 +134,14 @@ public class EventoController {
         ));
     }
 
+    @DeleteMapping("/reservas/{reservaRaizId}")
+    public EventoResponse retirarReserva(
+            @AuthenticationPrincipal UsuarioAutenticado usuario,
+            @PathVariable UUID reservaRaizId
+    ) {
+        return toResponse(retirarReservaSalonUseCase.retirar(reservaRaizId, usuario.id()));
+    }
+
     @GetMapping
     public List<EventoResponse> listar() {
         return consultarEventoUseCase.listar().stream()
@@ -182,7 +195,8 @@ public class EventoController {
                 reserva.fechaHoraInicio(),
                 reserva.fechaHoraFin(),
                 reserva.version(),
-                reserva.vigente()
+                reserva.vigente(),
+                reserva.activa()
         );
     }
 }

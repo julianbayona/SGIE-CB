@@ -138,6 +138,20 @@ public class Evento {
         return cambiarEstado(EstadoEvento.PENDIENTE);
     }
 
+    public Evento reprogramarRango(LocalDateTime fechaHoraInicio, LocalDateTime fechaHoraFin) {
+        return new Evento(
+                id,
+                clienteId,
+                tipoEventoId,
+                tipoComidaId,
+                usuarioCreadorId,
+                fechaHoraInicio,
+                fechaHoraFin,
+                estado,
+                gcalEventId
+        );
+    }
+
     public void validarOperable() {
         if (estado == EstadoEvento.CANCELADO) {
             throw new DomainException("No se puede operar un evento cancelado");

@@ -36,6 +36,7 @@ public interface SpringDataCotizacionJpaRepository extends JpaRepository<Cotizac
                   where r.id = c.reservaId
                     and r.eventoId = :eventoId
                     and r.vigente = true
+                    and r.activa = true
               )
             order by c.createdAt desc
             """)

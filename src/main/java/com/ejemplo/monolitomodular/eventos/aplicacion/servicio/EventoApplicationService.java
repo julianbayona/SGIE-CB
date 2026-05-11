@@ -20,6 +20,8 @@ import com.ejemplo.monolitomodular.eventos.aplicacion.puerto.entrada.ConsultarEv
 import com.ejemplo.monolitomodular.eventos.aplicacion.puerto.entrada.CrearEventoUseCase;
 import com.ejemplo.monolitomodular.eventos.aplicacion.puerto.entrada.CrearReservaSalonUseCase;
 import com.ejemplo.monolitomodular.eventos.aplicacion.puerto.entrada.ModificarReservaSalonUseCase;
+import com.ejemplo.monolitomodular.eventos.aplicacion.puerto.entrada.RetirarReservaSalonUseCase;
+import com.ejemplo.monolitomodular.eventos.dominio.modelo.EstadoEvento;
 import com.ejemplo.monolitomodular.eventos.dominio.modelo.Evento;
 import com.ejemplo.monolitomodular.eventos.dominio.modelo.HistorialEstadoEvento;
 import com.ejemplo.monolitomodular.eventos.dominio.modelo.ReservaSalon;
@@ -43,6 +45,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -55,6 +58,7 @@ public class EventoApplicationService implements
         CrearReservaSalonUseCase,
         ModificarReservaSalonUseCase,
         ConfirmarEventoUseCase,
+        RetirarReservaSalonUseCase,
         CancelarEventoUseCase {
 
     private final ClienteRepository clienteRepository;
@@ -189,6 +193,7 @@ public class EventoApplicationService implements
         if (reservaSalonRepository.existeConflicto(command.salonId(), command.fechaHoraInicio(), command.fechaHoraFin())) {
             throw new DomainException("Ya existe una reserva confirmada en conflicto para el salon " + command.salonId());
         }
+        validarSinConflictoInterno(eventoId, command.salonId(), command.fechaHoraInicio(), command.fechaHoraFin(), null);
 
         reservaSalonRepository.guardar(ReservaSalon.nueva(
                 eventoId,
@@ -199,7 +204,9 @@ public class EventoApplicationService implements
                 command.usuarioId()
         ));
 
-        return toView(evento, reservaSalonRepository.listarPorEvento(eventoId));
+        List<ReservaSalon> reservas = reservaSalonRepository.listarPorEvento(eventoId);
+        Evento actualizado = recalcularRangoDesdeReservas(evento, reservas);
+        return toView(actualizado, reservas);
     }
 
     @Override
@@ -229,6 +236,13 @@ public class EventoApplicationService implements
         )) {
             throw new DomainException("Ya existe una reserva confirmada en conflicto para el salon " + command.salonId());
         }
+        validarSinConflictoInterno(
+                evento.getId(),
+                command.salonId(),
+                command.fechaHoraInicio(),
+                command.fechaHoraFin(),
+                reservaActual.getReservaRaizId()
+        );
 
         reservaSalonRepository.desactivarReservaVigente(reservaActual.getReservaRaizId());
         reservaSalonRepository.guardar(
@@ -240,8 +254,39 @@ public class EventoApplicationService implements
                         command.usuarioId()
                 )
         );
+        cotizacionRepository.desactualizarActivasPorReservaId(reservaActual.getId());
+        Evento eventoActualizado = volverEventoAPendienteSiAplica(evento, command.usuarioId());
 
-        return toView(evento, reservaSalonRepository.listarPorEvento(evento.getId()));
+        List<ReservaSalon> reservas = reservaSalonRepository.listarPorEvento(evento.getId());
+        eventoActualizado = recalcularRangoDesdeReservas(eventoActualizado, reservas);
+        return toView(eventoActualizado, reservas);
+    }
+
+    @Override
+    @Transactional
+    public EventoView retirar(UUID reservaRaizId, UUID usuarioId) {
+        ReservaSalon reservaActual = reservaSalonRepository.buscarVigentePorRaizId(reservaRaizId)
+                .orElseThrow(() -> new DomainException("No existe una reserva activa para el identificador indicado"));
+
+        Evento evento = eventoRepository.buscarPorId(reservaActual.getEventoId())
+                .orElseThrow(() -> new DomainException("Evento no encontrado"));
+        evento.validarOperable();
+
+        usuarioRepository.buscarPorId(usuarioId)
+                .orElseThrow(() -> new DomainException("Usuario no encontrado"));
+
+        List<ReservaSalon> reservasActuales = reservaSalonRepository.listarPorEvento(evento.getId());
+        if (reservasActuales.size() <= 1) {
+            throw new DomainException("El evento debe conservar al menos una reserva activa");
+        }
+
+        reservaSalonRepository.retirarReservaVigente(reservaRaizId);
+        cotizacionRepository.desactualizarActivasPorReservaId(reservaActual.getId());
+        Evento eventoActualizado = volverEventoAPendienteSiAplica(evento, usuarioId);
+
+        List<ReservaSalon> reservas = reservaSalonRepository.listarPorEvento(evento.getId());
+        eventoActualizado = recalcularRangoDesdeReservas(eventoActualizado, reservas);
+        return toView(eventoActualizado, reservas);
     }
 
     @Override
@@ -347,6 +392,58 @@ public class EventoApplicationService implements
         }
     }
 
+    private void validarSinConflictoInterno(
+            UUID eventoId,
+            UUID salonId,
+            LocalDateTime fechaHoraInicio,
+            LocalDateTime fechaHoraFin,
+            UUID reservaRaizIdExcluida
+    ) {
+        boolean existeConflicto = reservaSalonRepository.listarPorEvento(eventoId).stream()
+                .filter(reserva -> reservaRaizIdExcluida == null || !reserva.getReservaRaizId().equals(reservaRaizIdExcluida))
+                .anyMatch(reserva -> reserva.getSalonId().equals(salonId)
+                        && reserva.getFechaHoraInicio().isBefore(fechaHoraFin)
+                        && reserva.getFechaHoraFin().isAfter(fechaHoraInicio));
+        if (existeConflicto) {
+            throw new DomainException("Ya existe otra reserva activa del mismo evento para este salon y horario");
+        }
+    }
+
+    private Evento recalcularRangoDesdeReservas(Evento evento, List<ReservaSalon> reservas) {
+        if (reservas.isEmpty()) {
+            throw new DomainException("El evento debe tener al menos una reserva activa");
+        }
+        LocalDateTime inicio = reservas.stream()
+                .map(ReservaSalon::getFechaHoraInicio)
+                .min(LocalDateTime::compareTo)
+                .orElseThrow();
+        LocalDateTime fin = reservas.stream()
+                .map(ReservaSalon::getFechaHoraFin)
+                .max(LocalDateTime::compareTo)
+                .orElseThrow();
+        if (inicio.equals(evento.getFechaHoraInicio()) && fin.equals(evento.getFechaHoraFin())) {
+            return evento;
+        }
+        return eventoRepository.guardar(evento.reprogramarRango(inicio, fin));
+    }
+
+    private Evento volverEventoAPendienteSiAplica(Evento evento, UUID usuarioId) {
+        if (evento.getEstado() == EstadoEvento.PENDIENTE || evento.getEstado() == EstadoEvento.CONFIRMADO) {
+            return evento;
+        }
+        Evento actualizado = evento.volverAPendientePorCotizacionDesactualizada();
+        if (actualizado.getEstado() != evento.getEstado()) {
+            eventoRepository.guardar(actualizado);
+            historialEstadoEventoRepository.guardar(HistorialEstadoEvento.registrarCambio(
+                    evento.getId(),
+                    usuarioId,
+                    evento.getEstado(),
+                    actualizado.getEstado()
+            ));
+        }
+        return actualizado;
+    }
+
     private String validarMotivoCancelacion(String motivo) {
         if (motivo == null || motivo.isBlank()) {
             throw new DomainException("El motivo de cancelacion es obligatorio");
@@ -428,7 +525,8 @@ public class EventoApplicationService implements
                 reserva.getFechaHoraInicio(),
                 reserva.getFechaHoraFin(),
                 reserva.getVersion(),
-                reserva.isVigente()
+                reserva.isVigente(),
+                reserva.isActiva()
         );
     }
 

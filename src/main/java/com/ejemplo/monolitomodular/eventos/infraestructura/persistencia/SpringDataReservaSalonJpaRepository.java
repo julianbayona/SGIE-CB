@@ -17,6 +17,7 @@ public interface SpringDataReservaSalonJpaRepository extends JpaRepository<Reser
             from ReservaSalonJpaEntity r
             where r.salonId = :salonId
               and r.vigente = true
+              and r.activa = true
               and exists (
                   select 1
                   from EventoJpaEntity e
@@ -33,6 +34,7 @@ public interface SpringDataReservaSalonJpaRepository extends JpaRepository<Reser
             from ReservaSalonJpaEntity r
             where r.salonId = :salonId
               and r.vigente = true
+              and r.activa = true
               and r.reservaRaizId <> :reservaRaizIdExcluida
               and exists (
                   select 1
@@ -50,11 +52,13 @@ public interface SpringDataReservaSalonJpaRepository extends JpaRepository<Reser
             from ReservaSalonJpaEntity r
             where r.eventoId = :eventoId
               and r.vigente = true
+              and r.activa = true
               and exists (
                   select 1
                   from ReservaSalonJpaEntity otra
                   where otra.salonId = r.salonId
                     and otra.vigente = true
+                    and otra.activa = true
                     and otra.eventoId <> r.eventoId
                     and exists (
                         select 1
@@ -68,16 +72,17 @@ public interface SpringDataReservaSalonJpaRepository extends JpaRepository<Reser
             """)
     boolean existeConflictoParaEvento(UUID eventoId);
 
-    List<ReservaSalonJpaEntity> findByEventoIdAndVigenteTrue(UUID eventoId);
+    List<ReservaSalonJpaEntity> findByEventoIdAndVigenteTrueAndActivaTrue(UUID eventoId);
 
-    Optional<ReservaSalonJpaEntity> findByEventoIdAndSalonIdAndVigenteTrue(UUID eventoId, UUID salonId);
+    Optional<ReservaSalonJpaEntity> findByEventoIdAndSalonIdAndVigenteTrueAndActivaTrue(UUID eventoId, UUID salonId);
 
-    Optional<ReservaSalonJpaEntity> findByReservaRaizIdAndVigenteTrue(UUID reservaRaizId);
+    Optional<ReservaSalonJpaEntity> findByReservaRaizIdAndVigenteTrueAndActivaTrue(UUID reservaRaizId);
 
     @Query("""
             select distinct r.salonId
             from ReservaSalonJpaEntity r
             where r.vigente = true
+              and r.activa = true
               and exists (
                   select 1
                   from EventoJpaEntity e
@@ -98,4 +103,15 @@ public interface SpringDataReservaSalonJpaRepository extends JpaRepository<Reser
                and r.vigente = true
             """)
     int desactivarReservaVigente(UUID reservaRaizId, LocalDateTime updatedAt);
+
+    @Modifying
+    @Query("""
+            update ReservaSalonJpaEntity r
+               set r.activa = false,
+                   r.updatedAt = :updatedAt
+             where r.reservaRaizId = :reservaRaizId
+               and r.vigente = true
+               and r.activa = true
+            """)
+    int retirarReservaVigente(UUID reservaRaizId, LocalDateTime updatedAt);
 }

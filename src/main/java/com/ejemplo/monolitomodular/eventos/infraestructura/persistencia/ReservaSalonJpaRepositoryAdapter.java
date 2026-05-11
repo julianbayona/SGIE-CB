@@ -34,6 +34,7 @@ public class ReservaSalonJpaRepositoryAdapter implements ReservaSalonRepository 
                                         reserva.getFechaHoraFin(),
                                         reserva.getVersion(),
                                         reserva.isVigente(),
+                                        reserva.isActiva(),
                                         reserva.getCreadoPor(),
                                         now,
                                         now
@@ -57,6 +58,7 @@ public class ReservaSalonJpaRepositoryAdapter implements ReservaSalonRepository 
                 reserva.getFechaHoraFin(),
                 reserva.getVersion(),
                 reserva.isVigente(),
+                reserva.isActiva(),
                 reserva.getCreadoPor(),
                 now,
                 now
@@ -80,7 +82,7 @@ public class ReservaSalonJpaRepositoryAdapter implements ReservaSalonRepository 
 
     @Override
     public List<ReservaSalon> listarPorEvento(UUID eventoId) {
-        return repository.findByEventoIdAndVigenteTrue(eventoId).stream()
+        return repository.findByEventoIdAndVigenteTrueAndActivaTrue(eventoId).stream()
                 .map(this::toDomain)
                 .toList();
     }
@@ -92,7 +94,7 @@ public class ReservaSalonJpaRepositoryAdapter implements ReservaSalonRepository 
 
     @Override
     public Optional<ReservaSalon> buscarVigentePorEventoYSalon(UUID eventoId, UUID salonId) {
-        return repository.findByEventoIdAndSalonIdAndVigenteTrue(eventoId, salonId).map(this::toDomain);
+        return repository.findByEventoIdAndSalonIdAndVigenteTrueAndActivaTrue(eventoId, salonId).map(this::toDomain);
     }
 
     @Override
@@ -102,12 +104,17 @@ public class ReservaSalonJpaRepositoryAdapter implements ReservaSalonRepository 
 
     @Override
     public Optional<ReservaSalon> buscarVigentePorRaizId(UUID reservaRaizId) {
-        return repository.findByReservaRaizIdAndVigenteTrue(reservaRaizId).map(this::toDomain);
+        return repository.findByReservaRaizIdAndVigenteTrueAndActivaTrue(reservaRaizId).map(this::toDomain);
     }
 
     @Override
     public void desactivarReservaVigente(UUID reservaRaizId) {
         repository.desactivarReservaVigente(reservaRaizId, LocalDateTime.now());
+    }
+
+    @Override
+    public void retirarReservaVigente(UUID reservaRaizId) {
+        repository.retirarReservaVigente(reservaRaizId, LocalDateTime.now());
     }
 
     private ReservaSalon toDomain(ReservaSalonJpaEntity entity) {
@@ -121,6 +128,7 @@ public class ReservaSalonJpaRepositoryAdapter implements ReservaSalonRepository 
                 entity.getFechaHoraFin(),
                 entity.getVersion(),
                 entity.isVigente(),
+                entity.isActiva(),
                 entity.getCreadoPor()
         );
     }

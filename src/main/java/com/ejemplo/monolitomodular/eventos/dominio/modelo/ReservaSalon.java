@@ -17,6 +17,7 @@ public class ReservaSalon {
     private final LocalDateTime fechaHoraFin;
     private final int version;
     private final boolean vigente;
+    private final boolean activa;
     private final UUID creadoPor;
 
     private ReservaSalon(
@@ -29,6 +30,7 @@ public class ReservaSalon {
             LocalDateTime fechaHoraFin,
             int version,
             boolean vigente,
+            boolean activa,
             UUID creadoPor
     ) {
         this.id = Objects.requireNonNull(id, "El id de la reserva es obligatorio");
@@ -49,6 +51,7 @@ public class ReservaSalon {
         }
         this.version = version;
         this.vigente = vigente;
+        this.activa = activa;
         this.creadoPor = Objects.requireNonNull(creadoPor, "El usuario creador de la reserva es obligatorio");
     }
 
@@ -61,7 +64,7 @@ public class ReservaSalon {
             UUID creadoPor
     ) {
         UUID id = UUID.randomUUID();
-        return new ReservaSalon(id, id, eventoId, salonId, numInvitados, fechaHoraInicio, fechaHoraFin, 1, true, creadoPor);
+        return new ReservaSalon(id, id, eventoId, salonId, numInvitados, fechaHoraInicio, fechaHoraFin, 1, true, true, creadoPor);
     }
 
     public ReservaSalon crearNuevaVersion(
@@ -81,6 +84,7 @@ public class ReservaSalon {
                 fechaHoraFin,
                 version + 1,
                 true,
+                true,
                 creadoPor
         );
     }
@@ -96,6 +100,29 @@ public class ReservaSalon {
                 fechaHoraFin,
                 version,
                 false,
+                activa,
+                creadoPor
+        );
+    }
+
+    public ReservaSalon retirarDelEvento() {
+        if (!vigente) {
+            throw new DomainException("Solo se puede retirar la version vigente de una reserva");
+        }
+        if (!activa) {
+            return this;
+        }
+        return new ReservaSalon(
+                id,
+                reservaRaizId,
+                eventoId,
+                salonId,
+                numInvitados,
+                fechaHoraInicio,
+                fechaHoraFin,
+                version,
+                true,
+                false,
                 creadoPor
         );
     }
@@ -110,9 +137,25 @@ public class ReservaSalon {
             LocalDateTime fechaHoraFin,
             int version,
             boolean vigente,
+            boolean activa,
             UUID creadoPor
     ) {
-        return new ReservaSalon(id, reservaRaizId, eventoId, salonId, numInvitados, fechaHoraInicio, fechaHoraFin, version, vigente, creadoPor);
+        return new ReservaSalon(id, reservaRaizId, eventoId, salonId, numInvitados, fechaHoraInicio, fechaHoraFin, version, vigente, activa, creadoPor);
+    }
+
+    public static ReservaSalon reconstruir(
+            UUID id,
+            UUID reservaRaizId,
+            UUID eventoId,
+            UUID salonId,
+            int numInvitados,
+            LocalDateTime fechaHoraInicio,
+            LocalDateTime fechaHoraFin,
+            int version,
+            boolean vigente,
+            UUID creadoPor
+    ) {
+        return reconstruir(id, reservaRaizId, eventoId, salonId, numInvitados, fechaHoraInicio, fechaHoraFin, version, vigente, true, creadoPor);
     }
 
     public UUID getId() {
@@ -149,6 +192,10 @@ public class ReservaSalon {
 
     public boolean isVigente() {
         return vigente;
+    }
+
+    public boolean isActiva() {
+        return activa;
     }
 
     public UUID getCreadoPor() {

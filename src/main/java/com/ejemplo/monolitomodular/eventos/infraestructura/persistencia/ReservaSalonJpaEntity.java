@@ -40,6 +40,9 @@ public class ReservaSalonJpaEntity {
     @Column(nullable = false)
     private boolean vigente;
 
+    @Column(nullable = false)
+    private boolean activa;
+
     @Column(name = "creado_por", nullable = false)
     private UUID creadoPor;
 
@@ -62,6 +65,7 @@ public class ReservaSalonJpaEntity {
             LocalDateTime fechaHoraFin,
             int version,
             boolean vigente,
+            boolean activa,
             UUID creadoPor,
             LocalDateTime createdAt,
             LocalDateTime updatedAt
@@ -75,6 +79,7 @@ public class ReservaSalonJpaEntity {
         this.fechaHoraFin = fechaHoraFin;
         this.version = version;
         this.vigente = vigente;
+        this.activa = activa;
         this.creadoPor = creadoPor;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
@@ -114,6 +119,10 @@ public class ReservaSalonJpaEntity {
 
     public boolean isVigente() {
         return vigente;
+    }
+
+    public boolean isActiva() {
+        return activa;
     }
 
     public UUID getCreadoPor() {

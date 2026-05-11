@@ -56,6 +56,7 @@ public interface SpringDataAnticipoJpaRepository extends JpaRepository<AnticipoJ
               and c.vigente = true
               and c.estado = com.ejemplo.monolitomodular.cotizaciones.dominio.modelo.EstadoCotizacion.ACEPTADA
               and r.vigente = true
+              and r.activa = true
               and e.estado <> com.ejemplo.monolitomodular.eventos.dominio.modelo.EstadoEvento.CANCELADO
               and e.fechaHoraInicio >= :desde
               and e.fechaHoraInicio <= :hasta

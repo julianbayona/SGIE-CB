@@ -705,6 +705,11 @@ class CotizacionApplicationServiceTest {
         public void desactivarReservaVigente(UUID reservaRaizId) {
             throw new UnsupportedOperationException();
         }
+
+        @Override
+        public void retirarReservaVigente(UUID reservaRaizId) {
+            throw new UnsupportedOperationException();
+        }
     }
 
     private static class UsuarioRepositoryStub implements UsuarioRepository {
