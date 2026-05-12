@@ -62,6 +62,13 @@ public class PagoController {
                 .toList();
     }
 
+    @GetMapping("/eventos/{eventoId}/anticipos")
+    public List<AnticipoResponse> listarAnticiposPorEvento(@PathVariable UUID eventoId) {
+        return consultarAnticiposUseCase.listarPorEvento(eventoId).stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
     @GetMapping("/eventos/{eventoId}/estado-financiero")
     public EstadoFinancieroEventoResponse estadoFinanciero(@PathVariable UUID eventoId) {
         return toResponse(consultarEstadoFinancieroEventoUseCase.consultar(eventoId));

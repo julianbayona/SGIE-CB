@@ -315,6 +315,11 @@ class RecordatorioAnticipoProgramadoApplicationServiceTest {
         }
 
         @Override
+        public List<Anticipo> listarPorEventoId(UUID eventoId) {
+            return List.of();
+        }
+
+        @Override
         public BigDecimal totalPorCotizacionId(UUID cotizacionId) {
             return BigDecimal.ZERO;
         }

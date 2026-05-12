@@ -41,6 +41,13 @@ public class AnticipoJpaRepositoryAdapter implements AnticipoRepository {
     }
 
     @Override
+    public List<Anticipo> listarPorEventoId(UUID eventoId) {
+        return repository.listarPorEventoId(eventoId).stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
     public BigDecimal totalPorCotizacionId(UUID cotizacionId) {
         return repository.totalPorCotizacionId(cotizacionId);
     }

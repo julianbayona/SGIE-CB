@@ -8,4 +8,6 @@ import java.util.UUID;
 public interface ConsultarAnticiposUseCase {
 
     List<AnticipoView> listarPorCotizacion(UUID cotizacionId);
+
+    List<AnticipoView> listarPorEvento(UUID eventoId);
 }

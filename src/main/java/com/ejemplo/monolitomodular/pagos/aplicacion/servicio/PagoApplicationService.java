@@ -57,11 +57,19 @@ public class PagoApplicationService implements RegistrarAnticipoUseCase, Consult
         if (cotizacion.getEstado() != EstadoCotizacion.ACEPTADA) {
             throw new DomainException("Solo se pueden registrar anticipos sobre una cotizacion aceptada");
         }
+        if (!cotizacion.isVigente()) {
+            throw new DomainException("Solo se pueden registrar anticipos sobre la cotizacion vigente");
+        }
         ReservaSalon reserva = reservaSalonRepository.buscarPorId(cotizacion.getReservaId())
                 .orElseThrow(() -> new DomainException("Reserva asociada a la cotizacion no encontrada"));
         Evento evento = eventoRepository.buscarPorId(reserva.getEventoId())
                 .orElseThrow(() -> new DomainException("Evento asociado a la cotizacion no encontrado"));
         evento.validarOperable();
+        Cotizacion cotizacionVigente = cotizacionRepository.buscarAceptadaVigentePorEventoId(evento.getId())
+                .orElseThrow(() -> new DomainException("El evento no tiene cotizacion aceptada vigente"));
+        if (!cotizacionVigente.getId().equals(cotizacion.getId())) {
+            throw new DomainException("El anticipo debe registrarse sobre la cotizacion aceptada vigente del evento");
+        }
 
         BigDecimal totalActual = anticipoRepository.totalPorEventoId(evento.getId());
         Anticipo anticipo = Anticipo.nuevo(
@@ -88,6 +96,20 @@ public class PagoApplicationService implements RegistrarAnticipoUseCase, Consult
         BigDecimal totalPagado = anticipoRepository.totalPorCotizacionId(cotizacionId);
         return anticipoRepository.listarPorCotizacionId(cotizacionId).stream()
                 .map(anticipo -> toView(anticipo, totalPagado, cotizacion.getValorTotal()))
+                .toList();
+    }
+
+    @Override
+    public List<AnticipoView> listarPorEvento(UUID eventoId) {
+        Evento evento = eventoRepository.buscarPorId(eventoId)
+                .orElseThrow(() -> new DomainException("Evento no encontrado"));
+        BigDecimal valorReferencia = cotizacionRepository.buscarAceptadaVigentePorEventoId(evento.getId())
+                .or(() -> cotizacionRepository.listarPorEventoId(evento.getId()).stream().findFirst())
+                .map(Cotizacion::getValorTotal)
+                .orElse(BigDecimal.ZERO);
+        BigDecimal totalPagado = anticipoRepository.totalPorEventoId(evento.getId());
+        return anticipoRepository.listarPorEventoId(evento.getId()).stream()
+                .map(anticipo -> toView(anticipo, totalPagado, valorReferencia))
                 .toList();
     }
 

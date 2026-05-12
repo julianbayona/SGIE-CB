@@ -138,6 +138,40 @@ class PagoApplicationServiceTest {
         assertEquals(new BigDecimal("1300000.00"), view.saldoPendiente());
     }
 
+    @Test
+    void deberiaListarAnticiposPorEvento() {
+        EscenarioPago escenario = escenario(cotizacionAceptada(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID()));
+        escenario.anticipoRepository().agregar(Anticipo.nuevo(
+                escenario.cotizacion().getId(),
+                escenario.usuario().getId(),
+                new BigDecimal("400000.00"),
+                "TRANSFERENCIA",
+                LocalDate.of(2026, 8, 20),
+                "Anticipo inicial"
+        ));
+
+        List<AnticipoView> anticipos = escenario.service().listarPorEvento(escenario.eventoRepository().evento().getId());
+
+        assertEquals(1, anticipos.size());
+        assertEquals(new BigDecimal("400000.00"), anticipos.get(0).totalPagado());
+        assertEquals(new BigDecimal("1600000.00"), anticipos.get(0).saldoPendiente());
+    }
+
+    @Test
+    void noDeberiaRegistrarAnticipoSobreCotizacionAceptadaAnteriorNoVigente() {
+        UUID cotizacionId = UUID.randomUUID();
+        UUID reservaId = UUID.randomUUID();
+        UUID usuarioId = UUID.randomUUID();
+        Cotizacion cotizacionAnterior = cotizacionAceptada(cotizacionId, reservaId, usuarioId).marcarNoVigente();
+        EscenarioPago escenario = escenario(cotizacionAnterior);
+
+        assertThrows(DomainException.class, () -> escenario.service().ejecutar(command(
+                cotizacionAnterior.getId(),
+                escenario.usuario().getId(),
+                new BigDecimal("500000.00")
+        )));
+    }
+
 
     private static EscenarioPago escenario(Cotizacion cotizacion) {
         Usuario usuario = Usuario.reconstruir(cotizacion.getUsuarioId(), "Admin", "$2a$hash", RolUsuario.ADMINISTRADOR, true);
@@ -255,6 +289,11 @@ class PagoApplicationServiceTest {
         }
 
         @Override
+        public List<Anticipo> listarPorEventoId(UUID eventoId) {
+            return List.copyOf(anticipos);
+        }
+
+        @Override
         public BigDecimal totalPorCotizacionId(UUID cotizacionId) {
             return listarPorCotizacionId(cotizacionId).stream()
                     .map(Anticipo::getValor)
@@ -304,7 +343,9 @@ class PagoApplicationServiceTest {
 
         @Override
         public Optional<Cotizacion> buscarAceptadaVigentePorEventoId(UUID eventoId) {
-            return Optional.empty();
+            return cotizacion.getEstado() == EstadoCotizacion.ACEPTADA && cotizacion.isVigente()
+                    ? Optional.of(cotizacion)
+                    : Optional.empty();
         }
 
         @Override

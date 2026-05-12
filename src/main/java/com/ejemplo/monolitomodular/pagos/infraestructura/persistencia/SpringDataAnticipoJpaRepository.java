@@ -13,6 +13,33 @@ public interface SpringDataAnticipoJpaRepository extends JpaRepository<AnticipoJ
 
     List<AnticipoJpaEntity> findByCotizacionIdOrderByFechaPagoAsc(UUID cotizacionId);
 
+    @Query("""
+            select a
+            from AnticipoJpaEntity a
+            where exists (
+                select 1
+                from CotizacionJpaEntity c
+                where c.id = a.cotizacionId
+                  and (
+                      exists (
+                          select 1
+                          from CotizacionReservaJpaEntity cr, ReservaSalonJpaEntity r
+                          where cr.cotizacionId = c.id
+                            and r.id = cr.reservaId
+                            and r.eventoId = :eventoId
+                      )
+                      or exists (
+                          select 1
+                          from ReservaSalonJpaEntity r
+                          where r.id = c.reservaId
+                            and r.eventoId = :eventoId
+                      )
+                  )
+            )
+            order by a.fechaPago asc
+            """)
+    List<AnticipoJpaEntity> listarPorEventoId(UUID eventoId);
+
     @Query("select coalesce(sum(a.valor), 0) from AnticipoJpaEntity a where a.cotizacionId = :cotizacionId")
     BigDecimal totalPorCotizacionId(UUID cotizacionId);
 
@@ -21,10 +48,23 @@ public interface SpringDataAnticipoJpaRepository extends JpaRepository<AnticipoJ
             from AnticipoJpaEntity a
             where exists (
                 select 1
-                from CotizacionJpaEntity c, ReservaSalonJpaEntity r
+                from CotizacionJpaEntity c
                 where c.id = a.cotizacionId
-                  and r.id = c.reservaId
-                  and r.eventoId = :eventoId
+                  and (
+                      exists (
+                          select 1
+                          from CotizacionReservaJpaEntity cr, ReservaSalonJpaEntity r
+                          where cr.cotizacionId = c.id
+                            and r.id = cr.reservaId
+                            and r.eventoId = :eventoId
+                      )
+                      or exists (
+                          select 1
+                          from ReservaSalonJpaEntity r
+                          where r.id = c.reservaId
+                            and r.eventoId = :eventoId
+                      )
+                  )
             )
             """)
     BigDecimal totalPorEventoId(UUID eventoId);
@@ -43,10 +83,23 @@ public interface SpringDataAnticipoJpaRepository extends JpaRepository<AnticipoJ
                     from AnticipoJpaEntity a
                     where exists (
                         select 1
-                        from CotizacionJpaEntity cPago, ReservaSalonJpaEntity rPago
+                        from CotizacionJpaEntity cPago
                         where cPago.id = a.cotizacionId
-                          and rPago.id = cPago.reservaId
-                          and rPago.eventoId = e.id
+                          and (
+                              exists (
+                                  select 1
+                                  from CotizacionReservaJpaEntity crPago, ReservaSalonJpaEntity rPago
+                                  where crPago.cotizacionId = cPago.id
+                                    and rPago.id = crPago.reservaId
+                                    and rPago.eventoId = e.id
+                              )
+                              or exists (
+                                  select 1
+                                  from ReservaSalonJpaEntity rPago
+                                  where rPago.id = cPago.reservaId
+                                    and rPago.eventoId = e.id
+                              )
+                          )
                     )
                 ) as totalPagado
             from CotizacionJpaEntity c, ReservaSalonJpaEntity r, EventoJpaEntity e, ClienteJpaEntity cliente
@@ -65,10 +118,23 @@ public interface SpringDataAnticipoJpaRepository extends JpaRepository<AnticipoJ
                     from AnticipoJpaEntity a
                     where exists (
                         select 1
-                        from CotizacionJpaEntity cPago, ReservaSalonJpaEntity rPago
+                        from CotizacionJpaEntity cPago
                         where cPago.id = a.cotizacionId
-                          and rPago.id = cPago.reservaId
-                          and rPago.eventoId = e.id
+                          and (
+                              exists (
+                                  select 1
+                                  from CotizacionReservaJpaEntity crPago, ReservaSalonJpaEntity rPago
+                                  where crPago.cotizacionId = cPago.id
+                                    and rPago.id = crPago.reservaId
+                                    and rPago.eventoId = e.id
+                              )
+                              or exists (
+                                  select 1
+                                  from ReservaSalonJpaEntity rPago
+                                  where rPago.id = cPago.reservaId
+                                    and rPago.eventoId = e.id
+                              )
+                          )
                     )
               )
             order by e.fechaHoraInicio asc
