@@ -91,6 +91,11 @@ public class ReservaSalonJpaRepositoryAdapter implements ReservaSalonRepository 
     }
 
     @Override
+    public boolean existeReservaActivaPorSalon(UUID salonId) {
+        return repository.existeReservaActivaPorSalon(salonId);
+    }
+
+    @Override
     public Optional<ReservaSalon> buscarVigentePorEventoYSalon(UUID eventoId, UUID salonId) {
         return repository.findByEventoIdAndSalonIdAndVigenteTrue(eventoId, salonId).map(this::toDomain);
     }

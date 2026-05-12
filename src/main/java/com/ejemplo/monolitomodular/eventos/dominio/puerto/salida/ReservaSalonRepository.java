@@ -24,6 +24,8 @@ public interface ReservaSalonRepository {
 
     Set<UUID> buscarSalonesOcupados(LocalDateTime fechaHoraInicio, LocalDateTime fechaHoraFin);
 
+    boolean existeReservaActivaPorSalon(UUID salonId);
+
     Optional<ReservaSalon> buscarVigentePorEventoYSalon(UUID eventoId, UUID salonId);
 
     Optional<ReservaSalon> buscarPorId(UUID id);

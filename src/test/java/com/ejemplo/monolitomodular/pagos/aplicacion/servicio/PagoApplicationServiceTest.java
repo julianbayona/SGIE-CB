@@ -395,6 +395,11 @@ class PagoApplicationServiceTest {
         }
 
         @Override
+        public boolean existeReservaActivaPorSalon(UUID salonId) {
+            return false;
+        }
+
+        @Override
         public void desactivarReservaVigente(UUID reservaRaizId) {
             throw new UnsupportedOperationException();
         }

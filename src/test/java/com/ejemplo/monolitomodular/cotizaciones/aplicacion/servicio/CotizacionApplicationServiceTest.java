@@ -702,6 +702,11 @@ class CotizacionApplicationServiceTest {
         }
 
         @Override
+        public boolean existeReservaActivaPorSalon(UUID salonId) {
+            return reserva.isVigente() && reserva.getSalonId().equals(salonId);
+        }
+
+        @Override
         public void desactivarReservaVigente(UUID reservaRaizId) {
             throw new UnsupportedOperationException();
         }

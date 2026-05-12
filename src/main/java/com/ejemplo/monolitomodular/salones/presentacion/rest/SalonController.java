@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -52,6 +53,18 @@ public class SalonController {
                 .toUri();
 
         return ResponseEntity.created(location).body(toResponse(salon));
+    }
+
+    @PatchMapping("/{id}/activar")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    public SalonResponse activar(@PathVariable UUID id) {
+        return toResponse(registrarSalonUseCase.activar(id));
+    }
+
+    @PatchMapping("/{id}/desactivar")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    public SalonResponse desactivar(@PathVariable UUID id) {
+        return toResponse(registrarSalonUseCase.desactivar(id));
     }
 
     @GetMapping("/{id}")

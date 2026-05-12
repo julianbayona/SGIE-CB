@@ -89,6 +89,20 @@ public interface SpringDataReservaSalonJpaRepository extends JpaRepository<Reser
             """)
     Set<UUID> buscarSalonesOcupados(LocalDateTime fechaHoraInicio, LocalDateTime fechaHoraFin);
 
+    @Query("""
+            select case when count(r) > 0 then true else false end
+            from ReservaSalonJpaEntity r
+            where r.salonId = :salonId
+              and r.vigente = true
+              and exists (
+                  select 1
+                  from EventoJpaEntity e
+                  where e.id = r.eventoId
+                    and e.estado <> com.ejemplo.monolitomodular.eventos.dominio.modelo.EstadoEvento.CANCELADO
+              )
+            """)
+    boolean existeReservaActivaPorSalon(UUID salonId);
+
     @Modifying
     @Query("""
             update ReservaSalonJpaEntity r

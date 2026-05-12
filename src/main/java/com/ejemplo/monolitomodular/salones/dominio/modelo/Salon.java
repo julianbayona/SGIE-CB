@@ -29,6 +29,14 @@ public class Salon {
         return new Salon(id, nombre, capacidad, descripcion, activo);
     }
 
+    public Salon activar() {
+        return new Salon(id, nombre, capacidad, descripcion, true);
+    }
+
+    public Salon desactivar() {
+        return new Salon(id, nombre, capacidad, descripcion, false);
+    }
+
     public UUID getId() {
         return id;
     }

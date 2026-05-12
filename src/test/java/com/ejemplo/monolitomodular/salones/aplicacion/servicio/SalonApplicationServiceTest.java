@@ -655,6 +655,11 @@ class SalonApplicationServiceTest {
         }
 
         @Override
+        public boolean existeReservaActivaPorSalon(UUID salonId) {
+            return false;
+        }
+
+        @Override
         public void desactivarReservaVigente(UUID reservaRaizId) {
         }
     }

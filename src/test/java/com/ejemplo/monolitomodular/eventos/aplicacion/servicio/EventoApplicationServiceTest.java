@@ -1121,6 +1121,13 @@ class EventoApplicationServiceTest {
         }
 
         @Override
+        public boolean existeReservaActivaPorSalon(UUID salonId) {
+            return reservas.stream()
+                    .filter(ReservaSalon::isVigente)
+                    .anyMatch(reserva -> reserva.getSalonId().equals(salonId));
+        }
+
+        @Override
         public void desactivarReservaVigente(UUID reservaRaizId) {
             for (int i = 0; i < reservas.size(); i++) {
                 ReservaSalon actual = reservas.get(i);

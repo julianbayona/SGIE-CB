@@ -41,6 +41,23 @@ public class SalonApplicationService implements RegistrarSalonUseCase, Consultar
     }
 
     @Override
+    public SalonView activar(UUID id) {
+        Salon salon = salonRepository.buscarPorId(id)
+                .orElseThrow(() -> new DomainException("Salon no encontrado"));
+        return toView(salonRepository.guardar(salon.activar()));
+    }
+
+    @Override
+    public SalonView desactivar(UUID id) {
+        Salon salon = salonRepository.buscarPorId(id)
+                .orElseThrow(() -> new DomainException("Salon no encontrado"));
+        if (reservaSalonRepository.existeReservaActivaPorSalon(id)) {
+            throw new DomainException("No se puede desactivar un salon con reservas activas");
+        }
+        return toView(salonRepository.guardar(salon.desactivar()));
+    }
+
+    @Override
     public SalonView obtenerPorId(UUID id) {
         return salonRepository.buscarPorId(id)
                 .map(this::toView)
