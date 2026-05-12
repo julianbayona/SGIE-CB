@@ -9,6 +9,8 @@ public interface RegistrarSalonUseCase {
 
     SalonView ejecutar(RegistrarSalonCommand command);
 
+    SalonView actualizar(UUID id, RegistrarSalonCommand command);
+
     SalonView activar(UUID id);
 
     SalonView desactivar(UUID id);

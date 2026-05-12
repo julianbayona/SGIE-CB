@@ -37,6 +37,10 @@ public class Salon {
         return new Salon(id, nombre, capacidad, descripcion, false);
     }
 
+    public Salon actualizar(String nombre, int capacidad, String descripcion) {
+        return new Salon(id, nombre, capacidad, descripcion, activo);
+    }
+
     public UUID getId() {
         return id;
     }

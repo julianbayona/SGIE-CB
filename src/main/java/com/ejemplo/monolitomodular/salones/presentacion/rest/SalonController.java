@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -53,6 +54,18 @@ public class SalonController {
                 .toUri();
 
         return ResponseEntity.created(location).body(toResponse(salon));
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    public SalonResponse actualizar(
+            @PathVariable UUID id,
+            @Valid @RequestBody RegistrarSalonRequest request
+    ) {
+        return toResponse(registrarSalonUseCase.actualizar(
+                id,
+                new RegistrarSalonCommand(request.nombre(), request.capacidad(), request.descripcion())
+        ));
     }
 
     @PatchMapping("/{id}/activar")

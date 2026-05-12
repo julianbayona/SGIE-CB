@@ -41,6 +41,18 @@ public class SalonApplicationService implements RegistrarSalonUseCase, Consultar
     }
 
     @Override
+    public SalonView actualizar(UUID id, RegistrarSalonCommand command) {
+        Salon salon = salonRepository.buscarPorId(id)
+                .orElseThrow(() -> new DomainException("Salon no encontrado"));
+        if (!salon.getNombre().equalsIgnoreCase(command.nombre()) && salonRepository.existePorNombre(command.nombre())) {
+            throw new DomainException("Ya existe un salon con el nombre indicado");
+        }
+        return toView(salonRepository.guardar(
+                salon.actualizar(command.nombre(), command.capacidad(), command.descripcion())
+        ));
+    }
+
+    @Override
     public SalonView activar(UUID id) {
         Salon salon = salonRepository.buscarPorId(id)
                 .orElseThrow(() -> new DomainException("Salon no encontrado"));
