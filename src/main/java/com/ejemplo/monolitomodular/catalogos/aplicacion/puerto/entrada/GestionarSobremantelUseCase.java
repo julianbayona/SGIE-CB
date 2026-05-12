@@ -14,6 +14,8 @@ public interface GestionarSobremantelUseCase {
 
     CatalogoConColorView desactivarSobremantel(UUID id);
 
+    CatalogoConColorView activarSobremantel(UUID id);
+
     CatalogoConColorView obtenerSobremantel(UUID id);
 
     List<CatalogoConColorView> listarSobremanteles();

@@ -38,6 +38,10 @@ public class TipoAdicional {
         return new TipoAdicional(id, nombre, modoCobro, precioBase, false);
     }
 
+    public TipoAdicional activar() {
+        return new TipoAdicional(id, nombre, modoCobro, precioBase, true);
+    }
+
     public UUID getId() {
         return id;
     }

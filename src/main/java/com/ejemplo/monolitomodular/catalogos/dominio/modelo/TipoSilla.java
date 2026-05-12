@@ -33,6 +33,10 @@ public class TipoSilla {
         return new TipoSilla(id, nombre, false);
     }
 
+    public TipoSilla activar() {
+        return new TipoSilla(id, nombre, true);
+    }
+
     public UUID getId() {
         return id;
     }

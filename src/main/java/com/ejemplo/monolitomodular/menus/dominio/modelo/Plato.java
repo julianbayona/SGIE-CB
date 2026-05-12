@@ -44,6 +44,10 @@ public class Plato {
         return new Plato(id, nombre, descripcion, precioBase, false);
     }
 
+    public Plato activar() {
+        return new Plato(id, nombre, descripcion, precioBase, true);
+    }
+
     public UUID getId() {
         return id;
     }

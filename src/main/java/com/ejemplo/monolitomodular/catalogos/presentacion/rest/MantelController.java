@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -49,6 +50,11 @@ public class MantelController {
     @DeleteMapping("/{id}")
     public CatalogoConColorResponse desactivar(@PathVariable UUID id) {
         return toResponse(gestionarMantelUseCase.desactivarMantel(id));
+    }
+
+    @PatchMapping("/{id}/activar")
+    public CatalogoConColorResponse activar(@PathVariable UUID id) {
+        return toResponse(gestionarMantelUseCase.activarMantel(id));
     }
 
     @GetMapping("/{id}")

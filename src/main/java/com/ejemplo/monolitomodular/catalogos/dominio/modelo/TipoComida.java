@@ -35,6 +35,10 @@ public class TipoComida {
         return new TipoComida(id, nombre, descripcion, false);
     }
 
+    public TipoComida activar() {
+        return new TipoComida(id, nombre, descripcion, true);
+    }
+
     public UUID getId() {
         return id;
     }

@@ -33,6 +33,10 @@ public class TipoMesa {
         return new TipoMesa(id, nombre, false);
     }
 
+    public TipoMesa activar() {
+        return new TipoMesa(id, nombre, true);
+    }
+
     public UUID getId() {
         return id;
     }

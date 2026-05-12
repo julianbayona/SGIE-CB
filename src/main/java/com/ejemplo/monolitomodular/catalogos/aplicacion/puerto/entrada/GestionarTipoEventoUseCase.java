@@ -14,6 +14,8 @@ public interface GestionarTipoEventoUseCase {
 
     CatalogoBasicoView desactivarTipoEvento(UUID id);
 
+    CatalogoBasicoView activarTipoEvento(UUID id);
+
     CatalogoBasicoView obtenerTipoEvento(UUID id);
 
     List<CatalogoBasicoView> listarTiposEvento();

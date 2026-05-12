@@ -14,6 +14,8 @@ public interface GestionarTipoAdicionalUseCase {
 
     TipoAdicionalView desactivarTipoAdicional(UUID id);
 
+    TipoAdicionalView activarTipoAdicional(UUID id);
+
     TipoAdicionalView obtenerTipoAdicional(UUID id);
 
     List<TipoAdicionalView> listarTiposAdicional();

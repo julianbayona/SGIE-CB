@@ -36,6 +36,10 @@ public class TipoMomentoMenu {
         return new TipoMomentoMenu(id, nombre, false);
     }
 
+    public TipoMomentoMenu activar() {
+        return new TipoMomentoMenu(id, nombre, true);
+    }
+
     public UUID getId() {
         return id;
     }

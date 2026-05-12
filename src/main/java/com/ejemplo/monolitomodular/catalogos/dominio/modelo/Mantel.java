@@ -35,6 +35,10 @@ public class Mantel {
         return new Mantel(id, nombre, colorId, false);
     }
 
+    public Mantel activar() {
+        return new Mantel(id, nombre, colorId, true);
+    }
+
     public UUID getId() {
         return id;
     }

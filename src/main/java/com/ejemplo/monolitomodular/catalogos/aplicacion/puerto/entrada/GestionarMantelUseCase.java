@@ -14,6 +14,8 @@ public interface GestionarMantelUseCase {
 
     CatalogoConColorView desactivarMantel(UUID id);
 
+    CatalogoConColorView activarMantel(UUID id);
+
     CatalogoConColorView obtenerMantel(UUID id);
 
     List<CatalogoConColorView> listarManteles();

@@ -14,6 +14,8 @@ public interface GestionarTipoComidaUseCase {
 
     CatalogoBasicoView desactivarTipoComida(UUID id);
 
+    CatalogoBasicoView activarTipoComida(UUID id);
+
     CatalogoBasicoView obtenerTipoComida(UUID id);
 
     List<CatalogoBasicoView> listarTiposComida();

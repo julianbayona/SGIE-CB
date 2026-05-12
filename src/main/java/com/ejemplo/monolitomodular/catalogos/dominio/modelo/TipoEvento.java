@@ -35,6 +35,10 @@ public class TipoEvento {
         return new TipoEvento(id, nombre, descripcion, false);
     }
 
+    public TipoEvento activar() {
+        return new TipoEvento(id, nombre, descripcion, true);
+    }
+
     public UUID getId() {
         return id;
     }

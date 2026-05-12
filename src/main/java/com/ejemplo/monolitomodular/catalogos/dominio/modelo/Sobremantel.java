@@ -35,6 +35,10 @@ public class Sobremantel {
         return new Sobremantel(id, nombre, colorId, false);
     }
 
+    public Sobremantel activar() {
+        return new Sobremantel(id, nombre, colorId, true);
+    }
+
     public UUID getId() {
         return id;
     }

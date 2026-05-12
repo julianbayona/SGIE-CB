@@ -14,6 +14,8 @@ public interface GestionarPlatoUseCase {
 
     PlatoView desactivar(UUID id);
 
+    PlatoView activar(UUID id);
+
     PlatoView obtener(UUID id);
 
     List<PlatoView> listar();

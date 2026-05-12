@@ -14,6 +14,8 @@ public interface GestionarColorUseCase {
 
     ColorView desactivarColor(UUID id);
 
+    ColorView activarColor(UUID id);
+
     ColorView obtenerColor(UUID id);
 
     List<ColorView> listarColores();

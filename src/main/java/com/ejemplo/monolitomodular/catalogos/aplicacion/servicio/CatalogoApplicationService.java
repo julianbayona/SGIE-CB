@@ -100,6 +100,13 @@ public class CatalogoApplicationService implements
     }
 
     @Override
+    public CatalogoBasicoView activarTipoEvento(UUID id) {
+        TipoEvento tipoEvento = tipoEventoRepository.buscarPorId(id)
+                .orElseThrow(() -> new DomainException("Tipo de evento no encontrado"));
+        return toView(tipoEventoRepository.guardar(tipoEvento.activar()));
+    }
+
+    @Override
     public CatalogoBasicoView obtenerTipoEvento(UUID id) {
         return tipoEventoRepository.buscarPorId(id)
                 .map(this::toView)
@@ -130,6 +137,13 @@ public class CatalogoApplicationService implements
         TipoComida tipoComida = tipoComidaRepository.buscarPorId(id)
                 .orElseThrow(() -> new DomainException("Tipo de comida no encontrado"));
         return toView(tipoComidaRepository.guardar(tipoComida.desactivar()));
+    }
+
+    @Override
+    public CatalogoBasicoView activarTipoComida(UUID id) {
+        TipoComida tipoComida = tipoComidaRepository.buscarPorId(id)
+                .orElseThrow(() -> new DomainException("Tipo de comida no encontrado"));
+        return toView(tipoComidaRepository.guardar(tipoComida.activar()));
     }
 
     @Override
@@ -166,6 +180,13 @@ public class CatalogoApplicationService implements
     }
 
     @Override
+    public ColorView activarColor(UUID id) {
+        Color color = colorRepository.buscarPorId(id)
+                .orElseThrow(() -> new DomainException("Color no encontrado"));
+        return toView(colorRepository.guardar(color.activar()));
+    }
+
+    @Override
     public ColorView obtenerColor(UUID id) {
         return colorRepository.buscarPorId(id)
                 .map(this::toView)
@@ -199,6 +220,13 @@ public class CatalogoApplicationService implements
     }
 
     @Override
+    public CatalogoBasicoView activarTipoMesa(UUID id) {
+        TipoMesa tipoMesa = tipoMesaRepository.buscarPorId(id)
+                .orElseThrow(() -> new DomainException("Tipo de mesa no encontrado"));
+        return toView(tipoMesaRepository.guardar(tipoMesa.activar()));
+    }
+
+    @Override
     public CatalogoBasicoView obtenerTipoMesa(UUID id) {
         return tipoMesaRepository.buscarPorId(id)
                 .map(this::toView)
@@ -229,6 +257,13 @@ public class CatalogoApplicationService implements
         TipoSilla tipoSilla = tipoSillaRepository.buscarPorId(id)
                 .orElseThrow(() -> new DomainException("Tipo de silla no encontrado"));
         return toView(tipoSillaRepository.guardar(tipoSilla.desactivar()));
+    }
+
+    @Override
+    public CatalogoBasicoView activarTipoSilla(UUID id) {
+        TipoSilla tipoSilla = tipoSillaRepository.buscarPorId(id)
+                .orElseThrow(() -> new DomainException("Tipo de silla no encontrado"));
+        return toView(tipoSillaRepository.guardar(tipoSilla.activar()));
     }
 
     @Override
@@ -267,6 +302,13 @@ public class CatalogoApplicationService implements
     }
 
     @Override
+    public CatalogoConColorView activarMantel(UUID id) {
+        Mantel mantel = mantelRepository.buscarPorId(id)
+                .orElseThrow(() -> new DomainException("Mantel no encontrado"));
+        return toView(mantelRepository.guardar(mantel.activar()));
+    }
+
+    @Override
     public CatalogoConColorView obtenerMantel(UUID id) {
         return mantelRepository.buscarPorId(id)
                 .map(this::toView)
@@ -299,6 +341,13 @@ public class CatalogoApplicationService implements
         Sobremantel sobremantel = sobremantelRepository.buscarPorId(id)
                 .orElseThrow(() -> new DomainException("Sobremantel no encontrado"));
         return toView(sobremantelRepository.guardar(sobremantel.desactivar()));
+    }
+
+    @Override
+    public CatalogoConColorView activarSobremantel(UUID id) {
+        Sobremantel sobremantel = sobremantelRepository.buscarPorId(id)
+                .orElseThrow(() -> new DomainException("Sobremantel no encontrado"));
+        return toView(sobremantelRepository.guardar(sobremantel.activar()));
     }
 
     @Override
@@ -336,6 +385,13 @@ public class CatalogoApplicationService implements
         TipoAdicional tipoAdicional = tipoAdicionalRepository.buscarPorId(id)
                 .orElseThrow(() -> new DomainException("Tipo adicional no encontrado"));
         return toView(tipoAdicionalRepository.guardar(tipoAdicional.desactivar()));
+    }
+
+    @Override
+    public TipoAdicionalView activarTipoAdicional(UUID id) {
+        TipoAdicional tipoAdicional = tipoAdicionalRepository.buscarPorId(id)
+                .orElseThrow(() -> new DomainException("Tipo adicional no encontrado"));
+        return toView(tipoAdicionalRepository.guardar(tipoAdicional.activar()));
     }
 
     @Override

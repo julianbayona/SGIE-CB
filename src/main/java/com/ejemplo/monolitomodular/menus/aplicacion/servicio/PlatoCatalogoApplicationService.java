@@ -42,6 +42,13 @@ public class PlatoCatalogoApplicationService implements GestionarPlatoUseCase {
     }
 
     @Override
+    public PlatoView activar(UUID id) {
+        Plato plato = platoRepository.buscarPorId(id)
+                .orElseThrow(() -> new DomainException("Plato no encontrado"));
+        return toView(platoRepository.guardar(plato.activar()));
+    }
+
+    @Override
     public PlatoView obtener(UUID id) {
         return platoRepository.buscarPorId(id)
                 .map(this::toView)

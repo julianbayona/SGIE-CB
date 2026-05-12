@@ -14,6 +14,8 @@ public interface GestionarTipoMomentoMenuUseCase {
 
     TipoMomentoMenuView desactivar(UUID id);
 
+    TipoMomentoMenuView activar(UUID id);
+
     TipoMomentoMenuView obtener(UUID id);
 
     List<TipoMomentoMenuView> listar();

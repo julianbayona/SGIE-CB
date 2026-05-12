@@ -14,6 +14,8 @@ public interface GestionarTipoMesaUseCase {
 
     CatalogoBasicoView desactivarTipoMesa(UUID id);
 
+    CatalogoBasicoView activarTipoMesa(UUID id);
+
     CatalogoBasicoView obtenerTipoMesa(UUID id);
 
     List<CatalogoBasicoView> listarTiposMesa();

@@ -38,6 +38,10 @@ public class Color {
         return new Color(id, nombre, codigoHex, false);
     }
 
+    public Color activar() {
+        return new Color(id, nombre, codigoHex, true);
+    }
+
     public UUID getId() {
         return id;
     }

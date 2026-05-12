@@ -42,6 +42,13 @@ public class TipoMomentoMenuCatalogoApplicationService implements GestionarTipoM
     }
 
     @Override
+    public TipoMomentoMenuView activar(UUID id) {
+        TipoMomentoMenu tipoMomento = repository.buscarPorId(id)
+                .orElseThrow(() -> new DomainException("Tipo momento de menu no encontrado"));
+        return toView(repository.guardar(tipoMomento.activar()));
+    }
+
+    @Override
     public TipoMomentoMenuView obtener(UUID id) {
         return repository.buscarPorId(id)
                 .map(this::toView)

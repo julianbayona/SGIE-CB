@@ -14,6 +14,8 @@ public interface GestionarTipoSillaUseCase {
 
     CatalogoBasicoView desactivarTipoSilla(UUID id);
 
+    CatalogoBasicoView activarTipoSilla(UUID id);
+
     CatalogoBasicoView obtenerTipoSilla(UUID id);
 
     List<CatalogoBasicoView> listarTiposSilla();
