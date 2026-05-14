@@ -7,8 +7,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.mail.SimpleMailMessage;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -34,12 +35,20 @@ public class SmtpEmailAdapter implements EmailPort {
             return EnviarEmailResult.error("No esta configurado sgie.notificaciones.email.from");
         }
         try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(from.trim());
-            message.setTo(command.correo());
-            message.setSubject(command.asunto());
-            message.setText(command.cuerpo());
-            mailSender.send(message);
+            mailSender.send(mimeMessage -> {
+                MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+                helper.setFrom(from.trim());
+                helper.setTo(command.correo());
+                helper.setSubject(command.asunto());
+                helper.setText(command.cuerpo(), false);
+                for (EnviarEmailCommand.Adjunto adjunto : command.adjuntos()) {
+                    helper.addAttachment(
+                            adjunto.nombreArchivo(),
+                            new ByteArrayResource(adjunto.contenido()),
+                            adjunto.contentType()
+                    );
+                }
+            });
             return EnviarEmailResult.ok();
         } catch (RuntimeException ex) {
             LOGGER.warn(

@@ -9,12 +9,14 @@ import com.ejemplo.monolitomodular.notificaciones.aplicacion.dto.NotificacionVie
 import com.ejemplo.monolitomodular.notificaciones.aplicacion.puerto.entrada.CrearNotificacionUseCase;
 import com.ejemplo.monolitomodular.notificaciones.aplicacion.puerto.entrada.ListarNotificacionesPorEventoUseCase;
 import com.ejemplo.monolitomodular.notificaciones.aplicacion.puerto.entrada.ProcesarNotificacionesPendientesUseCase;
+import com.ejemplo.monolitomodular.notificaciones.aplicacion.puerto.salida.EmailAttachmentProvider;
 import com.ejemplo.monolitomodular.notificaciones.dominio.modelo.Notificacion;
 import com.ejemplo.monolitomodular.notificaciones.dominio.modelo.EstadoDestinatarioNotificacion;
 import com.ejemplo.monolitomodular.notificaciones.dominio.modelo.NotificacionDestinatario;
 import com.ejemplo.monolitomodular.notificaciones.dominio.puerto.salida.EmailPort;
 import com.ejemplo.monolitomodular.notificaciones.dominio.puerto.salida.NotificacionRepository;
 import com.ejemplo.monolitomodular.notificaciones.dominio.puerto.salida.WhatsAppPort;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +31,7 @@ public class NotificacionApplicationService implements CrearNotificacionUseCase,
     private final NotificacionRepository notificacionRepository;
     private final WhatsAppPort whatsAppPort;
     private final EmailPort emailPort;
+    private final List<EmailAttachmentProvider> attachmentProviders;
     private final NotificacionEmailFormatter emailFormatter = new NotificacionEmailFormatter();
 
     public NotificacionApplicationService(
@@ -36,9 +39,20 @@ public class NotificacionApplicationService implements CrearNotificacionUseCase,
             WhatsAppPort whatsAppPort,
             EmailPort emailPort
     ) {
+        this(notificacionRepository, whatsAppPort, emailPort, List.of());
+    }
+
+    @Autowired
+    public NotificacionApplicationService(
+            NotificacionRepository notificacionRepository,
+            WhatsAppPort whatsAppPort,
+            EmailPort emailPort,
+            List<EmailAttachmentProvider> attachmentProviders
+    ) {
         this.notificacionRepository = notificacionRepository;
         this.whatsAppPort = whatsAppPort;
         this.emailPort = emailPort;
+        this.attachmentProviders = attachmentProviders == null ? List.of() : List.copyOf(attachmentProviders);
     }
 
     @Override
@@ -91,9 +105,13 @@ public class NotificacionApplicationService implements CrearNotificacionUseCase,
         if (destinatario.getEstado() == EstadoDestinatarioNotificacion.ENVIADO) {
             return destinatario;
         }
-        boolean exitoso = enviarWhatsAppSiAplica(notificacion, destinatario)
-                && enviarEmailSiAplica(notificacion, destinatario);
-        return exitoso ? destinatario.marcarEnviado() : destinatario.marcarError();
+        try {
+            boolean exitoso = enviarWhatsAppSiAplica(notificacion, destinatario)
+                    && enviarEmailSiAplica(notificacion, destinatario);
+            return exitoso ? destinatario.marcarEnviado() : destinatario.marcarError();
+        } catch (RuntimeException ex) {
+            return destinatario.marcarError();
+        }
     }
 
     private boolean enviarWhatsAppSiAplica(Notificacion notificacion, NotificacionDestinatario destinatario) {
@@ -120,8 +138,15 @@ public class NotificacionApplicationService implements CrearNotificacionUseCase,
                 destinatario.getCorreo(),
                 notificacion.getTipo(),
                 emailMessage.asunto(),
-                emailMessage.cuerpo()
+                emailMessage.cuerpo(),
+                adjuntos(notificacion)
         )).exitoso();
+    }
+
+    private List<EnviarEmailCommand.Adjunto> adjuntos(Notificacion notificacion) {
+        return attachmentProviders.stream()
+                .flatMap(provider -> provider.adjuntos(notificacion.getTipo(), notificacion.getPayloadJson()).stream())
+                .toList();
     }
 
     private NotificacionView toView(Notificacion notificacion) {

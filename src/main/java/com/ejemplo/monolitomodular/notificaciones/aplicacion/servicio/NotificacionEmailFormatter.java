@@ -125,16 +125,20 @@ class NotificacionEmailFormatter {
         String fechaEvento = fecha(valor(payload, "fechaEvento"));
         String valorTotal = valor(payload, "valorTotal");
         return new EmailMessage(
-                "Cotizacion de evento - Club Boyaca",
+                "Cotizacion de tu evento - Club Boyaca",
                 """
                 Hola %s,
 
-                Te enviamos la cotizacion de tu evento.
+                Recibe un cordial saludo del Club Boyaca.
+
+                Adjuntamos la cotizacion formal de tu evento en formato Excel para que puedas revisar con claridad el detalle de servicios, cantidades y valores.
 
                 Fecha del evento: %s
                 Valor total: %s
 
-                Puedes comunicarte con el Club Boyaca para aprobarla o solicitar ajustes.
+                Si deseas aprobar la cotizacion o solicitar algun ajuste, puedes responder a este correo o comunicarte directamente con nuestro equipo administrativo.
+
+                Gracias por confiar en el Club Boyaca para la realizacion de tu evento.
 
                 Club Boyaca
                 """.formatted(cliente, fechaEvento, valorTotal).trim()

@@ -17,11 +17,12 @@ public class EmailLogAdapter implements EmailPort {
     @Override
     public EnviarEmailResult enviar(EnviarEmailCommand command) {
         LOGGER.info(
-                "Simulando envio Email. notificacionId={}, correo={}, tipo={}, asunto={}, cuerpo={}",
+                "Simulando envio Email. notificacionId={}, correo={}, tipo={}, asunto={}, adjuntos={}, cuerpo={}",
                 command.notificacionId(),
                 command.correo(),
                 command.tipo(),
                 command.asunto(),
+                command.adjuntos().size(),
                 command.cuerpo()
         );
         return EnviarEmailResult.ok();
