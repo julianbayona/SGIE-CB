@@ -37,9 +37,15 @@ class NotificacionEmailFormatter {
                 """
                 Hola %s,
 
-                Tu prueba de plato fue programada exitosamente.
+                Recibe un cordial saludo del Club Boyaca.
+
+                Confirmamos que tu prueba de plato fue programada correctamente. Este espacio nos permitira revisar contigo la propuesta gastronomica y resolver cualquier ajuste antes del evento.
 
                 Fecha y hora: %s
+
+                Te recomendamos llegar unos minutos antes de la hora programada. Si necesitas reprogramar o hacer alguna observacion previa, puedes comunicarte con nuestro equipo administrativo.
+
+                Gracias por confiar en el Club Boyaca.
 
                 Club Boyaca
                 """.formatted(cliente, fecha).trim()
@@ -52,12 +58,17 @@ class NotificacionEmailFormatter {
         return new EmailMessage(
                 "Prueba de plato programada para coordinacion",
                 """
-                Se programo una prueba de plato.
+                Se registro una prueba de plato en el sistema SGIE.
 
                 Cliente: %s
                 Fecha y hora: %s
 
-                Revisar disponibilidad y preparacion correspondiente.
+                Acciones requeridas:
+                - Verificar disponibilidad del equipo de cocina y servicio.
+                - Revisar la propuesta gastronomica asociada al evento.
+                - Preparar las observaciones necesarias para la atencion del cliente.
+
+                Este correo es informativo para coordinacion interna del Club Boyaca.
                 """.formatted(cliente, fecha).trim()
         );
     }
@@ -71,10 +82,16 @@ class NotificacionEmailFormatter {
                 """
                 Hola %s,
 
-                Tu evento fue confirmado exitosamente.
+                Recibe un cordial saludo del Club Boyaca.
+
+                Nos complace confirmarte que tu evento quedo registrado como confirmado en nuestro sistema. Nuestro equipo continuara con la coordinacion operativa correspondiente para la fecha programada.
 
                 Inicio: %s
                 Fin: %s
+
+                Si tienes alguna observacion adicional sobre menu, montaje o condiciones del servicio, puedes comunicarte con nuestro equipo administrativo para revisarla oportunamente.
+
+                Gracias por elegir el Club Boyaca para la realizacion de tu evento.
 
                 Club Boyaca
                 """.formatted(cliente, inicio, fin).trim()
@@ -87,12 +104,17 @@ class NotificacionEmailFormatter {
         return new EmailMessage(
                 "Evento confirmado para coordinacion",
                 """
-                Se confirmo un evento en el sistema.
+                Se confirmo un evento en el sistema SGIE.
 
                 Inicio: %s
                 Fin: %s
 
-                Revisar montaje, menu y coordinacion operativa.
+                Acciones requeridas:
+                - Revisar la reserva del salon y el horario confirmado.
+                - Validar menu, montaje y adicionales asociados al evento.
+                - Coordinar personal, cocina, servicio y requerimientos operativos.
+
+                Este correo es informativo para la preparacion interna del Club Boyaca.
                 """.formatted(inicio, fin).trim()
         );
     }
@@ -108,12 +130,18 @@ class NotificacionEmailFormatter {
                 """
                 Hola %s,
 
-                Te recordamos que el evento tiene saldo de anticipo pendiente.
+                Recibe un cordial saludo del Club Boyaca.
+
+                Te recordamos que tu evento registra un saldo pendiente de anticipo. Este pago nos permite continuar con la reserva y coordinacion de los servicios acordados.
 
                 Fecha del evento: %s
                 Valor total: %s
                 Total pagado: %s
                 Saldo pendiente: %s
+
+                Si ya realizaste el pago, por favor comparte el soporte con nuestro equipo administrativo para actualizar el estado del evento. Si tienes alguna inquietud, estamos atentos para ayudarte.
+
+                Gracias por tu atencion.
 
                 Club Boyaca
                 """.formatted(cliente, fechaEvento, valorTotal, totalPagado, saldoPendiente).trim()
