@@ -766,13 +766,15 @@ class EventoApplicationServiceTest {
                 new CotizacionRepositoryStub(cotizacionAceptada()),
                 eventPublisher
         );
+        LocalDateTime inicio = LocalDateTime.now().plusDays(10).withHour(18).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime fin = inicio.plusHours(4);
         EventoView evento = service.ejecutar(new CrearEventoCommand(
                 cliente.getId(), tipoEventoId, tipoComidaId, usuario.getId(),
-                LocalDateTime.of(2026, 5, 10, 18, 0), LocalDateTime.of(2026, 5, 10, 22, 0)
+                inicio, fin
         ));
         service.ejecutar(evento.id(), new CrearReservaSalonCommand(
                 usuario.getId(), salon.getId(), 50,
-                LocalDateTime.of(2026, 5, 10, 18, 0), LocalDateTime.of(2026, 5, 10, 22, 0)
+                inicio, fin
         ));
         eventoRepository.guardar(eventoRepository.buscarPorId(evento.id()).orElseThrow().marcarCotizacionAprobada());
         int historialAntesDeConfirmar = historialRepository.total();
@@ -809,14 +811,16 @@ class EventoApplicationServiceTest {
                 new ApplicationEventPublisherStub()
         );
 
+        LocalDateTime inicio = LocalDateTime.now().plusDays(10).withHour(18).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime finEvento = inicio.plusHours(5);
         EventoView evento = service.ejecutar(new CrearEventoCommand(
                 cliente.getId(), tipoEventoId, tipoComidaId, usuario.getId(),
-                LocalDateTime.of(2026, 5, 10, 18, 0), LocalDateTime.of(2026, 5, 10, 23, 0)
+                inicio, finEvento
         ));
 
         EventoView conReserva = service.ejecutar(evento.id(), new CrearReservaSalonCommand(
                 usuario.getId(), salon.getId(), 50,
-                LocalDateTime.of(2026, 5, 10, 18, 0), LocalDateTime.of(2026, 5, 10, 22, 0)
+                inicio, inicio.plusHours(4)
         ));
 
         UUID reservaRaizId = conReserva.reservas().get(0).reservaRaizId();
@@ -824,7 +828,7 @@ class EventoApplicationServiceTest {
         assertThrows(DomainException.class, () ->
                 service.ejecutar(reservaRaizId, new ModificarReservaSalonCommand(
                         usuario.getId(), UUID.randomUUID(), 60,
-                        LocalDateTime.of(2026, 5, 10, 19, 0), LocalDateTime.of(2026, 5, 10, 23, 0)
+                        inicio.plusHours(1), finEvento
                 ))
         );
     }
@@ -852,14 +856,16 @@ class EventoApplicationServiceTest {
                 new ApplicationEventPublisherStub()
         );
 
+        LocalDateTime inicio = LocalDateTime.now().plusDays(10).withHour(18).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime finEvento = inicio.plusHours(5);
         EventoView evento = service.ejecutar(new CrearEventoCommand(
                 cliente.getId(), tipoEventoId, tipoComidaId, usuario.getId(),
-                LocalDateTime.of(2026, 5, 10, 18, 0), LocalDateTime.of(2026, 5, 10, 23, 0)
+                inicio, finEvento
         ));
 
         EventoView conReserva = service.ejecutar(evento.id(), new CrearReservaSalonCommand(
                 usuario.getId(), salon.getId(), 50,
-                LocalDateTime.of(2026, 5, 10, 18, 0), LocalDateTime.of(2026, 5, 10, 22, 0)
+                inicio, inicio.plusHours(4)
         ));
 
         UUID reservaRaizId = conReserva.reservas().get(0).reservaRaizId();
@@ -867,7 +873,41 @@ class EventoApplicationServiceTest {
         assertThrows(DomainException.class, () ->
                 service.ejecutar(reservaRaizId, new ModificarReservaSalonCommand(
                         UUID.randomUUID(), salon.getId(), 60,
-                        LocalDateTime.of(2026, 5, 10, 19, 0), LocalDateTime.of(2026, 5, 10, 23, 0)
+                        inicio.plusHours(1), finEvento
+                ))
+        );
+    }
+
+    @Test
+    void noDeberiaCrearReservaParaEventoFinalizado() {
+        Cliente cliente = Cliente.nuevo("123", "Test", "3001111111", "test@correo.com", TipoCliente.SOCIO, null);
+        Usuario usuario = Usuario.nuevo("Admin", "$2a$hash", RolUsuario.ADMINISTRADOR);
+        Salon salon = Salon.nuevo("Salon A", 100, "Test");
+        UUID tipoEventoId = UUID.randomUUID();
+        UUID tipoComidaId = UUID.randomUUID();
+
+        EventoApplicationService service = new EventoApplicationService(
+                new ClienteRepositoryStub(List.of(cliente)),
+                new TipoEventoRepositoryStub(Set.of(tipoEventoId)),
+                new TipoComidaRepositoryStub(Set.of(tipoComidaId)),
+                new UsuarioRepositoryStub(List.of(usuario)),
+                new SalonRepositoryStub(List.of(salon)),
+                new EventoRepositoryStub(),
+                new ReservaSalonRepositoryStub(),
+                new HistorialRepositoryStub(),
+                new CotizacionRepositoryStub(),
+                new ApplicationEventPublisherStub()
+        );
+
+        LocalDateTime inicio = LocalDateTime.now().minusDays(2).withHour(18).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime fin = inicio.plusHours(4);
+        EventoView evento = service.ejecutar(new CrearEventoCommand(
+                cliente.getId(), tipoEventoId, tipoComidaId, usuario.getId(), inicio, fin
+        ));
+
+        assertThrows(DomainException.class, () ->
+                service.ejecutar(evento.id(), new CrearReservaSalonCommand(
+                        usuario.getId(), salon.getId(), 50, inicio, fin
                 ))
         );
     }

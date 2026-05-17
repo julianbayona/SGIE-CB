@@ -3,10 +3,13 @@ package com.ejemplo.monolitomodular.eventos.dominio.modelo;
 import com.ejemplo.monolitomodular.shared.dominio.excepcion.DomainException;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Objects;
 import java.util.UUID;
 
 public class Evento {
+
+    private static final ZoneId ZONA_HORARIA_CLUB = ZoneId.of("America/Bogota");
 
     private final UUID id;
     private final UUID clienteId;
@@ -141,6 +144,9 @@ public class Evento {
     public void validarOperable() {
         if (estado == EstadoEvento.CANCELADO) {
             throw new DomainException("No se puede operar un evento cancelado");
+        }
+        if (fechaHoraFin.isBefore(LocalDateTime.now(ZONA_HORARIA_CLUB))) {
+            throw new DomainException("No se puede operar un evento que ya finalizo");
         }
     }
 
