@@ -47,6 +47,9 @@ public class PruebaPlatoApplicationService implements ProgramarPruebaPlatoUseCas
         Evento evento = eventoRepository.buscarPorId(command.eventoId())
                 .orElseThrow(() -> new DomainException("Evento no encontrado"));
         evento.validarOperable();
+        if (!command.fechaRealizacion().isBefore(evento.getFechaHoraInicio())) {
+            throw new DomainException("La prueba de plato debe programarse antes del inicio del evento");
+        }
         Cliente cliente = clienteRepository.buscarPorId(evento.getClienteId())
                 .orElseThrow(() -> new DomainException("Cliente no encontrado"));
 

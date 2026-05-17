@@ -82,6 +82,26 @@ class PruebaPlatoApplicationServiceTest {
         )));
     }
 
+    @Test
+    void noDeberiaProgramarPruebaPlatoEnLaFechaDelEventoONiDespues() {
+        Usuario usuario = Usuario.nuevo("Admin", "$2a$hash", RolUsuario.ADMINISTRADOR);
+        Cliente cliente = Cliente.nuevo("123", "Cliente Uno", "573001112233", "cliente@test.com", TipoCliente.NO_SOCIO, usuario.getId());
+        Evento evento = evento(cliente.getId(), usuario.getId());
+        PruebaPlatoApplicationService service = new PruebaPlatoApplicationService(
+                new PruebaPlatoRepositoryStub(),
+                new EventoRepositoryStub(evento),
+                new ClienteRepositoryStub(cliente),
+                new UsuarioRepositoryStub(usuario),
+                new ApplicationEventPublisherStub()
+        );
+
+        assertThrows(DomainException.class, () -> service.ejecutar(new ProgramarPruebaPlatoCommand(
+                evento.getId(),
+                usuario.getId(),
+                evento.getFechaHoraInicio()
+        )));
+    }
+
     private static Evento evento(UUID clienteId, UUID usuarioId) {
         return Evento.reconstruir(
                 UUID.randomUUID(),
