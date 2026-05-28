@@ -1,6 +1,5 @@
 package com.ejemplo.monolitomodular.cotizaciones.aplicacion.servicio;
 
-import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.TipoComidaRepository;
 import com.ejemplo.monolitomodular.catalogos.dominio.puerto.salida.TipoEventoRepository;
 import com.ejemplo.monolitomodular.clientes.dominio.modelo.Cliente;
 import com.ejemplo.monolitomodular.clientes.dominio.puerto.salida.ClienteRepository;
@@ -42,8 +41,6 @@ import java.util.Locale;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 @Service
 public class CotizacionOperacionApplicationService implements
@@ -57,9 +54,9 @@ public class CotizacionOperacionApplicationService implements
     private final ClienteRepository clienteRepository;
     private final SalonRepository salonRepository;
     private final TipoEventoRepository tipoEventoRepository;
-    private final TipoComidaRepository tipoComidaRepository;
     private final CrearNotificacionUseCase crearNotificacionUseCase;
     private final EnviarCotizacionUseCase enviarCotizacionUseCase;
+    private final CotizacionExcelDocumentGenerator excelDocumentGenerator;
     private final ObjectMapper objectMapper;
 
     public CotizacionOperacionApplicationService(
@@ -69,9 +66,9 @@ public class CotizacionOperacionApplicationService implements
             ClienteRepository clienteRepository,
             SalonRepository salonRepository,
             TipoEventoRepository tipoEventoRepository,
-            TipoComidaRepository tipoComidaRepository,
             CrearNotificacionUseCase crearNotificacionUseCase,
             EnviarCotizacionUseCase enviarCotizacionUseCase,
+            CotizacionExcelDocumentGenerator excelDocumentGenerator,
             ObjectMapper objectMapper
     ) {
         this.cotizacionRepository = cotizacionRepository;
@@ -80,9 +77,9 @@ public class CotizacionOperacionApplicationService implements
         this.clienteRepository = clienteRepository;
         this.salonRepository = salonRepository;
         this.tipoEventoRepository = tipoEventoRepository;
-        this.tipoComidaRepository = tipoComidaRepository;
         this.crearNotificacionUseCase = crearNotificacionUseCase;
         this.enviarCotizacionUseCase = enviarCotizacionUseCase;
+        this.excelDocumentGenerator = excelDocumentGenerator;
         this.objectMapper = objectMapper;
     }
 
@@ -101,7 +98,7 @@ public class CotizacionOperacionApplicationService implements
         return new DocumentoCotizacionView(
                 "cotizacion-" + context.cotizacion().getId() + ".xlsx",
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                generarExcel(context.cotizacion(), context.evento(), context.reserva(), context.cliente(), context.salon())
+                excelDocumentGenerator.generar(context.cotizacion(), context.evento(), context.reserva(), context.cliente(), context.salon())
         );
     }
 
@@ -182,23 +179,6 @@ public class CotizacionOperacionApplicationService implements
         }
     }
 
-    private byte[] generarExcel(Cotizacion cotizacion, Evento evento, ReservaSalon reserva, Cliente cliente, Salon salon) {
-        try (ByteArrayOutputStream output = new ByteArrayOutputStream(); ZipOutputStream zip = new ZipOutputStream(output)) {
-            write(zip, "[Content_Types].xml", contentTypes());
-            write(zip, "_rels/.rels", rootRels());
-            write(zip, "docProps/core.xml", coreProps(cotizacion));
-            write(zip, "docProps/app.xml", appProps());
-            write(zip, "xl/workbook.xml", workbook());
-            write(zip, "xl/_rels/workbook.xml.rels", workbookRels());
-            write(zip, "xl/styles.xml", styles());
-            write(zip, "xl/worksheets/sheet1.xml", worksheet(cotizacion, evento, reserva, cliente, salon));
-            zip.finish();
-            return output.toByteArray();
-        } catch (IOException ex) {
-            throw new DomainException("No se pudo generar el documento de cotizacion");
-        }
-    }
-
     private byte[] generarPdf(Cotizacion cotizacion, Evento evento, ReservaSalon reserva, Cliente cliente, Salon salon) {
         try (PDDocument document = new PDDocument(); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             PdfWriter pdf = new PdfWriter(document);
@@ -253,143 +233,6 @@ public class CotizacionOperacionApplicationService implements
         }
     }
 
-    private String worksheet(Cotizacion cotizacion, Evento evento, ReservaSalon reserva, Cliente cliente, Salon salon) {
-        StringBuilder rows = new StringBuilder();
-        String tipoEvento = nombreTipoEvento(evento);
-        String tipoComida = tipoComidaRepository.buscarPorId(evento.getTipoComidaId())
-                .map(tipo -> tipo.getNombre())
-                .orElse(evento.getTipoComidaId().toString());
-
-        addRow(rows, 1, cell("A1", "CLUB BOYACA", 1));
-        addRow(rows, 2, cell("A2", "Cotizacion formal de evento", 2));
-        addRow(rows, 4,
-                cell("A4", "Cotizacion No.", 4),
-                cell("B4", cotizacion.getId().toString(), 5),
-                cell("E4", "Estado", 4),
-                cell("F4", cotizacion.getEstado().name(), 5));
-        addRow(rows, 5,
-                cell("A5", "Fecha de emision", 4),
-                cell("B5", formatoFecha(LocalDateTime.now()), 5),
-                cell("E5", "Vigente", 4),
-                cell("F5", cotizacion.isVigente() ? "Si" : "No", 5));
-
-        addSection(rows, 7, "Datos del cliente");
-        addRow(rows, 8, cell("A8", "Cliente", 4), cell("B8", cliente.getNombreCompleto(), 5),
-                cell("E8", "Tipo cliente", 4), cell("F8", cliente.getTipoCliente().name(), 5));
-        addRow(rows, 9, cell("A9", "Cedula", 4), cell("B9", cliente.getCedula(), 5),
-                cell("E9", "Telefono", 4), cell("F9", cliente.getTelefono(), 5));
-        addRow(rows, 10, cell("A10", "Correo", 4), cell("B10", cliente.getCorreo(), 5));
-
-        addSection(rows, 12, "Datos del evento y reserva");
-        addRow(rows, 13, cell("A13", "Tipo de evento", 4), cell("B13", tipoEvento, 5),
-                cell("E13", "Tipo de comida", 4), cell("F13", tipoComida, 5));
-        addRow(rows, 14, cell("A14", "Salon", 4), cell("B14", salon.getNombre(), 5),
-                cell("E14", "Capacidad salon", 4), numberCell("F14", salon.getCapacidad(), 6));
-        addRow(rows, 15, cell("A15", "Invitados", 4), numberCell("B15", reserva.getNumInvitados(), 6),
-                cell("E15", "Version reserva", 4), numberCell("F15", reserva.getVersion(), 6));
-        addRow(rows, 16, cell("A16", "Inicio", 4), cell("B16", formatoFecha(evento.getFechaHoraInicio()), 5),
-                cell("E16", "Fin", 4), cell("F16", formatoFecha(evento.getFechaHoraFin()), 5));
-
-        addSection(rows, 18, "Resumen financiero");
-        addRow(rows, 19,
-                cell("A19", "Subtotal calculado", 4),
-                moneyCell("B19", cotizacion.getValorSubtotal(), 7),
-                cell("D19", "Descuento", 4),
-                moneyCell("E19", cotizacion.getDescuento(), 7),
-                cell("G19", "Total cotizacion", 4),
-                moneyCell("H19", cotizacion.getValorTotal(), 7));
-        addRow(rows, 20,
-                cell("A20", "Total items", 4),
-                numberCell("B20", cotizacion.getItems().size(), 6),
-                cell("D20", "Valores", 4),
-                cell("E20", "Pesos colombianos (COP)", 5),
-                cell("G20", "Emitida", 4),
-                cell("H20", formatoFecha(LocalDateTime.now()), 5));
-
-        addSection(rows, 22, "Detalle economico");
-        addRow(rows, 23,
-                cell("A23", "No.", 8),
-                cell("B23", "Origen", 8),
-                cell("C23", "Concepto", 8),
-                cell("D23", "Cobro", 8),
-                cell("E23", "Descripcion", 8),
-                cell("F23", "Precio base", 8),
-                cell("G23", "Precio aplicado", 8),
-                cell("H23", "Cantidad", 8),
-                cell("I23", "Subtotal", 8));
-
-        int row = 24;
-        int index = 1;
-        for (CotizacionItem item : cotizacion.getItems()) {
-            BigDecimal precioAplicado = item.getPrecioOverride() == null ? item.getPrecioBase() : item.getPrecioOverride();
-            addRow(rows, row,
-                    numberCell("A" + row, index, 6),
-                    cell("B" + row, origenItem(item), 5),
-                    cell("C" + row, item.getTipoConcepto(), 5),
-                    cell("D" + row, modalidadCobro(item), 5),
-                    cell("E" + row, item.getDescripcion(), 5),
-                    moneyCell("F" + row, item.getPrecioBase(), 7),
-                    moneyCell("G" + row, precioAplicado, 7),
-                    numberCell("H" + row, item.getCantidad(), 6),
-                    formulaCell("I" + row, "G" + row + "*H" + row, 7));
-            row++;
-            index++;
-        }
-
-        int subtotalRow = row + 1;
-        int descuentoRow = row + 2;
-        int totalRow = row + 3;
-        int noteRow = row + 5;
-        int firstItemRow = 24;
-        int lastItemRow = Math.max(firstItemRow, row - 1);
-
-        addRow(rows, subtotalRow, cell("H" + subtotalRow, "Subtotal", 9),
-                formulaCell("I" + subtotalRow, "SUM(I" + firstItemRow + ":I" + lastItemRow + ")", 10));
-        addRow(rows, descuentoRow, cell("H" + descuentoRow, "Descuento", 9),
-                moneyCell("I" + descuentoRow, cotizacion.getDescuento(), 10));
-        addRow(rows, totalRow, cell("H" + totalRow, "Total", 11),
-                formulaCell("I" + totalRow, "I" + subtotalRow + "-I" + descuentoRow, 12));
-
-        addSection(rows, noteRow, "Observaciones");
-        addRow(rows, noteRow + 1, cell("A" + (noteRow + 1), cotizacion.getObservaciones() == null
-                ? "Sin observaciones registradas."
-                : cotizacion.getObservaciones(), 13));
-        addRow(rows, noteRow + 3, cell("A" + (noteRow + 3),
-                "Documento generado automaticamente por SGIE Club Boyaca. Valores expresados en pesos colombianos.", 14));
-
-        return """
-                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-                <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
-                  <sheetViews><sheetView showGridLines="0" workbookViewId="0"><pane ySplit="23" topLeftCell="A24" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>
-                  <cols>
-                    <col min="1" max="1" width="8" customWidth="1"/>
-                    <col min="2" max="2" width="14" customWidth="1"/>
-                    <col min="3" max="3" width="20" customWidth="1"/>
-                    <col min="4" max="4" width="16" customWidth="1"/>
-                    <col min="5" max="5" width="42" customWidth="1"/>
-                    <col min="6" max="6" width="16" customWidth="1"/>
-                    <col min="7" max="7" width="18" customWidth="1"/>
-                    <col min="8" max="8" width="13" customWidth="1"/>
-                    <col min="9" max="9" width="18" customWidth="1"/>
-                  </cols>
-                  <sheetData>
-                %s
-                  </sheetData>
-                  <autoFilter ref="A23:I%d"/>
-                  <mergeCells count="7">
-                    <mergeCell ref="A1:I1"/>
-                    <mergeCell ref="A2:I2"/>
-                    <mergeCell ref="A7:I7"/>
-                    <mergeCell ref="A12:I12"/>
-                    <mergeCell ref="A18:I18"/>
-                    <mergeCell ref="A22:I22"/>
-                    <mergeCell ref="A%d:I%d"/>
-                  </mergeCells>
-                  <pageMargins left="0.5" right="0.5" top="0.7" bottom="0.7" header="0.3" footer="0.3"/>
-                </worksheet>
-                """.formatted(rows, lastItemRow, noteRow, noteRow);
-    }
-
     private String nombreTipoEvento(Evento evento) {
         return tipoEventoRepository.buscarPorId(evento.getTipoEventoId())
                 .map(tipo -> tipo.getNombre())
@@ -407,207 +250,14 @@ public class CotizacionOperacionApplicationService implements
         return "Montaje";
     }
 
-    private String modalidadCobro(CotizacionItem item) {
-        return item.getCantidad() == 1 ? "Servicio" : "Unidad";
-    }
-
     private String money(BigDecimal value) {
         NumberFormat format = NumberFormat.getCurrencyInstance(new Locale("es", "CO"));
         format.setMaximumFractionDigits(0);
         return format.format(value == null ? BigDecimal.ZERO : value);
     }
 
-    private void addSection(StringBuilder rows, int row, String title) {
-        addRow(rows, row, cell("A" + row, title, 3));
-    }
-
-    private void addRow(StringBuilder rows, int rowNumber, String... cells) {
-        rows.append("    <row r=\"").append(rowNumber).append("\">");
-        for (String cell : cells) {
-            rows.append(cell);
-        }
-        rows.append("</row>\n");
-    }
-
-    private String cell(String ref, String value, int style) {
-        return "<c r=\"" + ref + "\" s=\"" + style + "\" t=\"inlineStr\"><is><t>" + xml(spreadsheetText(value)) + "</t></is></c>";
-    }
-
-    private String numberCell(String ref, Number value, int style) {
-        return "<c r=\"" + ref + "\" s=\"" + style + "\"><v>" + value + "</v></c>";
-    }
-
-    private String moneyCell(String ref, BigDecimal value, int style) {
-        return "<c r=\"" + ref + "\" s=\"" + style + "\"><v>" + excelNumber(value) + "</v></c>";
-    }
-
-    private String formulaCell(String ref, String formula, int style) {
-        return "<c r=\"" + ref + "\" s=\"" + style + "\"><f>" + xml(formula) + "</f></c>";
-    }
-
-    private String excelNumber(BigDecimal value) {
-        return (value == null ? BigDecimal.ZERO : value)
-                .setScale(2, RoundingMode.HALF_UP)
-                .toPlainString();
-    }
-
     private String formatoFecha(LocalDateTime fecha) {
         return fecha == null ? "" : fecha.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
-    }
-
-    private void write(ZipOutputStream zip, String path, String content) throws IOException {
-        zip.putNextEntry(new ZipEntry(path));
-        zip.write(content.stripLeading().getBytes(java.nio.charset.StandardCharsets.UTF_8));
-        zip.closeEntry();
-    }
-
-    private String xml(String value) {
-        if (value == null) {
-            return "";
-        }
-        return value
-                .replaceAll("[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F]", "")
-                .replace("&", "&amp;")
-                .replace("<", "&lt;")
-                .replace(">", "&gt;")
-                .replace("\"", "&quot;")
-                .replace("'", "&apos;");
-    }
-
-    private String spreadsheetText(String value) {
-        if (value == null || value.isBlank()) {
-            return value;
-        }
-        String trimmed = value.stripLeading();
-        if (trimmed.startsWith("=") || trimmed.startsWith("+") || trimmed.startsWith("-") || trimmed.startsWith("@")) {
-            return "'" + value;
-        }
-        return value;
-    }
-
-    private String contentTypes() {
-        return """
-                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-                <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
-                  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
-                  <Default Extension="xml" ContentType="application/xml"/>
-                  <Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
-                  <Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>
-                  <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
-                  <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
-                  <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
-                </Types>
-                """;
-    }
-
-    private String rootRels() {
-        return """
-                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-                <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-                  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
-                  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>
-                  <Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>
-                </Relationships>
-                """;
-    }
-
-    private String workbookRels() {
-        return """
-                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-                <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-                  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
-                  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
-                </Relationships>
-                """;
-    }
-
-    private String workbook() {
-        return """
-                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-                <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
-                  <sheets>
-                    <sheet name="Cotizacion" sheetId="1" r:id="rId1"/>
-                  </sheets>
-                  <calcPr calcMode="auto" fullCalcOnLoad="1"/>
-                </workbook>
-                """;
-    }
-
-    private String coreProps(Cotizacion cotizacion) {
-        String now = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
-        return """
-                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-                <cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-                  <dc:title>Cotizacion %s</dc:title>
-                  <dc:creator>SGIE Club Boyaca</dc:creator>
-                  <cp:lastModifiedBy>SGIE Club Boyaca</cp:lastModifiedBy>
-                  <dcterms:created xsi:type="dcterms:W3CDTF">%s</dcterms:created>
-                  <dcterms:modified xsi:type="dcterms:W3CDTF">%s</dcterms:modified>
-                </cp:coreProperties>
-                """.formatted(xml(cotizacion.getId().toString()), now, now);
-    }
-
-    private String appProps() {
-        return """
-                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-                <Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">
-                  <Application>SGIE Club Boyaca</Application>
-                  <DocSecurity>0</DocSecurity>
-                  <ScaleCrop>false</ScaleCrop>
-                  <HeadingPairs><vt:vector size="2" baseType="variant"><vt:variant><vt:lpstr>Worksheets</vt:lpstr></vt:variant><vt:variant><vt:i4>1</vt:i4></vt:variant></vt:vector></HeadingPairs>
-                  <TitlesOfParts><vt:vector size="1" baseType="lpstr"><vt:lpstr>Cotizacion</vt:lpstr></vt:vector></TitlesOfParts>
-                </Properties>
-                """;
-    }
-
-    private String styles() {
-        return """
-                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-                <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-                  <numFmts count="1"><numFmt numFmtId="164" formatCode="$ #,##0.00"/></numFmts>
-                  <fonts count="6">
-                    <font><sz val="11"/><color rgb="FF1F2937"/><name val="Aptos"/></font>
-                    <font><b/><sz val="20"/><color rgb="FFFFFFFF"/><name val="Aptos Display"/></font>
-                    <font><b/><sz val="12"/><color rgb="FFFFFFFF"/><name val="Aptos"/></font>
-                    <font><b/><sz val="10"/><color rgb="FF3F3524"/><name val="Aptos"/></font>
-                    <font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Aptos"/></font>
-                    <font><i/><sz val="10"/><color rgb="FF6B7280"/><name val="Aptos"/></font>
-                  </fonts>
-                  <fills count="7">
-                    <fill><patternFill patternType="none"/></fill>
-                    <fill><patternFill patternType="gray125"/></fill>
-                    <fill><patternFill patternType="solid"><fgColor rgb="FF1F1A14"/><bgColor indexed="64"/></patternFill></fill>
-                    <fill><patternFill patternType="solid"><fgColor rgb="FFA8841C"/><bgColor indexed="64"/></patternFill></fill>
-                    <fill><patternFill patternType="solid"><fgColor rgb="FFF5EFE1"/><bgColor indexed="64"/></patternFill></fill>
-                    <fill><patternFill patternType="solid"><fgColor rgb="FFE8D38D"/><bgColor indexed="64"/></patternFill></fill>
-                    <fill><patternFill patternType="solid"><fgColor rgb="FFF9FAFB"/><bgColor indexed="64"/></patternFill></fill>
-                  </fills>
-                  <borders count="3">
-                    <border><left/><right/><top/><bottom/><diagonal/></border>
-                    <border><left style="thin"><color rgb="FFE5E7EB"/></left><right style="thin"><color rgb="FFE5E7EB"/></right><top style="thin"><color rgb="FFE5E7EB"/></top><bottom style="thin"><color rgb="FFE5E7EB"/></bottom><diagonal/></border>
-                    <border><top style="thin"><color rgb="FFA8841C"/></top><bottom style="medium"><color rgb="FFA8841C"/></bottom><diagonal/></border>
-                  </borders>
-                  <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
-                  <cellXfs count="15">
-                    <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
-                    <xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"><alignment horizontal="center"/></xf>
-                    <xf numFmtId="0" fontId="2" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"><alignment horizontal="center"/></xf>
-                    <xf numFmtId="0" fontId="2" fillId="3" borderId="0" xfId="0" applyFont="1" applyFill="1"><alignment horizontal="left"/></xf>
-                    <xf numFmtId="0" fontId="3" fillId="4" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/>
-                    <xf numFmtId="0" fontId="0" fillId="6" borderId="1" xfId="0" applyFill="1" applyBorder="1"><alignment wrapText="1"/></xf>
-                    <xf numFmtId="0" fontId="0" fillId="6" borderId="1" xfId="0" applyFill="1" applyBorder="1"><alignment horizontal="center"/></xf>
-                    <xf numFmtId="164" fontId="0" fillId="6" borderId="1" xfId="0" applyNumberFormat="1" applyFill="1" applyBorder="1"/>
-                    <xf numFmtId="0" fontId="4" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"><alignment horizontal="center"/></xf>
-                    <xf numFmtId="0" fontId="3" fillId="5" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/>
-                    <xf numFmtId="164" fontId="3" fillId="5" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"/>
-                    <xf numFmtId="0" fontId="4" fillId="3" borderId="2" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/>
-                    <xf numFmtId="164" fontId="4" fillId="3" borderId="2" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"/>
-                    <xf numFmtId="0" fontId="0" fillId="6" borderId="1" xfId="0" applyFill="1" applyBorder="1"><alignment wrapText="1" vertical="top"/></xf>
-                    <xf numFmtId="0" fontId="5" fillId="0" borderId="0" xfId="0" applyFont="1"/>
-                  </cellXfs>
-                  <cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
-                </styleSheet>
-                """;
     }
 
     private record DocumentoContext(
