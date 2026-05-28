@@ -22,14 +22,26 @@ public class CotizacionItemJpaEntity {
     @Column(name = "tipo_concepto", nullable = false, length = 60)
     private String tipoConcepto;
 
+    @Column(name = "concepto_codigo", length = 60)
+    private String conceptoCodigo;
+
+    @Column(name = "origen_tipo", length = 40)
+    private String origenTipo;
+
     @Column(name = "origen_id", nullable = false)
     private UUID origenId;
 
     @Column(name = "descripcion", nullable = false, length = 500)
     private String descripcion;
 
+    @Column(name = "descripcion_snapshot", length = 500)
+    private String descripcionSnapshot;
+
     @Column(name = "precio_base", nullable = false)
     private BigDecimal precioBase;
+
+    @Column(name = "precio_base_snapshot")
+    private BigDecimal precioBaseSnapshot;
 
     @Column(name = "precio_override")
     private BigDecimal precioOverride;
@@ -47,9 +59,13 @@ public class CotizacionItemJpaEntity {
             UUID id,
             UUID cotizacionId,
             String tipoConcepto,
+            String conceptoCodigo,
+            String origenTipo,
             UUID origenId,
             String descripcion,
+            String descripcionSnapshot,
             BigDecimal precioBase,
+            BigDecimal precioBaseSnapshot,
             BigDecimal precioOverride,
             int cantidad,
             BigDecimal subtotal
@@ -57,9 +73,13 @@ public class CotizacionItemJpaEntity {
         this.id = id;
         this.cotizacionId = cotizacionId;
         this.tipoConcepto = tipoConcepto;
+        this.conceptoCodigo = conceptoCodigo;
+        this.origenTipo = origenTipo;
         this.origenId = origenId;
         this.descripcion = descripcion;
+        this.descripcionSnapshot = descripcionSnapshot;
         this.precioBase = precioBase;
+        this.precioBaseSnapshot = precioBaseSnapshot;
         this.precioOverride = precioOverride;
         this.cantidad = cantidad;
         this.subtotal = subtotal;
@@ -77,6 +97,14 @@ public class CotizacionItemJpaEntity {
         return tipoConcepto;
     }
 
+    public String getConceptoCodigo() {
+        return conceptoCodigo;
+    }
+
+    public String getOrigenTipo() {
+        return origenTipo;
+    }
+
     public UUID getOrigenId() {
         return origenId;
     }
@@ -85,8 +113,16 @@ public class CotizacionItemJpaEntity {
         return descripcion;
     }
 
+    public String getDescripcionSnapshot() {
+        return descripcionSnapshot;
+    }
+
     public BigDecimal getPrecioBase() {
         return precioBase;
+    }
+
+    public BigDecimal getPrecioBaseSnapshot() {
+        return precioBaseSnapshot;
     }
 
     public BigDecimal getPrecioOverride() {
