@@ -33,12 +33,21 @@ public class CotizacionEmailAttachmentProvider implements EmailAttachmentProvide
             return List.of();
         }
         UUID cotizacionId = cotizacionId(payloadJson);
-        DocumentoCotizacionView documento = descargarDocumentoCotizacionUseCase.getObject().descargar(cotizacionId);
-        return List.of(new EnviarEmailCommand.Adjunto(
-                documento.nombreArchivo(),
-                documento.contentType(),
-                documento.contenido()
-        ));
+        DescargarDocumentoCotizacionUseCase descargarDocumento = descargarDocumentoCotizacionUseCase.getObject();
+        DocumentoCotizacionView excel = descargarDocumento.descargar(cotizacionId);
+        DocumentoCotizacionView pdf = descargarDocumento.descargarPdf(cotizacionId);
+        return List.of(
+                new EnviarEmailCommand.Adjunto(
+                        excel.nombreArchivo(),
+                        excel.contentType(),
+                        excel.contenido()
+                ),
+                new EnviarEmailCommand.Adjunto(
+                        pdf.nombreArchivo(),
+                        pdf.contentType(),
+                        pdf.contenido()
+                )
+        );
     }
 
     private UUID cotizacionId(String payloadJson) {

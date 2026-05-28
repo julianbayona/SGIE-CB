@@ -159,7 +159,7 @@ class NotificacionEmailFormatter {
 
                 Recibe un cordial saludo del Club Boyaca.
 
-                Adjuntamos la cotizacion formal de tu evento en formato Excel para que puedas revisar con claridad el detalle de servicios, cantidades y valores.
+                Adjuntamos la cotizacion formal de tu evento en PDF y Excel para que puedas revisar con claridad el resumen, el detalle de servicios, cantidades y valores.
 
                 Fecha del evento: %s
                 Valor total: %s
