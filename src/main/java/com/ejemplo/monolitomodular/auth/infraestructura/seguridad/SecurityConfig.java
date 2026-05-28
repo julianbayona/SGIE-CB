@@ -3,6 +3,7 @@ package com.ejemplo.monolitomodular.auth.infraestructura.seguridad;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
@@ -28,6 +29,7 @@ import java.util.Map;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
+@EnableConfigurationProperties({JwtProperties.class, RateLimitProperties.class})
 public class SecurityConfig {
 
     private final List<String> allowedOrigins;
@@ -42,6 +44,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
+            RateLimitingFilter rateLimitingFilter,
             JwtAuthenticationFilter jwtAuthenticationFilter,
             ObjectMapper objectMapper
     ) throws Exception {
@@ -63,7 +66,8 @@ public class SecurityConfig {
                         .accessDeniedHandler((request, response, exception) ->
                                 escribirError(response, objectMapper, HttpServletResponse.SC_FORBIDDEN, "Acceso denegado"))
                 )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(jwtAuthenticationFilter, RateLimitingFilter.class)
                 .build();
     }
 

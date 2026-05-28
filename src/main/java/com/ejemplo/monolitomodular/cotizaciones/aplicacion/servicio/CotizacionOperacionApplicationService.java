@@ -25,12 +25,9 @@ import com.ejemplo.monolitomodular.notificaciones.dominio.modelo.TipoNotificacio
 import com.ejemplo.monolitomodular.salones.dominio.modelo.Salon;
 import com.ejemplo.monolitomodular.salones.dominio.puerto.salida.SalonRepository;
 import com.ejemplo.monolitomodular.shared.dominio.excepcion.DomainException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.pdmodel.PDPageContentStream;
-import org.apache.pdfbox.pdmodel.common.PDRectangle;
-import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -180,7 +177,7 @@ public class CotizacionOperacionApplicationService implements
                     "fechaEvento", evento.getFechaHoraInicio().toString(),
                     "valorTotal", cotizacion.valorTotal()
             ));
-        } catch (Exception ex) {
+        } catch (JsonProcessingException ex) {
             return "{}";
         }
     }
@@ -433,7 +430,7 @@ public class CotizacionOperacionApplicationService implements
     }
 
     private String cell(String ref, String value, int style) {
-        return "<c r=\"" + ref + "\" s=\"" + style + "\" t=\"inlineStr\"><is><t>" + xml(value) + "</t></is></c>";
+        return "<c r=\"" + ref + "\" s=\"" + style + "\" t=\"inlineStr\"><is><t>" + xml(spreadsheetText(value)) + "</t></is></c>";
     }
 
     private String numberCell(String ref, Number value, int style) {
@@ -469,11 +466,23 @@ public class CotizacionOperacionApplicationService implements
             return "";
         }
         return value
+                .replaceAll("[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F]", "")
                 .replace("&", "&amp;")
                 .replace("<", "&lt;")
                 .replace(">", "&gt;")
                 .replace("\"", "&quot;")
                 .replace("'", "&apos;");
+    }
+
+    private String spreadsheetText(String value) {
+        if (value == null || value.isBlank()) {
+            return value;
+        }
+        String trimmed = value.stripLeading();
+        if (trimmed.startsWith("=") || trimmed.startsWith("+") || trimmed.startsWith("-") || trimmed.startsWith("@")) {
+            return "'" + value;
+        }
+        return value;
     }
 
     private String contentTypes() {
@@ -608,140 +617,6 @@ public class CotizacionOperacionApplicationService implements
             Cliente cliente,
             Salon salon
     ) {
-    }
-
-    private static class PdfWriter implements AutoCloseable {
-
-        private static final float MARGIN = 48;
-        private final PDDocument document;
-        private PDPage page;
-        private PDPageContentStream content;
-        private float y;
-
-        private PdfWriter(PDDocument document) throws IOException {
-            this.document = document;
-            newPage();
-        }
-
-        private void title(String text) throws IOException {
-            write(text, PDType1Font.HELVETICA_BOLD, 18, MARGIN, y);
-            y -= 24;
-        }
-
-        private void subtitle(String text) throws IOException {
-            write(text, PDType1Font.HELVETICA_BOLD, 13, MARGIN, y);
-            y -= 22;
-        }
-
-        private void section(String text) throws IOException {
-            ensureSpace(32);
-            write(text, PDType1Font.HELVETICA_BOLD, 11, MARGIN, y);
-            y -= 16;
-        }
-
-        private void text(String text) throws IOException {
-            ensureSpace(16);
-            write(text, PDType1Font.HELVETICA, 9, MARGIN, y);
-            y -= 14;
-        }
-
-        private void emphasis(String text) throws IOException {
-            ensureSpace(18);
-            write(text, PDType1Font.HELVETICA_BOLD, 10, MARGIN, y);
-            y -= 16;
-        }
-
-        private void paragraph(String text) throws IOException {
-            String remaining = text == null ? "" : text;
-            while (remaining.length() > 95) {
-                text(remaining.substring(0, 95));
-                remaining = remaining.substring(95);
-            }
-            text(remaining);
-        }
-
-        private void tableHeader() throws IOException {
-            ensureSpace(22);
-            write("Origen", PDType1Font.HELVETICA_BOLD, 8, MARGIN, y);
-            write("Descripcion", PDType1Font.HELVETICA_BOLD, 8, MARGIN + 70, y);
-            write("Cant.", PDType1Font.HELVETICA_BOLD, 8, MARGIN + 330, y);
-            write("Valor unit.", PDType1Font.HELVETICA_BOLD, 8, MARGIN + 380, y);
-            write("Subtotal", PDType1Font.HELVETICA_BOLD, 8, MARGIN + 470, y);
-            y -= 14;
-        }
-
-        private void tableRow(String origen, String descripcion, String cantidad, String valorUnitario, String subtotal) throws IOException {
-            ensureSpace(18);
-            write(truncate(origen, 12), PDType1Font.HELVETICA, 8, MARGIN, y);
-            write(truncate(descripcion, 48), PDType1Font.HELVETICA, 8, MARGIN + 70, y);
-            write(cantidad, PDType1Font.HELVETICA, 8, MARGIN + 330, y);
-            write(valorUnitario, PDType1Font.HELVETICA, 8, MARGIN + 380, y);
-            write(subtotal, PDType1Font.HELVETICA, 8, MARGIN + 470, y);
-            y -= 13;
-        }
-
-        private void footer() throws IOException {
-            ensureSpace(24);
-            y -= 8;
-            write("Documento generado automaticamente por SGIE Club Boyaca. Valores expresados en pesos colombianos.",
-                    PDType1Font.HELVETICA_OBLIQUE, 8, MARGIN, y);
-        }
-
-        private void space(float amount) throws IOException {
-            ensureSpace(amount);
-            y -= amount;
-        }
-
-        private void ensureSpace(float needed) throws IOException {
-            if (y - needed < MARGIN) {
-                newPage();
-            }
-        }
-
-        private void newPage() throws IOException {
-            if (content != null) {
-                content.close();
-            }
-            page = new PDPage(PDRectangle.LETTER);
-            document.addPage(page);
-            content = new PDPageContentStream(document, page);
-            y = page.getMediaBox().getHeight() - MARGIN;
-        }
-
-        private void write(String text, PDType1Font font, int fontSize, float x, float yPosition) throws IOException {
-            content.beginText();
-            content.setFont(font, fontSize);
-            content.newLineAtOffset(x, yPosition);
-            content.showText(sanitizePdfText(text));
-            content.endText();
-        }
-
-        private String truncate(String text, int length) {
-            if (text == null) {
-                return "";
-            }
-            return text.length() <= length ? text : text.substring(0, Math.max(0, length - 3)) + "...";
-        }
-
-        private String sanitizePdfText(String text) {
-            if (text == null) {
-                return "";
-            }
-            return text
-                    .replace('\u00A0', ' ')
-                    .replace("\r", " ")
-                    .replace("\n", " ")
-                    .replace("–", "-")
-                    .replace("—", "-");
-        }
-
-        @Override
-        public void close() throws IOException {
-            if (content != null) {
-                content.close();
-                content = null;
-            }
-        }
     }
 
     private CotizacionView toView(Cotizacion cotizacion) {

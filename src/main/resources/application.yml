@@ -49,6 +49,13 @@ sgie:
     jwt:
       secret: ${SGIE_AUTH_JWT_SECRET:dev-secret-change-this-value-before-deploying-sgie-club-boyaca}
       expiration-minutes: ${SGIE_AUTH_JWT_EXPIRATION_MINUTES:30}
+  security:
+    rate-limit:
+      enabled: ${SGIE_RATE_LIMIT_ENABLED:true}
+      capacity: ${SGIE_RATE_LIMIT_CAPACITY:120}
+      window-seconds: ${SGIE_RATE_LIMIT_WINDOW_SECONDS:60}
+      login-capacity: ${SGIE_RATE_LIMIT_LOGIN_CAPACITY:10}
+      login-window-seconds: ${SGIE_RATE_LIMIT_LOGIN_WINDOW_SECONDS:60}
   notificaciones:
     email:
       enabled: ${SGIE_EMAIL_ENABLED:false}
