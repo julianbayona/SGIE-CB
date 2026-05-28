@@ -19,17 +19,20 @@ public class MontajeJpaRepositoryAdapter implements MontajeRepository {
     private final SpringDataMontajeJpaRepository montajeRepository;
     private final SpringDataMontajeMesaReservaJpaRepository mesasRepository;
     private final SpringDataInfraestructuraReservaJpaRepository infraestructuraRepository;
+    private final SpringDataInfraestructuraReservaItemJpaRepository infraestructuraItemRepository;
     private final SpringDataAdicionalEventoJpaRepository adicionalRepository;
 
     public MontajeJpaRepositoryAdapter(
             SpringDataMontajeJpaRepository montajeRepository,
             SpringDataMontajeMesaReservaJpaRepository mesasRepository,
             SpringDataInfraestructuraReservaJpaRepository infraestructuraRepository,
+            SpringDataInfraestructuraReservaItemJpaRepository infraestructuraItemRepository,
             SpringDataAdicionalEventoJpaRepository adicionalRepository
     ) {
         this.montajeRepository = montajeRepository;
         this.mesasRepository = mesasRepository;
         this.infraestructuraRepository = infraestructuraRepository;
+        this.infraestructuraItemRepository = infraestructuraItemRepository;
         this.adicionalRepository = adicionalRepository;
     }
 
@@ -45,7 +48,9 @@ public class MontajeJpaRepositoryAdapter implements MontajeRepository {
         ));
 
         mesasRepository.saveAll(montaje.getMesas().stream().map(this::toEntity).toList());
-        infraestructuraRepository.save(toEntity(montaje.getInfraestructura()));
+        InfraestructuraReservaJpaEntity infraestructuraEntity = infraestructuraRepository.save(toEntity(montaje.getInfraestructura()));
+        infraestructuraItemRepository.deleteByInfraestructuraReservaId(infraestructuraEntity.getId());
+        infraestructuraItemRepository.saveAll(toItemEntities(montaje.getInfraestructura(), infraestructuraEntity.getId(), now));
         adicionalRepository.saveAll(montaje.getAdicionales().stream().map(this::toEntity).toList());
 
         return buscarPorReservaId(montaje.getReservaId())
@@ -129,6 +134,17 @@ public class MontajeJpaRepositoryAdapter implements MontajeRepository {
     }
 
     private InfraestructuraReserva toDomain(InfraestructuraReservaJpaEntity entity) {
+        List<InfraestructuraReservaItemJpaEntity> items = infraestructuraItemRepository.findByInfraestructuraReservaId(entity.getId());
+        if (!items.isEmpty()) {
+            return InfraestructuraReserva.reconstruir(
+                    entity.getId(),
+                    entity.getMontajeId(),
+                    tieneInfraestructura(items, "MESA_PONQUE"),
+                    tieneInfraestructura(items, "MESA_REGALOS"),
+                    tieneInfraestructura(items, "ESPACIO_MUSICOS"),
+                    tieneInfraestructura(items, "ESTANTE_BOMBAS")
+            );
+        }
         return InfraestructuraReserva.reconstruir(
                 entity.getId(),
                 entity.getMontajeId(),
@@ -137,6 +153,44 @@ public class MontajeJpaRepositoryAdapter implements MontajeRepository {
                 entity.isEspacioMusicos(),
                 entity.isEstanteBombas()
         );
+    }
+
+    private List<InfraestructuraReservaItemJpaEntity> toItemEntities(
+            InfraestructuraReserva infraestructura,
+            UUID infraestructuraReservaId,
+            LocalDateTime now
+    ) {
+        return List.of(
+                toItemEntity(infraestructura, infraestructuraReservaId, "MESA_PONQUE", infraestructura.isMesaPonque(), now),
+                toItemEntity(infraestructura, infraestructuraReservaId, "MESA_REGALOS", infraestructura.isMesaRegalos(), now),
+                toItemEntity(infraestructura, infraestructuraReservaId, "ESPACIO_MUSICOS", infraestructura.isEspacioMusicos(), now),
+                toItemEntity(infraestructura, infraestructuraReservaId, "ESTANTE_BOMBAS", infraestructura.isEstanteBombas(), now)
+        ).stream().flatMap(Optional::stream).toList();
+    }
+
+    private Optional<InfraestructuraReservaItemJpaEntity> toItemEntity(
+            InfraestructuraReserva infraestructura,
+            UUID infraestructuraReservaId,
+            String tipo,
+            boolean incluido,
+            LocalDateTime now
+    ) {
+        if (!incluido) {
+            return Optional.empty();
+        }
+        return Optional.of(new InfraestructuraReservaItemJpaEntity(
+                UUID.randomUUID(),
+                infraestructuraReservaId,
+                infraestructura.getMontajeId(),
+                tipo,
+                1,
+                null,
+                now
+        ));
+    }
+
+    private boolean tieneInfraestructura(List<InfraestructuraReservaItemJpaEntity> items, String tipo) {
+        return items.stream().anyMatch(item -> tipo.equals(item.getTipo()) && item.getCantidad() > 0);
     }
 
     private AdicionalEvento toDomain(AdicionalEventoJpaEntity entity) {
