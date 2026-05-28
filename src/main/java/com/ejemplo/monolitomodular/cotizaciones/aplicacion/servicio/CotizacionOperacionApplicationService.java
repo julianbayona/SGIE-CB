@@ -25,7 +25,9 @@ import com.ejemplo.monolitomodular.notificaciones.dominio.modelo.TipoNotificacio
 import com.ejemplo.monolitomodular.salones.dominio.modelo.Salon;
 import com.ejemplo.monolitomodular.salones.dominio.puerto.salida.SalonRepository;
 import com.ejemplo.monolitomodular.shared.dominio.excepcion.DomainException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.pdfbox.pdmodel.PDDocument;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,8 +35,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.text.NumberFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -93,6 +97,25 @@ public class CotizacionOperacionApplicationService implements
 
     @Override
     public DocumentoCotizacionView descargar(UUID cotizacionId) {
+        DocumentoContext context = documentoContext(cotizacionId);
+        return new DocumentoCotizacionView(
+                "cotizacion-" + context.cotizacion().getId() + ".xlsx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                generarExcel(context.cotizacion(), context.evento(), context.reserva(), context.cliente(), context.salon())
+        );
+    }
+
+    @Override
+    public DocumentoCotizacionView descargarPdf(UUID cotizacionId) {
+        DocumentoContext context = documentoContext(cotizacionId);
+        return new DocumentoCotizacionView(
+                "cotizacion-" + context.cotizacion().getId() + ".pdf",
+                "application/pdf",
+                generarPdf(context.cotizacion(), context.evento(), context.reserva(), context.cliente(), context.salon())
+        );
+    }
+
+    private DocumentoContext documentoContext(UUID cotizacionId) {
         Cotizacion cotizacion = buscarCotizacion(cotizacionId);
         ReservaSalon reserva = reserva(cotizacion);
         Evento evento = evento(reserva);
@@ -100,11 +123,7 @@ public class CotizacionOperacionApplicationService implements
                 .orElseThrow(() -> new DomainException("Cliente no encontrado"));
         Salon salon = salonRepository.buscarPorId(reserva.getSalonId())
                 .orElseThrow(() -> new DomainException("Salon no encontrado"));
-        return new DocumentoCotizacionView(
-                "cotizacion-" + cotizacion.getId() + ".xlsx",
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                generarExcel(cotizacion, evento, reserva, cliente, salon)
-        );
+        return new DocumentoContext(cotizacion, reserva, evento, cliente, salon);
     }
 
     @Override
@@ -158,7 +177,7 @@ public class CotizacionOperacionApplicationService implements
                     "fechaEvento", evento.getFechaHoraInicio().toString(),
                     "valorTotal", cotizacion.valorTotal()
             ));
-        } catch (Exception ex) {
+        } catch (JsonProcessingException ex) {
             return "{}";
         }
     }
@@ -180,11 +199,63 @@ public class CotizacionOperacionApplicationService implements
         }
     }
 
+    private byte[] generarPdf(Cotizacion cotizacion, Evento evento, ReservaSalon reserva, Cliente cliente, Salon salon) {
+        try (PDDocument document = new PDDocument(); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            PdfWriter pdf = new PdfWriter(document);
+            pdf.title("CLUB BOYACA");
+            pdf.subtitle("Cotizacion formal de evento");
+            pdf.text("Cotizacion No. " + cotizacion.getId());
+            pdf.text("Fecha de emision: " + formatoFecha(LocalDateTime.now()) + "    Estado: " + cotizacion.getEstado().name());
+            pdf.space(10);
+
+            pdf.section("Datos del cliente");
+            pdf.text("Cliente: " + cliente.getNombreCompleto());
+            pdf.text("Cedula: " + cliente.getCedula() + "    Telefono: " + cliente.getTelefono());
+            pdf.text("Correo: " + cliente.getCorreo());
+            pdf.space(8);
+
+            pdf.section("Datos del evento");
+            pdf.text("Tipo de evento: " + nombreTipoEvento(evento));
+            pdf.text("Salon: " + salon.getNombre() + "    Invitados: " + reserva.getNumInvitados());
+            pdf.text("Inicio: " + formatoFecha(evento.getFechaHoraInicio()) + "    Fin: " + formatoFecha(evento.getFechaHoraFin()));
+            pdf.space(8);
+
+            pdf.section("Resumen financiero");
+            pdf.text("Subtotal: " + money(cotizacion.getValorSubtotal()));
+            pdf.text("Descuento: " + money(cotizacion.getDescuento()));
+            pdf.emphasis("Total cotizacion: " + money(cotizacion.getValorTotal()));
+            pdf.space(8);
+
+            pdf.section("Detalle economico");
+            pdf.tableHeader();
+            for (CotizacionItem item : cotizacion.getItems()) {
+                BigDecimal precioAplicado = item.getPrecioOverride() == null ? item.getPrecioBase() : item.getPrecioOverride();
+                pdf.tableRow(
+                        origenItem(item),
+                        item.getDescripcion(),
+                        Integer.toString(item.getCantidad()),
+                        money(precioAplicado),
+                        money(precioAplicado.multiply(BigDecimal.valueOf(item.getCantidad())))
+                );
+            }
+
+            pdf.space(10);
+            pdf.section("Observaciones");
+            pdf.paragraph(cotizacion.getObservaciones() == null || cotizacion.getObservaciones().isBlank()
+                    ? "Sin observaciones registradas."
+                    : cotizacion.getObservaciones());
+            pdf.footer();
+            pdf.close();
+            document.save(output);
+            return output.toByteArray();
+        } catch (IOException ex) {
+            throw new DomainException("No se pudo generar el PDF de cotizacion");
+        }
+    }
+
     private String worksheet(Cotizacion cotizacion, Evento evento, ReservaSalon reserva, Cliente cliente, Salon salon) {
         StringBuilder rows = new StringBuilder();
-        String tipoEvento = tipoEventoRepository.buscarPorId(evento.getTipoEventoId())
-                .map(tipo -> tipo.getNombre())
-                .orElse(evento.getTipoEventoId().toString());
+        String tipoEvento = nombreTipoEvento(evento);
         String tipoComida = tipoComidaRepository.buscarPorId(evento.getTipoComidaId())
                 .map(tipo -> tipo.getNombre())
                 .orElse(evento.getTipoComidaId().toString());
@@ -219,28 +290,48 @@ public class CotizacionOperacionApplicationService implements
         addRow(rows, 16, cell("A16", "Inicio", 4), cell("B16", formatoFecha(evento.getFechaHoraInicio()), 5),
                 cell("E16", "Fin", 4), cell("F16", formatoFecha(evento.getFechaHoraFin()), 5));
 
-        addSection(rows, 18, "Detalle economico");
+        addSection(rows, 18, "Resumen financiero");
         addRow(rows, 19,
-                cell("A19", "No.", 8),
-                cell("B19", "Concepto", 8),
-                cell("C19", "Descripcion", 8),
-                cell("D19", "Precio base", 8),
-                cell("E19", "Precio aplicado", 8),
-                cell("F19", "Cantidad", 8),
-                cell("G19", "Subtotal", 8));
+                cell("A19", "Subtotal calculado", 4),
+                moneyCell("B19", cotizacion.getValorSubtotal(), 7),
+                cell("D19", "Descuento", 4),
+                moneyCell("E19", cotizacion.getDescuento(), 7),
+                cell("G19", "Total cotizacion", 4),
+                moneyCell("H19", cotizacion.getValorTotal(), 7));
+        addRow(rows, 20,
+                cell("A20", "Total items", 4),
+                numberCell("B20", cotizacion.getItems().size(), 6),
+                cell("D20", "Valores", 4),
+                cell("E20", "Pesos colombianos (COP)", 5),
+                cell("G20", "Emitida", 4),
+                cell("H20", formatoFecha(LocalDateTime.now()), 5));
 
-        int row = 20;
+        addSection(rows, 22, "Detalle economico");
+        addRow(rows, 23,
+                cell("A23", "No.", 8),
+                cell("B23", "Origen", 8),
+                cell("C23", "Concepto", 8),
+                cell("D23", "Cobro", 8),
+                cell("E23", "Descripcion", 8),
+                cell("F23", "Precio base", 8),
+                cell("G23", "Precio aplicado", 8),
+                cell("H23", "Cantidad", 8),
+                cell("I23", "Subtotal", 8));
+
+        int row = 24;
         int index = 1;
         for (CotizacionItem item : cotizacion.getItems()) {
             BigDecimal precioAplicado = item.getPrecioOverride() == null ? item.getPrecioBase() : item.getPrecioOverride();
             addRow(rows, row,
                     numberCell("A" + row, index, 6),
-                    cell("B" + row, item.getTipoConcepto(), 5),
-                    cell("C" + row, item.getDescripcion(), 5),
-                    moneyCell("D" + row, item.getPrecioBase(), 7),
-                    moneyCell("E" + row, precioAplicado, 7),
-                    numberCell("F" + row, item.getCantidad(), 6),
-                    formulaCell("G" + row, "E" + row + "*F" + row, 7));
+                    cell("B" + row, origenItem(item), 5),
+                    cell("C" + row, item.getTipoConcepto(), 5),
+                    cell("D" + row, modalidadCobro(item), 5),
+                    cell("E" + row, item.getDescripcion(), 5),
+                    moneyCell("F" + row, item.getPrecioBase(), 7),
+                    moneyCell("G" + row, precioAplicado, 7),
+                    numberCell("H" + row, item.getCantidad(), 6),
+                    formulaCell("I" + row, "G" + row + "*H" + row, 7));
             row++;
             index++;
         }
@@ -249,15 +340,15 @@ public class CotizacionOperacionApplicationService implements
         int descuentoRow = row + 2;
         int totalRow = row + 3;
         int noteRow = row + 5;
-        int firstItemRow = 20;
+        int firstItemRow = 24;
         int lastItemRow = Math.max(firstItemRow, row - 1);
 
-        addRow(rows, subtotalRow, cell("F" + subtotalRow, "Subtotal", 9),
-                formulaCell("G" + subtotalRow, "SUM(G" + firstItemRow + ":G" + lastItemRow + ")", 10));
-        addRow(rows, descuentoRow, cell("F" + descuentoRow, "Descuento", 9),
-                moneyCell("G" + descuentoRow, cotizacion.getDescuento(), 10));
-        addRow(rows, totalRow, cell("F" + totalRow, "Total", 11),
-                formulaCell("G" + totalRow, "G" + subtotalRow + "-G" + descuentoRow, 12));
+        addRow(rows, subtotalRow, cell("H" + subtotalRow, "Subtotal", 9),
+                formulaCell("I" + subtotalRow, "SUM(I" + firstItemRow + ":I" + lastItemRow + ")", 10));
+        addRow(rows, descuentoRow, cell("H" + descuentoRow, "Descuento", 9),
+                moneyCell("I" + descuentoRow, cotizacion.getDescuento(), 10));
+        addRow(rows, totalRow, cell("H" + totalRow, "Total", 11),
+                formulaCell("I" + totalRow, "I" + subtotalRow + "-I" + descuentoRow, 12));
 
         addSection(rows, noteRow, "Observaciones");
         addRow(rows, noteRow + 1, cell("A" + (noteRow + 1), cotizacion.getObservaciones() == null
@@ -269,30 +360,61 @@ public class CotizacionOperacionApplicationService implements
         return """
                 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
                 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
-                  <sheetViews><sheetView showGridLines="0" workbookViewId="0"><pane ySplit="19" topLeftCell="A20" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>
+                  <sheetViews><sheetView showGridLines="0" workbookViewId="0"><pane ySplit="23" topLeftCell="A24" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>
                   <cols>
                     <col min="1" max="1" width="8" customWidth="1"/>
-                    <col min="2" max="2" width="18" customWidth="1"/>
-                    <col min="3" max="3" width="46" customWidth="1"/>
+                    <col min="2" max="2" width="14" customWidth="1"/>
+                    <col min="3" max="3" width="20" customWidth="1"/>
                     <col min="4" max="4" width="16" customWidth="1"/>
-                    <col min="5" max="5" width="18" customWidth="1"/>
-                    <col min="6" max="6" width="13" customWidth="1"/>
+                    <col min="5" max="5" width="42" customWidth="1"/>
+                    <col min="6" max="6" width="16" customWidth="1"/>
                     <col min="7" max="7" width="18" customWidth="1"/>
+                    <col min="8" max="8" width="13" customWidth="1"/>
+                    <col min="9" max="9" width="18" customWidth="1"/>
                   </cols>
                   <sheetData>
                 %s
                   </sheetData>
-                  <mergeCells count="6">
-                    <mergeCell ref="A1:G1"/>
-                    <mergeCell ref="A2:G2"/>
-                    <mergeCell ref="A7:G7"/>
-                    <mergeCell ref="A12:G12"/>
-                    <mergeCell ref="A18:G18"/>
-                    <mergeCell ref="A%d:G%d"/>
+                  <autoFilter ref="A23:I%d"/>
+                  <mergeCells count="7">
+                    <mergeCell ref="A1:I1"/>
+                    <mergeCell ref="A2:I2"/>
+                    <mergeCell ref="A7:I7"/>
+                    <mergeCell ref="A12:I12"/>
+                    <mergeCell ref="A18:I18"/>
+                    <mergeCell ref="A22:I22"/>
+                    <mergeCell ref="A%d:I%d"/>
                   </mergeCells>
                   <pageMargins left="0.5" right="0.5" top="0.7" bottom="0.7" header="0.3" footer="0.3"/>
                 </worksheet>
-                """.formatted(rows, noteRow, noteRow);
+                """.formatted(rows, lastItemRow, noteRow, noteRow);
+    }
+
+    private String nombreTipoEvento(Evento evento) {
+        return tipoEventoRepository.buscarPorId(evento.getTipoEventoId())
+                .map(tipo -> tipo.getNombre())
+                .orElse(evento.getTipoEventoId().toString());
+    }
+
+    private String origenItem(CotizacionItem item) {
+        String tipo = item.getTipoConcepto() == null ? "" : item.getTipoConcepto().toUpperCase(Locale.ROOT);
+        if (tipo.contains("SALON") || tipo.contains("ALQUILER")) {
+            return "Salon";
+        }
+        if (tipo.contains("MENU") || tipo.contains("PLATO")) {
+            return "Menu";
+        }
+        return "Montaje";
+    }
+
+    private String modalidadCobro(CotizacionItem item) {
+        return item.getCantidad() == 1 ? "Servicio" : "Unidad";
+    }
+
+    private String money(BigDecimal value) {
+        NumberFormat format = NumberFormat.getCurrencyInstance(new Locale("es", "CO"));
+        format.setMaximumFractionDigits(0);
+        return format.format(value == null ? BigDecimal.ZERO : value);
     }
 
     private void addSection(StringBuilder rows, int row, String title) {
@@ -308,7 +430,7 @@ public class CotizacionOperacionApplicationService implements
     }
 
     private String cell(String ref, String value, int style) {
-        return "<c r=\"" + ref + "\" s=\"" + style + "\" t=\"inlineStr\"><is><t>" + xml(value) + "</t></is></c>";
+        return "<c r=\"" + ref + "\" s=\"" + style + "\" t=\"inlineStr\"><is><t>" + xml(spreadsheetText(value)) + "</t></is></c>";
     }
 
     private String numberCell(String ref, Number value, int style) {
@@ -344,11 +466,23 @@ public class CotizacionOperacionApplicationService implements
             return "";
         }
         return value
+                .replaceAll("[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F]", "")
                 .replace("&", "&amp;")
                 .replace("<", "&lt;")
                 .replace(">", "&gt;")
                 .replace("\"", "&quot;")
                 .replace("'", "&apos;");
+    }
+
+    private String spreadsheetText(String value) {
+        if (value == null || value.isBlank()) {
+            return value;
+        }
+        String trimmed = value.stripLeading();
+        if (trimmed.startsWith("=") || trimmed.startsWith("+") || trimmed.startsWith("-") || trimmed.startsWith("@")) {
+            return "'" + value;
+        }
+        return value;
     }
 
     private String contentTypes() {
@@ -474,6 +608,15 @@ public class CotizacionOperacionApplicationService implements
                   <cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
                 </styleSheet>
                 """;
+    }
+
+    private record DocumentoContext(
+            Cotizacion cotizacion,
+            ReservaSalon reserva,
+            Evento evento,
+            Cliente cliente,
+            Salon salon
+    ) {
     }
 
     private CotizacionView toView(Cotizacion cotizacion) {

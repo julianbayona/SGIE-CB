@@ -7,4 +7,6 @@ import java.util.UUID;
 public interface DescargarDocumentoCotizacionUseCase {
 
     DocumentoCotizacionView descargar(UUID cotizacionId);
+
+    DocumentoCotizacionView descargarPdf(UUID cotizacionId);
 }

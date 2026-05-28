@@ -106,6 +106,15 @@ public class CotizacionController {
                 .body(documento.contenido());
     }
 
+    @GetMapping("/cotizaciones/{id}/documento/pdf")
+    public ResponseEntity<byte[]> descargarDocumentoPdf(@PathVariable UUID id) {
+        DocumentoCotizacionView documento = descargarDocumentoCotizacionUseCase.descargarPdf(id);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_TYPE, documento.contentType())
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + documento.nombreArchivo() + "\"")
+                .body(documento.contenido());
+    }
+
     @PatchMapping("/cotizaciones/{cotizacionId}/items/{itemId}")
     public CotizacionResponse actualizarItem(
             @PathVariable UUID cotizacionId,
