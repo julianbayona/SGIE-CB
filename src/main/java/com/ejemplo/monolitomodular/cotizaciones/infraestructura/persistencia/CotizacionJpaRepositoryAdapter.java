@@ -107,13 +107,17 @@ public class CotizacionJpaRepositoryAdapter implements CotizacionRepository {
     }
 
     private CotizacionItem toDomain(CotizacionItemJpaEntity entity) {
-        return CotizacionItem.reconstruir(
+        return CotizacionItem.reconstruirNormalizado(
                 entity.getId(),
                 entity.getCotizacionId(),
                 entity.getTipoConcepto(),
+                entity.getConceptoCodigo(),
+                entity.getOrigenTipo(),
                 entity.getOrigenId(),
                 entity.getDescripcion(),
+                entity.getDescripcionSnapshot(),
                 entity.getPrecioBase(),
+                entity.getPrecioBaseSnapshot(),
                 entity.getPrecioOverride(),
                 entity.getCantidad()
         );
@@ -124,9 +128,13 @@ public class CotizacionJpaRepositoryAdapter implements CotizacionRepository {
                 item.getId(),
                 item.getCotizacionId(),
                 item.getTipoConcepto(),
+                item.getConceptoCodigo(),
+                item.getOrigenTipo(),
                 item.getOrigenId(),
                 item.getDescripcion(),
+                item.getDescripcionSnapshot(),
                 item.getPrecioBase(),
+                item.getPrecioBaseSnapshot(),
                 item.getPrecioOverride(),
                 item.getCantidad(),
                 item.getSubtotal()
