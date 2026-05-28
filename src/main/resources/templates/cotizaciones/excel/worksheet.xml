@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <sheetViews><sheetView showGridLines="0" workbookViewId="0"><pane ySplit="23" topLeftCell="A24" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>
+  <cols>
+    <col min="1" max="1" width="8" customWidth="1"/>
+    <col min="2" max="2" width="14" customWidth="1"/>
+    <col min="3" max="3" width="20" customWidth="1"/>
+    <col min="4" max="4" width="16" customWidth="1"/>
+    <col min="5" max="5" width="42" customWidth="1"/>
+    <col min="6" max="6" width="16" customWidth="1"/>
+    <col min="7" max="7" width="18" customWidth="1"/>
+    <col min="8" max="8" width="13" customWidth="1"/>
+    <col min="9" max="9" width="18" customWidth="1"/>
+  </cols>
+  <sheetData>
+%s
+  </sheetData>
+  <autoFilter ref="A23:I%d"/>
+  <mergeCells count="7">
+    <mergeCell ref="A1:I1"/>
+    <mergeCell ref="A2:I2"/>
+    <mergeCell ref="A7:I7"/>
+    <mergeCell ref="A12:I12"/>
+    <mergeCell ref="A18:I18"/>
+    <mergeCell ref="A22:I22"/>
+    <mergeCell ref="A%d:I%d"/>
+  </mergeCells>
+  <pageMargins left="0.5" right="0.5" top="0.7" bottom="0.7" header="0.3" footer="0.3"/>
+</worksheet>
