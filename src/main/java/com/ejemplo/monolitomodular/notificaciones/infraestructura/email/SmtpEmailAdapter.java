@@ -6,14 +6,14 @@ import com.ejemplo.monolitomodular.notificaciones.dominio.puerto.salida.EmailPor
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
 
 @Component
-@ConditionalOnProperty(prefix = "sgie.notificaciones.email", name = "enabled", havingValue = "true")
+@ConditionalOnExpression("'${sgie.notificaciones.email.enabled:false}' == 'true' && '${sgie.notificaciones.email.provider:smtp}' == 'smtp'")
 public class SmtpEmailAdapter implements EmailPort {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SmtpEmailAdapter.class);

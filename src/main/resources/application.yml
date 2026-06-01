@@ -59,7 +59,11 @@ sgie:
   notificaciones:
     email:
       enabled: ${SGIE_EMAIL_ENABLED:false}
+      provider: ${SGIE_EMAIL_PROVIDER:smtp}
       from: ${SGIE_EMAIL_FROM:${MAIL_USERNAME:}}
+      resend:
+        api-key: ${RESEND_API_KEY:}
+        api-url: ${RESEND_API_URL:https://api.resend.com/emails}
     scheduler:
       fixed-delay-ms: ${SGIE_NOTIFICACIONES_SCHEDULER_FIXED_DELAY_MS:60000}
       limite: ${SGIE_NOTIFICACIONES_SCHEDULER_LIMITE:20}
